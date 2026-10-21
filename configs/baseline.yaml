@@ -1,0 +1,24 @@
+# Exact model names served by OPENAI_BASE_URL (no provider prefix).
+lead:
+  model: api-glm-5.3-flash
+worker:
+  model: api-glm-5.3-flash
+citation:
+  model: api-glm-5.3-flash
+  max_output_tokens: 8192
+# Chat Completions generation options (e.g. reasoning_effort) go under `options`.
+# Prices are intentionally unset; cost is null until explicit rates are configured.
+max_lead_turns: 20
+max_worker_turns: 12
+max_worker_tool_calls: 20
+max_batches: 6
+max_workers_per_batch: 4
+max_run_tokens: 2000000
+run_timeout_seconds: 900
+worker_timeout_seconds: 180
+call_timeout_seconds: 60
+max_document_chars: 24000
+max_citation_chars: 160000
+max_download_bytes: 2000000
+search_results: 5
+output_dir: runs

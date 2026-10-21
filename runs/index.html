@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MultiAgentResearch · Run viewer</title>
+<style>
+:root{font:14px system-ui,sans-serif;color:#dbe5f3;background:#101722;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;display:grid;grid-template-columns:300px minmax(0,1fr);height:100vh}
+aside{border-right:1px solid #334155;overflow:auto;background:#141e2c}header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px;border-bottom:1px solid #334155;position:sticky;top:0;background:#141e2c;z-index:3}
+h1{font-size:18px;margin:0}h2{font-size:16px;margin:0}p{line-height:1.5}button{background:#263b54;color:#eff6ff;border:1px solid #48617e;border-radius:7px;padding:8px 11px;cursor:pointer}button:hover{background:#355172}button:disabled{opacity:.5;cursor:wait}
+main{overflow:auto;position:relative}#run-list{padding:10px}.run{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;background:#1b293b;border-color:transparent}.run.selected{border-color:#6bb9ff;background:#243d59}.run strong{display:block;overflow-wrap:anywhere}.run small{overflow-wrap:anywhere;display:block;color:#a8b9ce;margin-top:6px}.run .query{margin-top:8px;font-size:12px;line-height:1.5}
+#summary{padding:18px 24px 0}#summary .stats{display:flex;gap:12px;flex-wrap:wrap;color:#a8c8e7}.notice{color:#e8c98a}#flow-wrap{position:relative;padding:25px;min-height:200px;overflow:auto}#flow{position:relative;z-index:1;min-width:650px}
+.stage{margin:0 0 74px}.stage-heading{margin:0 0 16px;font-size:13px;color:#a8b9ce;text-transform:uppercase;letter-spacing:.08em}
+.lanes{display:flex;gap:28px;align-items:flex-start;justify-content:safe center}.lane{flex:1;min-width:240px;max-width:700px}.lane-heading{padding:9px 12px;background:var(--lane-bg,#203147);border-radius:8px;color:var(--role-accent,#8bc8ff);font-weight:600;margin-bottom:16px}
+.card{border:1px solid var(--card-border,#42546c);background:var(--card-bg,#1b293b);border-radius:10px;margin-bottom:24px;box-shadow:0 5px 15px #0002;position:relative;overflow:hidden}.card.error{border-color:#d47d7d}.card.pending{border-style:dashed}.card-head{padding:12px 14px;display:flex;justify-content:space-between;gap:10px;font-weight:600;background:var(--card-head-bg,#213248)}.card-head small{font-size:11px;color:var(--role-muted,#b1c0d4);font-weight:400;white-space:nowrap}.preview{padding:12px 14px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:150px;overflow:auto;color:var(--role-text,#d0deee)}
+details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summary{cursor:pointer;color:var(--role-accent,#9dccf7)}pre{font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:480px;overflow:auto;margin:10px 0 0}svg#arrows{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
+.empty{padding:28px;color:#a8b9ce}#error{color:#ffb2b2;padding:0 24px}a{color:#9dccf7}
+/* Role palettes apply to the whole lane, including tool and completion blocks. */
+.lane.role-worker{--lane-bg:#1c4937;--card-bg:#142e25;--card-head-bg:#1b4031;--card-border:#3a7058;--detail-border:#305640;--role-accent:#9ee3b8;--role-muted:#b1ccbc;--role-text:#d2eadc;color:#d2eadc}
+.lane.role-citation{--lane-bg:#39204f;--card-bg:#251630;--card-head-bg:#352044;--card-border:#70508b;--detail-border:#503361;--role-accent:#d5b0f4;--role-muted:#c5b4d3;--role-text:#e6d9ef;color:#e6d9ef}
+[hidden]{display:none!important}
+#main>header{display:block}
+.run-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+#title{overflow-wrap:anywhere}
+.view-tabs{display:flex;gap:8px;margin-top:16px}
+.view-tabs button{background:transparent;border-color:transparent;color:#a8b9ce;border-radius:6px 6px 0 0}
+.view-tabs button[aria-selected="true"]{background:#263b54;color:#f0f6ff;border-bottom:3px solid #8bc8ff}
+.view-tabs button:focus-visible{outline:2px solid #8bc8ff;outline-offset:2px}
+.graph-note{padding:0 24px;color:#a8b9ce}
+#report-panel{max-width:1100px;margin:0 auto;padding:24px 32px 60px}
+.report-note{color:#a8b9ce;font-size:13px}
+.report-document{padding:24px 28px;margin:24px 0;border:1px solid #42546c;border-radius:12px;background:#1b293b}
+.report-document>h3{margin-top:0;font-size:18px}
+.report-citation{background:#251630;border-color:#70508b}
+.report-citation>h3{color:#d5b0f4}
+.report-worker{background:#142e25;border-color:#3a7058}
+.report-worker>h3{color:#9ee3b8}
+.worker-results-heading{margin-top:36px}
+.markdown-body{line-height:1.75;overflow-wrap:anywhere;font-size:15px}
+.markdown-body h1{font-size:28px}.markdown-body h2{font-size:23px}.markdown-body h3{font-size:19px}
+.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{margin:1.4em 0 .6em;line-height:1.3}
+.markdown-body p{line-height:inherit;margin:.8em 0}
+.markdown-body li{margin:.3em 0}.markdown-body li>p{margin:.3em 0}
+.markdown-body code{background:#0e1723;padding:2px 5px;border-radius:4px;font:13px ui-monospace,monospace}
+.markdown-body pre{max-height:none;overflow:auto;background:#0e1723;padding:16px;white-space:pre;font-size:13px}
+.markdown-body pre code{padding:0;background:transparent}
+.markdown-body blockquote{margin:1em 0;border-left:3px solid #6d8eaa;padding:1px 16px;color:#b9cce1}
+.markdown-body table{display:block;overflow:auto;border-collapse:collapse;margin:18px 0;width:100%}
+.markdown-body th,.markdown-body td{border:1px solid #496077;padding:9px 12px;text-align:left}
+.markdown-body th{background:#263b54}.markdown-body hr{border:0;border-top:1px solid #496077;margin:24px 0}
+</style>
+</head>
+<body>
+<aside><header><h1>Research runs</h1><button id="refresh-list" aria-label="Refresh runs list">↻ Refresh</button></header><div id="run-list"></div></aside>
+<main id="main"><header><div class="run-title-row"><h2 id="title">Agent activity</h2><button id="refresh-run" disabled aria-label="Refresh selected run">↻ Refresh</button></div>
+<div class="view-tabs" role="tablist" aria-label="Run views">
+<button id="tab-graph" role="tab" aria-controls="graph-panel" aria-selected="true" tabindex="0">Agent Output Graph</button>
+<button id="tab-report" role="tab" aria-controls="report-panel" aria-selected="false" tabindex="-1">Result Report</button>
+</div></header>
+<div id="summary"><p>Select a run. Expand blocks to inspect model inputs, recorded reasoning, outputs, and tools.</p></div><p id="error" role="alert"></p>
+<section id="graph-panel" role="tabpanel" aria-labelledby="tab-graph">
+<p class="graph-note">Top to bottom: execution order. Parallel worker columns share a batch. Arrows show orchestration and per-agent sequence, not elapsed time. Expand blocks for full payloads.</p>
+<div id="flow-wrap"><svg id="arrows" aria-hidden="true"></svg><div id="flow"></div></div></section>
+<section id="report-panel" role="tabpanel" aria-labelledby="tab-report" hidden><p class="empty">Select a run to view its report and worker findings.</p></section></main>
+<script src="viewer-assets/markdown-it.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+let selected=null, runs=[], requestVersion=0, stageElements=[];
+const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
+const pretty=v=>typeof v==='string'?v:JSON.stringify(v,null,2);
+// Classic relative scripts work from file://; fetch and ES modules do not.
+window.__MAR_DATA__=Object.create(null);
+const pendingLoads=new Map(), payloadCache=new Map();
+function loadData(path){
+ if(pendingLoads.has(path))return pendingLoads.get(path);
+ const promise=new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  let timer;
+  const finish=(error)=>{
+   clearTimeout(timer);script.remove();
+   const data=window.__MAR_DATA__[path];delete window.__MAR_DATA__[path];
+   if(error)reject(error);else if(data===undefined)reject(Error('Invalid export: '+path));else resolve(data);
+  };
+  script.onload=()=>finish();
+  script.onerror=()=>finish(Error('Cannot load '+path+'. Keep index.html and its exported run files together.'));
+  timer=setTimeout(()=>finish(Error('Timed out loading '+path)),15000);
+  script.src=new URL(path,location.href).href+'?refresh='+Date.now()+'-'+Math.random();
+  document.head.append(script);
+ });
+ pendingLoads.set(path,promise);
+ promise.then(()=>pendingLoads.delete(path),()=>pendingLoads.delete(path));
+ return promise;
+}
+async function loadRun(name){
+ if(!/^(?:\d{6}_\d{6}_)?[a-f0-9]{32}$/.test(name))throw Error('Invalid run directory');
+ const data=await loadData(name+'/viewer-data.js');
+ data.warnings=[...(data.warnings||[])];
+ let cursor=0;
+ async function worker(){
+  while(cursor<data.events.length){
+   const event=data.events[cursor++], ref=event.payload_ref;
+   if(!/^[a-f0-9]{64}$/.test(ref)){event.payload={unavailable:'Invalid payload reference'};continue}
+   const path=name+'/viewer-payloads/'+ref+'.js';
+   try{
+    if(!payloadCache.has(path))payloadCache.set(path,await loadData(path));
+    event.payload=payloadCache.get(path);
+   }catch(error){event.payload={unavailable:error.message};data.warnings.push(error.message)}
+  }
+ }
+ await Promise.all(Array.from({length:8},worker));
+ return data;
+}
+function showError(e){$('#error').textContent=e.message}
+function drawList(){
+ const list=$('#run-list');list.replaceChildren();
+ if(!runs.length)list.append(el('p','empty','No runs found.'));
+ for(const run of runs){
+  const b=el('button','run'+(selected===run.directory?' selected':''));
+  b.append(el('strong','',run.started_at?new Date(run.started_at).toLocaleString():run.directory),
+   el('small','',run.status),el('small','',run.directory),
+   el('div','query',(run.query||run.error||'No query recorded').slice(0,180)));
+  b.onclick=()=>selectRun(run.directory);list.append(b);
+ }
+}
+async function refreshList(){
+ const button=$('#refresh-list');button.disabled=true;
+ try{runs=await loadData('viewer-manifest.js');drawList();if(!selected&&runs.length)await selectRun(runs[0].directory)}
+ catch(e){showError(e)}finally{button.disabled=false}
+}
+function section(card,label,value,open=false){
+ const d=el('details');d.open=open;d.append(el('summary','',label),el('pre','',pretty(value)));card.append(d);
+}
+function reasoning(payload){
+ const extra=payload.additional_kwargs||{};
+ const blocks=Array.isArray(payload.content)?payload.content.filter(x=>['thinking','reasoning','reasoning_content'].includes(x.type)):[];
+ return extra.reasoning_content||extra.reasoning||extra.thinking|| (blocks.length?blocks:null);
+}
+// Report helpers intentionally use only successful tool results and recorded worker summaries.
+function collectReport(data){
+ const requests=new Map(), workers=new Map(), citationResponses=new Map();
+ let report=null, citationReport=null, finalResults=null;
+ for(const event of data.events||[]){
+  const payload=event.payload||{};
+  if(event.agent_id==='citation'){
+   if(['citation.started','model.request','citation.failed','model.error'].includes(event.event_type))
+    citationReport=null;
+   if(event.event_type==='model.response')citationResponses.set(event.event_id,event);
+   if(event.event_type==='citation.validated'){
+    const response=[...(event.parent_event_ids||[])].reverse().map(id=>citationResponses.get(id)).find(Boolean);
+    const content=response?.payload?.content;
+    if(typeof content==='string')citationReport=content;
+    else if(Array.isArray(content)){
+     const text=content.filter(block=>block.type==='text'&&typeof block.text==='string');
+     if(text.length)citationReport=text.map(block=>block.text).join('');
+    }
+   }
+  }
+  if(event.event_type==='tool.request')requests.set(event.event_id,event);
+  if(event.event_type==='tool.result'&&event.agent_id==='lead'){
+   const request=(event.parent_event_ids||[]).map(id=>requests.get(id)).find(e=>e?.payload?.name==='complete_task');
+   if(request&&typeof payload.completed?.report==='string')report=payload.completed.report;
+  }
+  if(event.event_type==='worker.finished'&&typeof payload.assignment_id==='string')
+   workers.set(payload.assignment_id,payload);
+  if(event.event_type==='run.finished'&&payload.worker_results&&typeof payload.worker_results==='object')
+   finalResults=payload.worker_results;
+ }
+ const results=finalResults===null?[...workers.entries()]:Object.entries(finalResults);
+ results.sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));
+ return {report,citationReport,workers:results,final:finalResults!==null};
+}
+function createReportMarkdown(){
+ const md=window.markdownit({html:false,linkify:false,typographer:false});
+ const validate=md.validateLink.bind(md);
+ md.validateLink=url=>validate(url)&&/^(https?:\/\/|mailto:|#)/i.test(url);
+ const linkOpen=md.renderer.rules.link_open||((tokens,idx,options,env,self)=>self.renderToken(tokens,idx,options));
+ md.renderer.rules.link_open=(tokens,idx,options,env,self)=>{
+  tokens[idx].attrSet('target','_blank');tokens[idx].attrSet('rel','noopener noreferrer');
+  return linkOpen(tokens,idx,options,env,self);
+ };
+ // Do not issue remote image requests just because an agent mentioned an image.
+ md.renderer.rules.image=(tokens,idx)=>md.utils.escapeHtml('[Image: '+tokens[idx].content+']');
+ return md;
+}
+let reportMarkdown=null;
+function renderReport(data){
+ const panel=$('#report-panel');panel.replaceChildren();
+ const result=collectReport(data);
+ panel.append(el('h2','','Result Report'));
+ panel.append(el('p','report-note','Validated citation report when available, followed by the lead researcher’s draft and all recorded worker findings.'));
+ function documentBlock(title,body,role,note){
+  const article=el('article','report-document '+role);
+  article.append(el('h3','',title));
+  if(note)article.append(el('p','report-note',note));
+  if(typeof body==='string'&&body.trim()){
+   const content=el('div','markdown-body');
+   try{
+    if(!reportMarkdown)reportMarkdown=createReportMarkdown();
+    content.innerHTML=reportMarkdown.render(body);
+   }catch(error){
+    content.append(el('p','notice','Markdown renderer unavailable. Showing the original text.'),el('pre','',body));
+   }
+   article.append(content);
+  }else article.append(el('p','empty','No text was recorded for this result.'));
+  panel.append(article);
+ }
+ if(result.citationReport!==null)
+  documentBlock('Citation agent final report',result.citationReport,'report-citation','Source: citation response accepted by citation.validated. Validation checks draft preservation and source/span references, not factual correctness.');
+ if(result.report===null)
+  panel.append(el('p','empty','No successful lead complete_task report has been recorded yet.'));
+ else documentBlock('Lead researcher draft',result.report,'report-lead','Source: accepted complete_task.report, before citation annotation');
+ panel.append(el('h2','worker-results-heading','Worker findings'));
+ panel.append(el('p','report-note',result.final?'Source: final worker_results.':'Run has no final worker_results yet. Showing the latest worker.finished summaries available.'));
+ if(!result.workers.length)panel.append(el('p','empty','No worker findings have been recorded yet.'));
+ for(const [id,worker] of result.workers){
+  const note=[worker.status||'Unknown status',worker.stop_reason].filter(Boolean).join(' · ');
+  documentBlock(id,worker.findings,'report-worker',note);
+ }
+}
+let activeTab='graph';
+function selectTab(name){
+ activeTab=name;
+ for(const id of ['graph','report']){
+  const tab=$('#tab-'+id),active=id===name;
+  tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;
+  $('#'+id+'-panel').hidden=!active;
+ }
+ if(name==='graph')requestAnimationFrame(drawArrows);
+}
+// End report helpers.
+
+function renderCard(entry){
+ const e=entry.event,p=e.payload||{},r=entry.result,q=r?.payload||{};
+ const type=e.event_type, model=type==='model.request',tool=type==='tool.request';
+ const error=(r?.event_type||type).match(/error|failed|cancelled/)||q.error||p.error;
+ const pending=(model||tool)&&!r;
+ const card=el('article','card'+(error?' error':'')+(pending?' pending':''));
+ card.dataset.event=e.event_id;
+ let title=model?'Model turn':tool?'Tool · '+p.name:type.replaceAll('.',' · ');
+ if(pending)title+=' · no result recorded';
+ if(error)title+=' · error';
+ const head=el('div','card-head');head.append(el('span','',title),el('small','',new Date(e.timestamp).toLocaleTimeString()));card.append(head);
+ let preview=model?(q.content||q.tool_calls||q.message||'Request sent; no response recorded.'):tool?(q.message||q.error||q):p;
+ if(model&&Array.isArray(preview)&&!preview.length)preview='No text output.';
+ card.append(el('div','preview',pretty(preview).slice(0,600)));
+ if(model){
+  section(card,'Input messages',p.messages||[]);
+  section(card,'Available tools',p.tools||[]);
+  const reason=reasoning(q);
+  section(card,'Reasoning (recorded only)',reason||'No reasoning text was returned or recorded. Token counts do not contain reasoning text.');
+  if(r){section(card,'Output / tool calls',{content:q.content,tool_calls:q.tool_calls,invalid_tool_calls:q.invalid_tool_calls});
+   section(card,'Usage / response metadata',{usage:q.usage_metadata,metadata:q.response_metadata,error:q.message||q.error});}
+ }else if(tool){
+  section(card,'Input arguments',p.args);
+  if(r)section(card,'Tool result',q);
+ }else section(card,'Payload',p);
+ section(card,'Event metadata / dependencies',{...e,payload:undefined,result:r?{...r,payload:undefined}:undefined});
+ return card;
+}
+function buildStages(events){
+ const stages=[], batches=new Map(), entries=new Map();let active=null;
+ function stage(label,batch){const s={label,batch,lanes:new Map()};stages.push(s);return s}
+ function lane(s,id){if(!s.lanes.has(id))s.lanes.set(id,[]);return s.lanes.get(id)}
+ function batchStage(id){if(!batches.has(id))batches.set(id,stage('Parallel research · batch '+id,id));active=null;return batches.get(id)}
+ for(const e of events){
+  if(['model.response','model.error','tool.result','tool.error','tool.cancelled'].includes(e.event_type)){
+   const parent=(e.parent_event_ids||[]).map(id=>entries.get(id)).find(Boolean);
+   if(parent){parent.result=e;continue}
+  }
+  if(e.event_type==='worker.delivered'||e.event_type==='source.saved')continue;
+  if(e.event_type==='delegation.request'){
+   const s=batchStage(String(e.batch_id));lane(s,'lead delegation').push({event:e});continue;
+  }
+  if(e.event_type==='delegation.result'){
+   if(e.payload?.error)lane(batchStage(String(e.batch_id)),'lead delegation').push({event:e});
+   continue;
+  }
+  const match=e.agent_id.match(/^batch(\d+)-worker\d+$/);let s,id=e.agent_id;
+  if(match)s=batchStage(match[1]);
+  else{
+   if(!active||active.id!==id){active={id,stage:stage(id==='lead'?'Lead researcher':id==='citation'?'Citation agent':'Run lifecycle')}}
+   s=active.stage;
+  }
+  const entry={event:e};lane(s,id).push(entry);entries.set(e.event_id,entry);
+ }
+ return stages;
+}
+function renderFlow(data){
+ const flow=$('#flow');flow.replaceChildren();stageElements=[];
+ for(const s of buildStages(data.events)){
+  const wrapper=el('section','stage');wrapper.append(el('h3','stage-heading',s.label));
+  // Delegation inputs precede the parallel worker columns.
+  const delegation=s.lanes.get('lead delegation');
+  if(delegation){
+   const box=el('div','lanes'), l=el('div','lane');
+   const first=delegation[0].event;
+   l.append(renderCard({event:{...first,event_type:'lead · parallel delegation',
+    payload:{assignments:delegation.map(x=>x.event.payload)},
+    delegation_event_ids:delegation.map(x=>x.event.event_id)}}));
+   box.append(l);wrapper.append(box);
+   s.lanes.delete('lead delegation');
+  }
+  const lanes=el('div','lanes'), columns=[];
+  for(const [id,entries] of s.lanes){
+   const roleClass=/^batch\d+-worker\d+$/.test(id)?' role-worker':id==='citation'?' role-citation':'';
+   const l=el('div','lane'+roleClass);l.append(el('div','lane-heading',id));
+   for(const entry of entries)l.append(renderCard(entry));
+   lanes.append(l);columns.push(l);
+  }
+  wrapper.append(lanes);flow.append(wrapper);stageElements.push({wrapper,columns});
+ }
+ requestAnimationFrame(drawArrows);
+}
+function drawArrows(){
+ if($('#graph-panel').hidden)return;
+ const svg=$('#arrows'),wrap=$('#flow-wrap'),base=wrap.getBoundingClientRect();
+ svg.replaceChildren();svg.setAttribute('width',wrap.scrollWidth);svg.setAttribute('height',wrap.scrollHeight);
+ const ns='http://www.w3.org/2000/svg';
+ const defs=document.createElementNS(ns,'defs');defs.innerHTML='<marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7795b7"/></marker>';svg.append(defs);
+ function point(node,bottom){const r=node.getBoundingClientRect();return [r.left-base.left+wrap.scrollLeft+r.width/2,(bottom?r.bottom:r.top)-base.top+wrap.scrollTop]}
+ function arrow(a,b){const [x,y]=point(a,true),[xx,yy]=point(b,false);const p=document.createElementNS(ns,'path');p.setAttribute('d',`M ${x} ${y} C ${x} ${(y+yy)/2}, ${xx} ${(y+yy)/2}, ${xx} ${yy-3}`);p.setAttribute('fill','none');p.setAttribute('stroke','#7795b7');p.setAttribute('stroke-width','1.5');p.setAttribute('marker-end','url(#head)');svg.append(p)}
+ let previous=[];
+ for(const stage of stageElements){
+  const topBox=stage.wrapper.querySelector(':scope > .lanes'),delegation=topBox&&topBox!==stage.wrapper.lastElementChild?[...topBox.querySelectorAll('.card')]:[];
+  const first=[],last=[];
+  for(const col of stage.columns){const cards=[...col.querySelectorAll('.card')];if(!cards.length)continue;first.push(cards[0]);last.push(cards.at(-1));for(let i=1;i<cards.length;i++)arrow(cards[i-1],cards[i])}
+  if(delegation.length){for(let i=1;i<delegation.length;i++)arrow(delegation[i-1],delegation[i]);for(const p of previous)arrow(p,delegation[0]);for(const f of first)arrow(delegation.at(-1),f)}
+  else for(const p of previous)for(const f of first)arrow(p,f);
+  previous=last.length?last:delegation.slice(-1);
+ }
+}
+async function selectRun(name){
+ const changed=selected!==name;
+ if(changed){
+  $('#flow').replaceChildren();stageElements=[];$('#arrows').replaceChildren();
+  $('#report-panel').replaceChildren(el('p','empty','Loading this run’s report…'));
+  $('#summary').replaceChildren(el('p','','Loading run…'));$('#title').textContent=name;
+ }
+ selected=name;drawList();const version=++requestVersion;$('#refresh-run').disabled=true;$('#error').textContent='';
+ const openIds=new Set([...document.querySelectorAll('.card details[open]')].map(d=>d.parentElement.dataset.event+'|'+d.querySelector('summary').textContent));
+ try{
+  const data=await loadRun(name);if(version!==requestVersion)return;
+  $('#title').textContent=name;const summary=$('#summary');summary.replaceChildren();
+  summary.append(el('h2','',data.query||'No query recorded'));
+  const u=data.usage;summary.append(el('p','stats',`Status: ${data.status} · ${u.model_calls||0} model calls · ${(u.input_tokens||0).toLocaleString()} input / ${(u.output_tokens||0).toLocaleString()} output tokens`));
+  if(data.stop_reason)summary.append(el('p','notice','Stop reason: '+data.stop_reason));
+  if(data.status==='unfinished')summary.append(el('p','notice','No final run event: this run may be active or interrupted.'));
+  if(data.warnings.length)summary.append(el('p','notice',data.warnings.join('\n')));
+  const config=el('details');config.append(el('summary','','Run configuration'),el('pre','',pretty(data.config)));summary.append(config);
+  renderFlow(data);renderReport(data);selectTab(activeTab);
+  for(const d of document.querySelectorAll('.card details'))if(openIds.has(d.parentElement.dataset.event+'|'+d.querySelector('summary').textContent))d.open=true;
+ }catch(e){if(version===requestVersion)showError(e)}finally{if(version===requestVersion)$('#refresh-run').disabled=false}
+}
+for(const id of ['graph','report']){
+ const tab=$('#tab-'+id);
+ tab.onclick=()=>selectTab(id);
+ tab.onkeydown=event=>{
+  if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
+   event.preventDefault();
+   const next=event.key==='Home'?'graph':event.key==='End'?'report':id==='graph'?'report':'graph';
+   selectTab(next);$('#tab-'+next).focus();
+  }
+ };
+}
+$('#refresh-list').onclick=refreshList;$('#refresh-run').onclick=()=>selected&&selectRun(selected);
+document.addEventListener('toggle',()=>requestAnimationFrame(drawArrows),true);window.addEventListener('resize',drawArrows);
+new ResizeObserver(()=>requestAnimationFrame(drawArrows)).observe($('#flow'));
+refreshList();
+</script>
+</body>
+</html>

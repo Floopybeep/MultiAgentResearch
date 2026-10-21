@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/anthropics/claude-cookbooks",
+  "commit": "66ab04adc6725c887aa1bafe5cd1fc75e98a47e4",
+  "files": {
+    "research_lead_agent.md": "cc3165be0721fa26b92800027ac035c2db792d3a22f4bdd3577424559067d29e",
+    "research_subagent.md": "34c18034905aa9c0128f340de7c189e1da98b5bfa1c1df0233612ee6af72cf35",
+    "citations_agent.md": "48ac46ad78b4a50e3660fafe8f9147044ffb20982f7cbc278f36edefa2ce22fb"
+  }
+}
