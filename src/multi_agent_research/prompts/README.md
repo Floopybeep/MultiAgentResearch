@@ -1,15 +1,18 @@
-# Prompt provenance and adaptations
+# Prompt provenance and interfaces
 
-`upstream/manifest.json` pins the Anthropic Cookbook prompt snapshots and their SHA-256
-hashes. Their original license is retained in `upstream/LICENSE`. They are reference
-material, not executed as-is. The active `lead.md`, `worker.md`, and `citation.md` are
-shortened adaptations; every run records their hashes.
+`upstream/manifest.json` pins Anthropic Cookbook reference snapshots and hashes.
+`upstream/LICENSE` contains their license.
 
-Adaptations: web-only tools; explicit plan-memory tools; one reusable worker; no user
-clarification; host-enforced budgets; structured completion envelopes; citation markers
-with source/paragraph IDs and exact-text validation. Removed internal Workspace tools,
-obsolete tool references, inconsistent budget guidance, and unavailable formatting
-instructions. Source-content instructions are explicitly untrusted. The citation
-model receives all fetched evidence within a configured character cap; exceeding it
-fails visibly instead of silently truncating evidence. These choices are not claims
-about Anthropic's private production implementation.
+The active prompts are `lead.md`, `worker.md` and `judge.md`. Each run records their
+hashes through `prompts.hashes()`.
+
+| Prompt | Input | Tools / output |
+| --- | --- | --- |
+| Lead | Question, document catalog and returned Worker findings | `memory_write`, `memory_read`, parallel `run_blocking_subagent`, then `submit_answer` with `{answer}` |
+| Worker | Self-contained assignment and document catalog | Paged `read_document`, then `complete_task` with findings, read document IDs and uncertainties |
+| Judge | Question, reference answer and candidate response | JSON with boolean `correct` and string `reason` |
+
+The Lead plans, delegates and reassesses in one context. Workers use independent
+contexts. The grader calls the Judge after answer submission when exact match
+requires semantic evaluation. Format validity, exact match and correctness are
+separate result fields.

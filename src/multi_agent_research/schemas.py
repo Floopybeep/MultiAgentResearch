@@ -1,4 +1,4 @@
-"""Public tool contracts and serializable graph states."""
+"""Public QA tool contracts and serializable graph states."""
 
 from typing import Any, Literal, TypedDict
 
@@ -10,58 +10,47 @@ class Contract(BaseModel):
 
 
 class memory_write(Contract):
-    """Persist or update the research plan before delegation."""
+    """Persist or update the question-solving plan before delegation."""
 
     plan: str = Field(min_length=1)
 
 
 class memory_read(Contract):
-    """Read the most recent saved research plan."""
+    """Read the most recent saved question-solving plan."""
 
 
 class run_blocking_subagent(Contract):
-    """Delegate one self-contained research task; independent calls form a parallel batch."""
+    """Delegate one self-contained evidence-reading task; independent calls form a parallel batch."""
 
     prompt: str = Field(min_length=1)
 
 
-class complete_task(Contract):
-    """Submit the final report (lead) or evidence-backed findings (worker)."""
+class submit_answer(Contract):
+    """Submit the final QA response, with its concise answer enclosed in curly braces."""
 
-    report: str = Field(min_length=1)
-    source_ids: list[str] = Field(default_factory=list)
+    answer: str = Field(min_length=1)
+
+
+class complete_task(Contract):
+    """Return evidence-backed findings, supporting document IDs, and uncertainties to the Lead."""
+
+    findings: str = Field(min_length=1)
+    document_ids: list[str] = Field(min_length=1)
     uncertainties: list[str] = Field(default_factory=list)
 
 
-class web_search(Contract):
-    """Find relevant web pages and snippets. Fetch promising pages before citing them."""
+class read_document(Contract):
+    """Read a page of an available local article; use next_offset to continue reading."""
 
-    query: str = Field(min_length=1)
-
-
-class web_fetch(Contract):
-    """Fetch a public HTML/text page and preserve its evidence with paragraph identifiers."""
-
-    url: str = Field(min_length=1)
-
-
-class SourceDocument(Contract):
-    source_id: str
-    url: str
-    final_url: str
-    title: str
-    retrieved_at: str
-    raw_ref: str
-    paragraphs: dict[str, str]
-    truncated: bool = False
-    extraction_version: str = "bs4-get-text-v1"
+    document_id: str = Field(min_length=1)
+    offset: int = Field(default=0, ge=0)
 
 
 class WorkerResult(Contract):
     assignment_id: str
     status: Literal["completed", "failed", "budget_exhausted"]
     findings: str = ""
-    source_ids: list[str] = Field(default_factory=list)
+    document_ids: list[str] = Field(default_factory=list)
     uncertainties: list[str] = Field(default_factory=list)
     stop_reason: str
 
@@ -72,11 +61,10 @@ class AgentState(TypedDict, total=False):
     tool_calls: int
     batches: int
     results: dict[str, dict]
-    draft: str
-    report: str
+    answer: str
     status: str
     stop_reason: str
-    sources: list[str]
+    documents: list[str]
     result: dict
 
 

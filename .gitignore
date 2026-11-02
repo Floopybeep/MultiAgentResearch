@@ -1,5 +1,15 @@
 .venv/
+.cache/
 .env
+.env.*
+!.env.example
+/project.md
+.DS_Store
+*.sqlite*
+*.db
+*.db-*
+corpus/
+# Generated traces and browser exports; keep the canonical viewer copy.
 runs/*
 !runs/index.html
 __pycache__/

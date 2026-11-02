@@ -1,27 +1,31 @@
-"""Lead tool loop, synchronous parallel-worker batches, and citation handoff."""
+"""Lead QA tool loop and synchronous parallel-worker batches."""
 
 import asyncio
 import json
+from typing import Any
 
 from langchain_core.messages import HumanMessage, ToolMessage
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
-from ..runtime import BudgetExceeded
+from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
-    complete_task,
     memory_read,
     memory_write,
     merge_results,
     run_blocking_subagent,
+    submit_answer,
 )
-from .citations import cite
 from .worker import run_worker
 
-TOOLS = [memory_read, memory_write, run_blocking_subagent, complete_task]
+TOOLS = [memory_read, memory_write, run_blocking_subagent, submit_answer]
 
 
-def build_research(runtime, checkpointer):
+def build_research(
+    runtime: Runtime, checkpointer: BaseCheckpointSaver | None,
+) -> CompiledStateGraph:
     cfg = runtime.config
 
     async def lead(state):
@@ -43,7 +47,7 @@ def build_research(runtime, checkpointer):
                 "messages": messages
                 + [
                     HumanMessage(
-                        content="Use the provided tools; submit your draft via complete_task."
+                        content="Use the provided tools; submit your final {answer} via submit_answer."
                     )
                 ]
             }
@@ -60,29 +64,27 @@ def build_research(runtime, checkpointer):
                 if call["name"] == "memory_read":
                     memory_read.model_validate(call["args"])
                     return runtime.memory.read()
-                if call["name"] == "complete_task":
+                if call["name"] == "submit_answer":
                     if len(calls) != 1:
-                        raise ValueError("complete_task must be the only tool call")
+                        raise ValueError("Call submit_answer in its own turn")
                     if not any(r["status"] == "completed" for r in results.values()):
                         raise ValueError("At least one successful worker result is required")
-                    return {"completed": complete_task.model_validate(call["args"]).model_dump()}
+                    return {"completed": submit_answer.model_validate(call["args"]).model_dump()}
                 raise ValueError("Unknown lead tool")
 
             outputs[index] = await runtime.call_tool("lead", call, handler)
             if "completed" in outputs[index]:
-                draft = outputs[index]["completed"]["report"]
-                runtime.db.record(
-                    "draft", {"artifact_ref": runtime.artifacts.put({"draft": draft})}
-                )
-                return {"draft": draft}
+                answer = outputs[index]["completed"]["answer"]
+                runtime.event("answer.submitted", "lead", {"answer": answer}, runtime.observed["lead"].copy())
+                return {"answer": answer, "status": "completed", "stop_reason": "submit_answer"}
 
         delegated = [(i, c) for i, c in enumerate(calls) if c["name"] == "run_blocking_subagent"]
         if delegated:
             batch = batches + 1
             lead_dependencies = runtime.observed.get("lead", []).copy()
 
-            async def dispatch(position, index, call):
-                async def handler():
+            async def dispatch(position: int, index: int, call: dict[str, Any]):
+                async def handler() -> dict[str, Any]:
                     if not runtime.memory.ref:
                         raise ValueError("Save a research plan before delegation")
                     if batch > cfg.max_batches:
@@ -97,18 +99,16 @@ def build_research(runtime, checkpointer):
                     agent = f"batch{batch}-worker{position + 1}"
                     runtime.observed[agent] = [start]
                     result = await run_worker(runtime, agent, args.prompt, checkpointer)
-                    # Explicit worker-to-lead dependency, without sharing private worker context.
+                    # TODO: Input agent/batch IDs and raw WorkerResult; output a delivery dict.
+                    # Apply Worker-to-Lead faults and log raw/delivered payload links.
                     runtime.event(
-                        "worker.delivered",
-                        "lead",
-                        result.model_dump(),
-                        [runtime.observed[agent][-1]],
-                        batch_id=batch,
-                        assignment_id=agent,
+                        "worker.delivered", "lead", result.model_dump(),
+                        [runtime.observed[agent][-1]], batch_id=batch, assignment_id=agent,
                     )
                     return result.model_dump()
 
                 # Delegation is bounded by the worker timeout, not the shorter tool timeout.
+                started = asyncio.get_running_loop().time()
                 start = runtime.event(
                     "delegation.request", "lead", call, lead_dependencies, batch_id=batch
                 )
@@ -123,6 +123,7 @@ def build_research(runtime, checkpointer):
                     [start],
                     batch_id=batch,
                     tool_call_id=call["id"],
+                    duration_seconds=asyncio.get_running_loop().time() - started,
                 )
                 return index, value
 
@@ -144,12 +145,7 @@ def build_research(runtime, checkpointer):
     graph.add_node("lead", lead)
     graph.add_node("lead_tools", tools)
 
-    async def citation(state):
-        return await cite(runtime, state)
-
-    graph.add_node("citation", citation)
     graph.add_edge(START, "lead")
     graph.add_conditional_edges("lead", lambda s: END if s.get("status") else "lead_tools")
-    graph.add_conditional_edges("lead_tools", lambda s: "citation" if s.get("draft") else "lead")
-    graph.add_edge("citation", END)
+    graph.add_conditional_edges("lead_tools", lambda s: END if s.get("status") else "lead")
     return graph.compile(checkpointer=checkpointer)

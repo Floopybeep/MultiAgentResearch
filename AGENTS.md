@@ -1,123 +1,112 @@
-# MultiAgentResearch Repository Overview
+# MultiAgentResearch repository guidance
 
-## Project Description
+## Scope and working principles
 
-MultiAgentResearch is a standalone research framework for studying failure propagation and recovery in multi-agent deep research. The current implementation is a clean LangGraph baseline reproducing Anthropic's **publicly documented Research architecture**, with structured logging and an offline run viewer. It is not an exact copy of Anthropic's unpublished production system.
+This project studies **Failure Propagation and Recovery in Multi-Agent Systems**.
+The active task is **FRAMES multi-hop QA** with the question's gold Wikipedia
+articles as an oracle local evidence collection. No RAG, global index, or runtime
+web search. See README for the current scope and open research design tasks.
 
-Fault injection, recovery policies, and comparative evaluation are planned extensions, not implemented baseline features. The fault categories and project plan are documented in `README.md`. The sibling `../open_deep_research/` repository is a reference implementation; this package is developed independently.
+The deliverable is a minimal framework migration, not the full Phase 1 study:
+local data loading, Lead → parallel Reader Workers → reassessment, `{answer}`,
+and a naive hybrid grader. The CLI always performs a fresh real API run; no
+synthetic/demo or fixed-example modes.
+Keep unresolved design decisions in README and mark existing entries with TODOs;
+do not expand them into frameworks. General faults, propagation metrics, restart
+and inter-agent verification are not implemented. Phase 2 rollback/detection is out
+of scope. Acceptance is the user's real full run and trace inspection. **Do not run
+smoke tests or substitute synthetic evidence**, or claim readiness from mock counts.
 
-## Repository Structure
+Prefer the smallest working change. Do not add defensive frameworks, abstractions,
+configuration layers, or tests by default. Do not run tests unless requested.
+One-off downloads and repairs are process work, not reusable product features:
+remove temporary scripts, debug directories, intermediate data and logs when done.
+Keep only the final data needed by the main flow. Ask before expanding scope when
+a requirement is unclear.
 
-### Root Directory
+## Final data
 
-- `README.md` - Project plan, architectural decisions, limitations, and execution instructions.
-- `AGENTS.md` - Repository overview and guidance for coding agents.
-- `pyproject.toml` - Python dependencies, CLI entry points, and test/lint configuration.
-- `uv.lock` - Locked dependency versions; update alongside dependency changes.
-- `.env.example` - Environment variable names; never put real credentials here.
-- `.venv/` - Local virtual environment managed by uv; gitignored.
-- `configs/baseline.yaml` - Role-specific models and run/resource limits.
-- `configs/README.md` - Configuration field reference, defaults, and semantics.
-- `docs/agent-graph.svg` - Pipeline diagram embedded in the README.
+The repository-root `corpus/` contains:
 
-### Core Implementation (`src/multi_agent_research/`)
+- `frames.tsv`: 822 questions, retaining original IDs; 141 and 540 are removed.
+- `index.json`: question → document IDs; document ID → title, URL, Markdown filename.
+- `doc_0001.md` … `doc_2500.md`: final article bodies and tables.
 
-- `cli.py` - `mar` command: query, configuration, output directory, and offline demo selection.
-- `runner.py` - Run lifecycle, graph invocation, final status, and output files.
-- `runtime.py` - Shared run resources and observable model/tool execution boundaries.
-- `config.py` - Validated Pydantic run and model settings.
-- `schemas.py` - Graph state, tool arguments, source documents, and worker-result contracts.
-- `demo.py` - Scripted model, search, and fetch fixtures for credential-free testing.
+Question 823 retains its originally annotated Simple English article. Other pages
+are normal English Wikipedia. Use the index's source URLs; TSV annotations include
+some original malformed links. These are downloaded snapshots, not reconstructed
+historical revisions. Keep the same data across comparisons.
 
-### Agent Graphs (`src/multi_agent_research/graphs/`)
+The reader has no downloader, cache, repair/exclusion policy files, or data checksum
+layer. Do not recreate the removed `.cache/frames/` tree or preparation commands.
 
-- `research.py` - Lead planning, plan-memory tools, parallel batch dispatch/join, reassessment, and draft submission.
-- `worker.py` - Isolated worker contexts with bounded search/fetch loops and structured completion.
-- `citations.py` - Citation-agent invocation and deterministic output validation.
+## Implementation map
 
-The lead saves a plan before delegation, waits for a parallel batch of independent workers, and may delegate additional batches before writing the draft in its existing context. Workers run as separate checkpointed graphs joined with `asyncio.gather`; results return in assignment order. The citation agent adds source/paragraph markers without changing the draft. Validation checks text preservation and reference existence, not factual correctness. There is no separate writer or compression agent.
+Paths below are under `src/multi_agent_research/` unless stated otherwise:
 
-### Models, Tools, and Prompts
+- `frames.py`: local TSV/index loading, seeded sampling, selected-question Markdown loading.
+- `tools/documents.py`: document contracts and question-scoped, paged reading.
+- `benchmark.py`: sequential questions, incremental batch manifests, preparation failures and usage.
+- `cli.py`: `mar`, corpus directory, sample selection, config/output options.
+- `runner.py`: fresh run lifecycle, checkpoints, post-solve grading and final files.
+- `runtime.py`: observable model/tool calls, exact document snapshots, usage and exports.
+- `schemas.py`: Lead `submit_answer`, worker `complete_task`, reader arguments and state.
+- `graphs/research.py`: plan memory, parallel batches, reassessment and final answer.
+- `graphs/worker.py`: isolated worker graphs, bounded reading loops and typed failures.
+- `grading.py`, `prompts/judge.md`: exact-match then isolated LLM judge.
+- `models/adapter.py`: async Chat Completions, explicit endpoint env, SDK retries disabled.
+- `tools/memory.py`: artifact-backed Lead plan memory.
+- `storage/`, `observability/`: immutable payloads, SQLite events/checkpoints, redaction and usage.
+- `viewer.html`, `viewer_export.py`, `viewer.py`: offline graph/QA viewer and optional HTTP serving.
+- Root `README.md`, `configs/README.md`: usage and field semantics.
 
-- `models/adapter.py` - Async OpenAI Chat Completions through `ChatOpenAI`, with explicit endpoint credentials, `use_responses_api=False`, and SDK retries disabled.
-- `tools/search.py` - Tavily search returning titles, URLs, and snippets.
-- `tools/fetch.py` - Bounded public HTML/plain-text retrieval and extraction.
-- `tools/memory.py` - Lead-accessible plan memory backed by stored artifacts and records.
-- `prompts/` - Active lead, worker, and citation prompts.
-- `prompts/upstream/` - Pinned Anthropic Cookbook references, provenance manifest, and license. Document adaptations in `prompts/README.md`; keep upstream references intact.
+## Behavioral invariants
 
-### Storage and Observability
+Keep model/tool calls behind runtime boundaries. Preserve worker isolation, separate
+checkpoint threads, parallel `asyncio.gather` batches, assignment-order results,
+typed failures, and successful siblings after failures. The Lead saves a plan before
+delegation and receives a successful worker before submitting an answer.
 
-- `storage/artifacts.py` - Content-addressed JSON artifacts with integrity checks.
-- `storage/database.py` - SQLite event and run-record persistence.
-- `storage/checkpoints.py` - Persistent LangGraph SQLite checkpoints.
-- `observability/events.py` - Event IDs, dependencies, payload references, and credential redaction.
-- `observability/usage.py` - Reported token usage and optional cost estimates.
+Agents receive only the current question's catalog. Out-of-scope document reads
+must fail. Workers may return only document IDs read in that assignment. Gold
+answers enter only the evaluator after solving, never Lead/worker context. New
+Lead/worker prompts must be positive QA instructions, with no report/citation
+references or negative comparisons to the old task. Keep upstream prompt references
+and licenses unchanged.
 
-Keep model and tool calls behind the runtime's observable boundaries. SQLite and artifact JSON are authoritative; browser exports are derived data. Preserve worker isolation, typed failure results, source provenance, and credential redaction when changing the baseline. Checkpoint persistence currently supports inspection, not a resume/recovery workflow.
+Execution completion is distinct from correctness. Exact match extracts one nonempty
+unnested brace span, normalizes Unicode/case/whitespace, then compares. Unmatched or
+malformed answers go to the independent judge. Judge/API errors leave `correct:null`.
+Do not put real FRAMES gold answers in prompt examples.
 
-### Run Viewer and Outputs
+SQLite events and immutable artifacts are authoritative; browser exports are derived.
+Preserve full observable prompts/responses, tool results, document snapshots, parent
+IDs, role-specific usage and timing. Dependencies show exposure, not proof of causal
+reliance or propagation. Do not infer hidden reasoning from token counts. Checkpoints
+support inspection, not recovery/resume. Keep credential redaction and safe exports.
 
-- `viewer.html` - Canonical viewer UI with Agent Output Graph and Result Report tabs.
-- `viewer_export.py` - Background publication of browser-readable run manifests, event indexes, and payloads; installs viewer assets in the output directory.
-- `viewer.py` - SQLite log reader and optional local HTTP viewer server.
-- `vendor/markdown-it/` - Bundled offline Markdown renderer, license, and provenance.
-- `runs/index.html` - Tracked copy of the viewer; open directly in a browser without a server or folder picker.
-- `runs/YYMMDD_hhmmss_<run_id>/` - Generated run directories with UTC timestamps and UUID hex identifiers; gitignored.
+Viewer changes must update **both** `src/multi_agent_research/viewer.html` and
+`runs/index.html`. Preserve direct-file use, local assets, Markdown safety, role
+colors, archived-run support and separate list/run refresh controls. Retain vendor
+licenses and provenance. Credentials and generated traces must stay out of Git.
 
-Each run contains events, payload artifacts, checkpoints, and, when execution reaches finalization, a summary and source index. Draft and final Markdown reports exist only when produced. The Result Report tab shows validated citation output first, then the lead draft and worker findings. Do not present unvalidated citation output as a final report or infer unrecorded reasoning from token counts.
+## Running
 
-When editing the viewer, update both `src/multi_agent_research/viewer.html` and `runs/index.html`. Preserve direct-file operation, relative local assets, role colors, and separate list/run refresh controls. Keep generated traces and credentials out of Git. Vendor dependency updates must retain license and provenance information.
-
-### Testing (`tests/`)
-
-- `unit/test_contracts.py` - Schemas, artifacts, citations, memory, and redaction.
-- `unit/test_adapter.py` - OpenAI transport, required environment variables, and tool-call compatibility using mock HTTP.
-- `unit/test_tools.py` - Mocked search and fetch behavior.
-- `unit/test_viewer.py` - Run discovery, browser exports, refresh behavior, and export robustness.
-- `unit/test_report_view.py` - Report selection, Markdown rendering, and tabs.
-- `integration/test_pipeline.py` - Scripted end-to-end graphs, parallelism, isolation, budgets, and failure handling.
-
-## Key Technologies
-
-- **Python 3.11+ and uv** - Package management and execution.
-- **LangGraph and asyncio** - Stateful graphs, isolated workers, and parallel batches.
-- **langchain-core and langchain-openai** - Messages, tool schemas, and async model transport.
-- **Pydantic and PyYAML** - Validated configuration and structured records.
-- **HTTPX and Beautiful Soup** - Search requests, page retrieval, and text extraction.
-- **SQLite** - Authoritative events, records, and graph checkpoints.
-- **HTML/CSS/JavaScript and markdown-it** - Standalone local run visualization.
-- **pytest, pytest-asyncio, and Ruff** - Automated validation. Some JavaScript viewer tests use Node.js and skip if it is unavailable; Node is not required to view runs.
-
-## Development Commands
-
-Run these from the `MultiAgentResearch` directory:
-
-```bash
-uv sync --locked
-uv run mar --demo --config configs/baseline.yaml
-uv run pytest -q
-uv run ruff check src tests
-uv build
-```
-
-Use the offline demo and mocked tests for routine validation; they do not consume model or search credits. Run targeted tests appropriate to changes, and use the integration suite for graph/runtime changes. No LangGraph Studio, mypy, or benchmark runner is currently configured here.
-
-For a live research run, export the required credentials first:
+Run from the repository root after credential setup:
 
 ```bash
-uv run mar "Your research question" --config configs/baseline.yaml
+uv run mar --config configs/baseline.yaml --sample-size 10 --seed 42
 ```
 
-Open `runs/index.html` directly for normal viewing. `uv run mar-view --runs-dir runs --port 8765` remains an optional server, not a prerequisite. For copied legacy logs, the one-time export helper is `multi_agent_research.viewer_export.export_existing(Path("runs"))`.
+`--corpus-dir` defaults to `corpus`; `--question-ids` overrides sampling. Evidence is
+always local; model calls use exported `OPENAI_API_KEY` and `OPENAI_BASE_URL`.
+`.env` files are not automatically loaded. Use exact model names served by the
+chosen endpoint. Do not change model choices in unrelated work.
 
-## Configuration
+Open `runs/index.html` directly. `uv run mar-view --runs-dir runs --port 8765` is
+optional. Runs contain events, checkpoints, artifacts, `documents.json`, `run.json`,
+an answer when produced, and browser exports. Batch manifests are under `runs/batches/`.
 
-- Environment: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `TAVILY_API_KEY`. `.env` files are **not** automatically loaded. Never print or persist raw credentials.
-- YAML: `configs/baseline.yaml`, loaded with `--config`. Without it, the CLI uses `RunConfig` defaults, which can differ from the checked-in YAML.
-- CLI: `--output-dir` overrides the configured output directory. Relative paths resolve from the working directory.
-- Roles: `lead`, `worker`, and `citation` each configure the exact endpoint model name, per-call output cap, allowed generation options, and optional input/output prices. Do not replace the user's model choices as part of unrelated work.
-- Limits: lead/worker turns, worker tool calls, batches, concurrency, timeouts, download size, extracted text size, citation input size, and reported run tokens. The run-token limit counts input plus output and may be exceeded by in-flight parallel calls.
-- Costs: estimates are unavailable unless both token rates are supplied for all roles used. They exclude search charges and cache-specific pricing and are not the provider's billed credit balance.
-
-Consult `configs/README.md` and `config.py` for exact field definitions. Keep configuration documentation and tests aligned with behavioral changes.
+The total experiment budget is $50. Use configured rates and returned usage for
+cost estimates; estimates are not actual bills or remaining credit. There is no hard
+cross-batch dollar cap; parallel calls may exceed a per-question token limit.

@@ -9,10 +9,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class ModelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    model: str = "gpt-6-luna"
+    model: str = "glm-5.3-flash"
     max_output_tokens: int = Field(default=4096, gt=0)
     options: dict[str, Any] = Field(default_factory=dict)
     input_cost_per_million: float | None = Field(default=None, ge=0)
+    cached_input_cost_per_million: float | None = Field(default=None, ge=0)
     output_cost_per_million: float | None = Field(default=None, ge=0)
 
     @field_validator("options")
@@ -33,10 +34,10 @@ class ModelConfig(BaseModel):
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
-        default_factory=lambda: ModelConfig(model="gpt-6-luna")
+        default_factory=ModelConfig
     )
     worker: ModelConfig = Field(default_factory=ModelConfig)
-    citation: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=8192))
+    judge: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=1024))
     max_lead_turns: int = Field(default=20, gt=0)
     max_worker_turns: int = Field(default=12, gt=0)
     max_worker_tool_calls: int = Field(default=20, gt=0)
@@ -47,9 +48,6 @@ class RunConfig(BaseModel):
     worker_timeout_seconds: float = Field(default=180, gt=0)
     call_timeout_seconds: float = Field(default=60, gt=0)
     max_document_chars: int = Field(default=24000, gt=0)
-    max_citation_chars: int = Field(default=160000, gt=0)
-    max_download_bytes: int = Field(default=2000000, gt=0)
-    search_results: int = Field(default=5, ge=1, le=20)
     output_dir: Path = Path("runs")
 
     @classmethod

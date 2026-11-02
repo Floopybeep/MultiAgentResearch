@@ -1,24 +1,25 @@
-"""Per-run resources and observable model/tool boundaries; no injection or recovery."""
+"""Per-run resources and observable model, tool and document boundaries."""
 
 import asyncio
-import hashlib
-import json
+import logging
 import sqlite3
 import time
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from langchain_core.messages import messages_to_dict
 
-from .observability.events import EventLogger, now
+from .observability.events import EventLogger
 from .observability.usage import Usage
-from .schemas import SourceDocument
 from .storage.artifacts import ArtifactStore
 from .storage.database import Database
 from .tools.memory import PlanMemory
 from .viewer_export import ViewerExport
+
+logger = logging.getLogger(__name__)
 
 
 class BudgetExceeded(RuntimeError):
@@ -26,8 +27,8 @@ class BudgetExceeded(RuntimeError):
 
 
 class Runtime:
-    def __init__(self, config, model, search, fetcher, root: Path | None = None):
-        self.config, self.model, self.search, self.fetcher = config, model, search, fetcher
+    def __init__(self, config, model, documents, root: Path | None = None):
+        self.config, self.model, self.documents = config, model, documents
         self.run_id = uuid4().hex
         timestamp = datetime.now(timezone.utc).strftime("%y%m%d_%H%M%S")
         self.root = root or config.output_dir / f"{timestamp}_{self.run_id}"
@@ -37,8 +38,7 @@ class Runtime:
         self.log = EventLogger(self.db, self.artifacts, self.run_id)
         self.memory = PlanMemory(self.db, self.artifacts)
         self.usage = Usage()
-        self.sources = {}
-        self.source_events = {}
+        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge")}
         self.observed = {}
         redacted_config = self.log.redact(config.model_dump(mode="json"))
         self.db.record("config", redacted_config)
@@ -53,6 +53,14 @@ class Runtime:
     def event(self, kind, agent, payload, parents=(), **metadata):
         event = self.log.emit(kind, agent, payload, parents, **metadata)
         self.observed.setdefault(agent, []).append(event)
+        if kind == "model.request":
+            logger.info("[%s] Calling model...", agent)
+        elif kind == "model.error":
+            logger.info("[%s] Model call failed: %s.", agent, payload["type"])
+        elif kind == "worker.finished":
+            logger.info("[%s] Worker %s.", agent, payload["status"])
+        elif kind == "grade.finished":
+            logger.info("[judge] Grading finished (%s).", payload["method"])
         return event
 
     async def call_model(self, role, agent, messages, tools):
@@ -77,6 +85,7 @@ class Runtime:
                 self.config.call_timeout_seconds,
             )
             self.usage.add(response.usage_metadata, config)
+            self.usage_by_role[role].add(response.usage_metadata, config)
             self.event(
                 "model.response",
                 agent,
@@ -130,37 +139,20 @@ class Runtime:
             )
             return result
 
-    async def fetch(self, url, agent):
-        page = await self.fetcher.fetch(url, self.config.max_download_bytes)
-        raw_ref = self.artifacts.put(self.log.redact({"raw": page["raw"]}))
-        text = page["text"][: self.config.max_document_chars]
-        paragraphs = {
-            f"p{i}": p for i, p in enumerate((p.strip() for p in text.splitlines() if p.strip()), 1)
-        }
-        if not paragraphs:
-            raise ValueError("No readable text in fetched document")
-        digest = hashlib.sha256(
-            json.dumps([url, page["url"], raw_ref, paragraphs], sort_keys=True).encode()
-        ).hexdigest()[:16]
-        source = SourceDocument(
-            source_id=f"s{digest}",
-            url=url,
-            final_url=page["url"],
-            title=page["title"],
-            retrieved_at=now(),
-            raw_ref=raw_ref,
-            paragraphs=paragraphs,
-            truncated=len(text) < len(page["text"]),
-        )
-        # Source snapshots are run-local and contain precisely the delivered evidence.
-        self.sources.setdefault(source.source_id, source)
-        source = self.sources[source.source_id]
-        self.db.record(source.source_id, source.model_dump())
-        event = self.event(
-            "source.saved", agent, source.model_dump(), self.observed.get(agent, []).copy()
-        )
-        self.source_events[source.source_id] = event
-        return source.model_dump()
+    def snapshot_documents(self):
+        snapshots = []
+        for doc in self.documents.documents.values():
+            ref = self.artifacts.put(self.log.redact(doc.model_dump()))
+            entry = self.log.redact({**doc.catalog_entry(), "artifact_ref": ref})
+            self.db.record(doc.document_id, entry)
+            snapshots.append(entry)
+        self.event("documents.available", "lead", {"documents": snapshots})
+        return snapshots
+
+    def read_document(self, document_id: str, offset: int) -> dict[str, Any]:
+        # TODO: Input document_id/offset; output the Worker-visible page dict.
+        # Apply Tool-to-Worker faults and record linked original/injected payloads.
+        return self.documents.read(document_id, offset, self.config.max_document_chars)
 
     def close(self):
         try:

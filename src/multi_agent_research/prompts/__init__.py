@@ -7,4 +7,4 @@ def load(role):
 
 
 def hashes():
-    return {r: hashlib.sha256(load(r).encode()).hexdigest() for r in ("lead", "worker", "citation")}
+    return {r: hashlib.sha256(load(r).encode()).hexdigest() for r in ("lead", "worker", "judge")}
