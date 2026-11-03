@@ -9,10 +9,8 @@ def now():
     return datetime.now(timezone.utc).isoformat()
 
 
-class EventLogger:
-    def __init__(self, db, artifacts, run_id):
-        self.db, self.artifacts, self.run_id = db, artifacts, run_id
-        self.on_event = None
+class Redactor:
+    def __init__(self):
         self.secrets = [
             v
             for k, v in os.environ.items()
@@ -36,6 +34,13 @@ class EventLogger:
             for secret in self.secrets:
                 value = value.replace(secret, "[REDACTED]")
         return value
+
+
+class EventLogger(Redactor):
+    def __init__(self, db, artifacts, run_id):
+        super().__init__()
+        self.db, self.artifacts, self.run_id = db, artifacts, run_id
+        self.on_event = None
 
     def emit(self, kind, agent, payload, parents=(), **metadata):
         payload = self.redact(payload)

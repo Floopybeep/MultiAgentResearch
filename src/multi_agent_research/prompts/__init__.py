@@ -40,4 +40,4 @@ def context(config, date):
 
 
 def hashes():
-    return {r: hashlib.sha256(load(r).encode()).hexdigest() for r in ROLES}
+    return {r: hashlib.sha256(load(r).encode()).hexdigest() for r in ("lead", "worker", "judge")}

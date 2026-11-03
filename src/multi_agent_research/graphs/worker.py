@@ -4,10 +4,11 @@ import json
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
 
+from .. import prompts
 from ..runtime import BudgetExceeded
-from ..schemas import AgentState, WorkerResult, complete_task, web_fetch, web_search
+from ..schemas import AgentState, WorkerResult, complete_task, read_document
 
-TOOLS = [web_search, web_fetch, complete_task]
+TOOLS = [read_document, complete_task]
 
 
 def build_worker(runtime, agent, checkpointer):
@@ -23,42 +24,39 @@ def build_worker(runtime, agent, checkpointer):
     async def model_turn(state):
         if state.get("turns", 0) >= cfg.max_worker_turns:
             return finish(
-                state, "budget_exhausted", "worker_turn_limit", source_ids=state.get("sources", [])
+                state, "budget_exhausted", "worker_turn_limit", document_ids=state.get("documents", [])
             )
         try:
             answer = await runtime.call_model("worker", agent, state["messages"], TOOLS)
             return {"messages": state["messages"] + [answer], "turns": state.get("turns", 0) + 1}
         except BudgetExceeded as exc:
-            return finish(state, "budget_exhausted", str(exc), source_ids=state.get("sources", []))
+            return finish(state, "budget_exhausted", str(exc), document_ids=state.get("documents", []))
 
     async def tools(state):
         answer = state["messages"][-1]
         calls = answer.tool_calls
-        messages, sources = list(state["messages"]), list(state.get("sources", []))
+        messages, documents = list(state["messages"]), list(state.get("documents", []))
         if not calls:
             messages.append(
-                HumanMessage(content="Submit findings with complete_task, including source_ids.")
+                HumanMessage(content="Submit findings with complete_task, including document_ids.")
             )
             return {"messages": messages}
         remaining = cfg.max_worker_tool_calls - state.get("tool_calls", 0)
         if remaining <= 0:
-            return finish(state, "budget_exhausted", "worker_tool_limit", source_ids=sources)
+            return finish(state, "budget_exhausted", "worker_tool_limit", document_ids=documents)
         allowed = calls[:remaining]
 
         async def execute(call):
             async def handler():
-                if call["name"] == "web_search":
-                    args = web_search.model_validate(call["args"])
-                    return await runtime.search.search(args.query, cfg.search_results)
-                if call["name"] == "web_fetch":
-                    args = web_fetch.model_validate(call["args"])
-                    return await runtime.fetch(args.url, agent)
+                if call["name"] == "read_document":
+                    args = read_document.model_validate(call["args"])
+                    return runtime.read_document(args.document_id, args.offset)
                 if call["name"] == "complete_task":
                     if len(calls) != 1:
                         raise ValueError("complete_task must be the only call")
                     args = complete_task.model_validate(call["args"])
-                    if not set(args.source_ids) <= set(sources):
-                        raise ValueError("Worker can only reference sources it fetched")
+                    if not set(args.document_ids) <= set(documents):
+                        raise ValueError("Reference document IDs successfully read in this assignment")
                     return {"completed": args.model_dump()}
                 raise ValueError("Unknown worker tool")
 
@@ -72,12 +70,12 @@ def build_worker(runtime, agent, checkpointer):
                     state,
                     "completed",
                     "complete_task",
-                    findings=args["report"],
-                    source_ids=args["source_ids"],
+                    findings=args["findings"],
+                    document_ids=args["document_ids"],
                     uncertainties=args["uncertainties"],
                 )
-            if isinstance(output, dict) and "source_id" in output:
-                sources.append(output["source_id"])
+            if isinstance(output, dict) and "document_id" in output:
+                documents.append(output["document_id"])
             messages.append(ToolMessage(content=json.dumps(output), tool_call_id=call["id"]))
         for call in calls[remaining:]:
             messages.append(
@@ -85,7 +83,7 @@ def build_worker(runtime, agent, checkpointer):
             )
         return {
             "messages": messages,
-            "sources": sorted(set(sources)),
+            "documents": sorted(set(documents)),
             "tool_calls": state.get("tool_calls", 0) + len(allowed),
         }
 
@@ -99,6 +97,7 @@ def build_worker(runtime, agent, checkpointer):
 
 
 async def run_worker(runtime, agent, prompt, checkpointer):
+    started = asyncio.get_running_loop().time()
     runtime.event(
         "worker.started", agent, {"assignment": prompt}, runtime.observed.get(agent, []).copy()
     )
@@ -109,11 +108,15 @@ async def run_worker(runtime, agent, prompt, checkpointer):
                 {
                     "messages": [
                         SystemMessage(
-                            content=runtime.rendered_prompts["worker"]
+                            content=prompts.load("worker")
+                            + f"\nLimits: {runtime.config.max_worker_turns} model turns, "
+                            f"{runtime.config.max_worker_tool_calls} tool calls."
                         ),
-                        HumanMessage(content=f"<task>{prompt}</task>"),
+                        HumanMessage(content=json.dumps({
+                            "assignment": prompt, "available_documents": runtime.documents.catalog(),
+                        })),
                     ],
-                    "sources": [],
+                    "documents": [],
                     "turns": 0,
                 },
                 {
@@ -130,5 +133,8 @@ async def run_worker(runtime, agent, prompt, checkpointer):
             status="failed",
             stop_reason=f"{type(exc).__name__}: {runtime.log.redact(str(exc))}",
         )
-    runtime.event("worker.finished", agent, result.model_dump(), runtime.observed[agent].copy())
+    runtime.event(
+        "worker.finished", agent, result.model_dump(), runtime.observed[agent].copy(),
+        duration_seconds=asyncio.get_running_loop().time() - started,
+    )
     return result

@@ -1,86 +1,79 @@
-# Baseline configuration
+# QA configuration
 
-Run with `uv run mar "Research question" --config configs/baseline.yaml`.
-YAML fields are validated; unknown fields are rejected. Paths are relative to the
-working directory, not the YAML file. Omitted fields use the defaults below.
-The checked-in YAML may override these defaults.
+`mar --config configs/baseline.yaml` loads a validated `RunConfig`. Without the
+flag, Python defaults apply. Relative paths resolve from the working directory;
+`--output-dir` overrides the configured result directory.
 
-## Agent models
+## Models
 
-`lead`, `worker`, and `citation` each accept the same settings. The lead plans,
-delegates, and writes; every worker uses the worker settings; citation annotates the draft.
+`lead`, `worker`, and `judge` each accept:
 
-| Parameter | Default | Meaning |
-|---|---|---|
-| `model` | `gpt-6-luna` | Exact model name served by your OpenAI-compatible endpoint. No provider prefix is added or removed. |
-| `max_output_tokens` | 4096; citation: 8192 | Positive per-call output token cap. The SDK may transmit it as `max_completion_tokens`; model-specific reasoning tokens may count against it. |
-| `options` | `{}` | Supported generation options below. Endpoint/model support is required. |
-| `input_cost_per_million` | `null` | Optional nonnegative USD rate per million input tokens for local estimates. |
-| `output_cost_per_million` | `null` | Optional nonnegative USD rate per million output tokens for local estimates. |
+| Field | Python default | Meaning |
+| --- | --- | --- |
+| `model` | `glm-5.3-flash` | Exact model name served by the endpoint |
+| `max_output_tokens` | 4096 (judge: 1024) | Per-call output cap |
+| `options` | `{}` | Chat Completions generation options |
+| `input_cost_per_million` | unset | USD per million non-cached input tokens |
+| `cached_input_cost_per_million` | unset | USD per million cached input tokens |
+| `output_cost_per_million` | unset | USD per million output tokens |
 
-Allowed `options`:
+Allowed generation options: `temperature`, `top_p`, `seed`, `stop`,
+`presence_penalty`, `frequency_penalty`, `reasoning_effort`, `logprobs`,
+`top_logprobs`. `RunConfig` validates field names and positive resource limits.
 
-| Option | Meaning |
-|---|---|
-| `temperature` | Sampling randomness. |
-| `top_p` | Nucleus-sampling probability cutoff. |
-| `seed` | Provider-supported sampling seed; does not guarantee reproducibility. |
-| `stop` | Stop sequence or sequences. |
-| `presence_penalty` | Penalize tokens that have already appeared. |
-| `frequency_penalty` | Penalize tokens according to their frequency. |
-| `reasoning_effort` | Model-supported reasoning effort level. Does not guarantee reasoning text is returned. |
-| `logprobs` | Request output-token log probabilities. |
-| `top_logprobs` | Number of alternative token log probabilities to return, when enabled. |
+The adapter reads `OPENAI_API_KEY` and `OPENAI_BASE_URL` from the shell environment.
+It uses async Chat Completions with `use_responses_api=False` and `max_retries=0`.
 
-Transport overrides, credentials, and Responses API options are rejected.
-Export `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `TAVILY_API_KEY` in your shell.
-The program does not automatically load `.env`. Model inference always uses async
-OpenAI Chat Completions with SDK retries disabled.
+## Usage and cost fields
 
-Cost estimates require both rates for every role that makes a call. They exclude
-search charges and do not account separately for cache pricing; they are not an
-authoritative provider bill or credit balance.
+Input tokens include cached input. Given the endpoint's returned usage:
 
-## Execution and resource limits
+```text
+estimated_cost_usd = ((input - cached) * input_rate
+                      + cached * cache_rate + output * output_rate) / 1e6
+```
 
-All numeric limits must be positive. `search_results` must be between 1 and 20.
+`cached` comes from LangChain's `input_token_details.cache_read`. Missing cache
+details use the ordinary input rate for that response and set aggregate
+`cached_input_tokens` to `null`. Missing usage or required prices set
+`estimated_cost_usd` to `null`. A role with zero calls has zero usage and cost.
 
-| Parameter | Default | Meaning |
-|---|---:|---|
-| `max_lead_turns` | 20 | Maximum lead model calls across the run, including planning and synthesis. |
-| `max_worker_turns` | 12 | Maximum model calls per worker assignment. |
-| `max_worker_tool_calls` | 20 | Maximum executed tools per worker, including search, fetch, failed calls and `complete_task`. Also renders the worker prompt’s maximum-tool-call section. Exhaustion currently returns a budget failure without findings; no final-summary turn is reserved. |
-| `max_batches` | 6 | Maximum rounds of worker delegation. After exhaustion the lead receives a tool error and should synthesize existing results. |
-| `max_workers_per_batch` | 4 | Maximum parallel workers in a batch. Excess assignments return errors rather than queueing. |
-| `max_run_tokens` | 200000 | Global reported input + output usage threshold checked before model calls. Includes repeated context and cached input. In-flight/concurrent calls can exceed it. |
-| `run_timeout_seconds` | 900 | Overall graph execution timeout. |
-| `worker_timeout_seconds` | 180 | Timeout for each complete worker assignment. |
-| `call_timeout_seconds` | 60 | Timeout for an individual model or tool operation. Delegation uses the worker timeout instead. |
-| `max_document_chars` | 24000 | Extracted text characters retained per fetched document, before paragraph splitting. Longer text is truncated and flagged. |
-| `max_citation_chars` | 160000 | Character limit for the serialized draft + all source records sent to citation. Exceeding it stops the run; there is no automatic chunking. |
-| `max_download_bytes` | 2000000 | Maximum decoded response-body bytes per fetched page, before HTML extraction. Larger downloads fail instead of truncating. |
-| `search_results` | 5 | Maximum search results requested per Tavily call. |
-| `output_dir` | `runs` | Parent directory for run artifacts. `--output-dir` overrides it. |
+## Per-question resource limits
 
-There is no separate search-query cap: each `web_search(query=...)` consumes one
-worker tool call. `search_results` limits results returned per query, not the
-number of queries. The prompt asks the worker to leave one call for completion;
-the runtime does not automatically reserve that call. Limits are per assignment,
-so later workers receive fresh budgets. The maximum number of assignments is
-`max_batches * max_workers_per_batch`.
+| Field | Default | Semantics |
+| --- | --- | --- |
+| `max_lead_turns` | 20 | Model calls in the planning/reassessment loop |
+| `max_worker_turns` | 12 | Model calls per Worker |
+| `max_worker_tool_calls` | 20 | Tool calls per Worker, including completion |
+| `max_batches` | 6 | Delegation rounds per question |
+| `max_workers_per_batch` | 4 | Parallel Workers; excess assignments return errors |
+| `max_run_tokens` | 200000 | Reported input + output, all roles including judge |
+| `run_timeout_seconds` | 900 | Lead/Worker graph timeout, excluding grading |
+| `worker_timeout_seconds` | 180 | Individual Worker graph timeout |
+| `call_timeout_seconds` | 60 | Individual model/local tool call timeout |
+| `max_document_chars` | 24000 | Characters per reader page; continue at `next_offset` |
+| `output_dir` | `runs` | Per-question outputs and batch manifests |
 
-For lower-cost live validation, reduce `max_worker_tool_calls`, worker turns,
-batches, concurrency, and `max_run_tokens` together. The checked-in YAML currently
-sets `max_run_tokens` to 2,000,000; it is a reported-token threshold, not a hard
-provider-credit cap. Use `--demo` or the mocked tests for validation without API
-usage. Longer full prompts and accumulated tool results are included in model
-input repeatedly; search-query count alone does not bound model-token costs.
+The token limit is checked before model calls against accumulated returned usage.
+In-flight parallel calls can exceed the limit. A failed judge call records
+`method: judge_error` and `correct: null`.
 
-New run folders use `YYMMDD_hhmmss_<run_id>`, where the timestamp is UTC and
-`run_id` is the existing 32-character random UUID hex identifier. Existing run
-folders are not renamed. Checkpoint and event IDs continue to use the original run ID.
+## CLI settings
 
-Open `<output_dir>/index.html` directly in a browser. Each logged event automatically
-updates the browser exports; neither `mar-view` nor directory selection is required.
-The two refresh buttons reload the run manifest and selected trace respectively.
-SQLite remains authoritative. See the main README for export details and legacy-log migration.
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--config` | unset | YAML configuration path |
+| `--output-dir` | configured value | Override result directory |
+| `--corpus-dir` | `corpus` | Directory with `frames.tsv`, `index.json` and articles |
+| `--sample-size` | 10 | Number of sampled questions |
+| `--seed` | 42 | Local question-sampling seed |
+| `--question-ids` | unset | Explicit unique TSV row IDs, overriding sampling |
+
+The dataset contains 822 questions with original IDs. `index.json` maps questions
+to document IDs and documents to titles, URLs and Markdown filenames. Each
+question's catalog and snapshots contain its indexed articles. Missing files
+produce a `preparation_failed` result in the batch manifest.
+
+```bash
+uv run mar --config configs/baseline.yaml --sample-size 10 --seed 42
+```
