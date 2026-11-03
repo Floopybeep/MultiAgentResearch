@@ -3,7 +3,6 @@ import re
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from .. import prompts
 from ..runtime import BudgetExceeded
 
 MARKER = re.compile(r"\[\[cite:([a-zA-Z0-9]+):(p\d+)\]\]")
@@ -29,12 +28,40 @@ def text_content(message):
     )
 
 
+OPEN = "<exact_text_with_citation>"
+CLOSE = "</exact_text_with_citation>"
+
+
+def extract_report(text):
+    if OPEN not in text and CLOSE not in text:
+        # Legacy bare output still undergoes exact-text validation.
+        return text
+    if text.count(OPEN) != 1 or text.count(CLOSE) != 1:
+        raise ValueError("Ambiguous citation output envelope")
+    before, remainder = text.split(OPEN, 1)
+    if CLOSE in before or CLOSE not in remainder:
+        raise ValueError("Malformed citation output envelope")
+    report, trailing = remainder.split(CLOSE, 1)
+    if trailing.strip():
+        raise ValueError("Unexpected text after citation output envelope")
+    return report
+
+
+def citation_input(draft, documents):
+    # Fail visibly on reserved delimiters rather than corrupting or truncating a draft.
+    reserved = (OPEN, CLOSE, "<synthesized_text>", "</synthesized_text>",
+                "<sources>", "</sources>")
+    if any(tag in draft for tag in reserved):
+        raise ValueError("Draft contains a reserved citation delimiter")
+    sources = json.dumps(documents, ensure_ascii=False)
+    # Escaped JSON preserves source text while preventing literal delimiter collisions.
+    sources = sources.replace("<", "\\u003c").replace(">", "\\u003e")
+    return f"<synthesized_text>{draft}</synthesized_text>\n<sources>{sources}</sources>"
+
+
 async def cite(runtime, state):
     # Deliberately fail instead of silently discarding evidence beyond the configured cap.
     documents = [s.model_dump() for s in runtime.sources.values()]
-    payload = json.dumps({"draft": state["draft"], "sources": documents}, ensure_ascii=False)
-    if len(payload) > runtime.config.max_citation_chars:
-        return {"status": "budget_exhausted", "stop_reason": "citation_input_limit"}
     runtime.event(
         "citation.started",
         "citation",
@@ -42,20 +69,23 @@ async def cite(runtime, state):
         runtime.observed.get("lead", []) + list(runtime.source_events.values()),
     )
     try:
+        payload = citation_input(state["draft"], documents)
+        if len(payload) > runtime.config.max_citation_chars:
+            return {"status": "budget_exhausted", "stop_reason": "citation_input_limit"}
         response = await runtime.call_model(
             "citation",
             "citation",
-            [SystemMessage(content=prompts.load("citation")), HumanMessage(content=payload)],
+            [SystemMessage(content=runtime.rendered_prompts["citation"]), HumanMessage(content=payload)],
             [],
         )
         if response.tool_calls:
             raise ValueError("Citation agent cannot call tools")
-        report = text_content(response)
+        report = extract_report(text_content(response))
         count = validate_citations(state["draft"], report, runtime.sources)
         runtime.event(
             "citation.validated",
             "citation",
-            {"citation_count": count},
+            {"citation_count": count, "report": report},
             runtime.observed["citation"].copy(),
         )
         return {"report": report, "status": "completed", "stop_reason": "complete_task"}

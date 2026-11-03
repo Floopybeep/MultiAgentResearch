@@ -49,7 +49,7 @@ All numeric limits must be positive. `search_results` must be between 1 and 20.
 |---|---:|---|
 | `max_lead_turns` | 20 | Maximum lead model calls across the run, including planning and synthesis. |
 | `max_worker_turns` | 12 | Maximum model calls per worker assignment. |
-| `max_worker_tool_calls` | 20 | Maximum executed tools per worker, including failed calls and `complete_task`. Exhaustion currently returns a budget failure without findings; no final-summary turn is reserved. |
+| `max_worker_tool_calls` | 20 | Maximum executed tools per worker, including search, fetch, failed calls and `complete_task`. Also renders the worker prompt’s maximum-tool-call section. Exhaustion currently returns a budget failure without findings; no final-summary turn is reserved. |
 | `max_batches` | 6 | Maximum rounds of worker delegation. After exhaustion the lead receives a tool error and should synthesize existing results. |
 | `max_workers_per_batch` | 4 | Maximum parallel workers in a batch. Excess assignments return errors rather than queueing. |
 | `max_run_tokens` | 200000 | Global reported input + output usage threshold checked before model calls. Includes repeated context and cached input. In-flight/concurrent calls can exceed it. |
@@ -61,6 +61,20 @@ All numeric limits must be positive. `search_results` must be between 1 and 20.
 | `max_download_bytes` | 2000000 | Maximum decoded response-body bytes per fetched page, before HTML extraction. Larger downloads fail instead of truncating. |
 | `search_results` | 5 | Maximum search results requested per Tavily call. |
 | `output_dir` | `runs` | Parent directory for run artifacts. `--output-dir` overrides it. |
+
+There is no separate search-query cap: each `web_search(query=...)` consumes one
+worker tool call. `search_results` limits results returned per query, not the
+number of queries. The prompt asks the worker to leave one call for completion;
+the runtime does not automatically reserve that call. Limits are per assignment,
+so later workers receive fresh budgets. The maximum number of assignments is
+`max_batches * max_workers_per_batch`.
+
+For lower-cost live validation, reduce `max_worker_tool_calls`, worker turns,
+batches, concurrency, and `max_run_tokens` together. The checked-in YAML currently
+sets `max_run_tokens` to 2,000,000; it is a reported-token threshold, not a hard
+provider-credit cap. Use `--demo` or the mocked tests for validation without API
+usage. Longer full prompts and accumulated tool results are included in model
+input repeatedly; search-query count alone does not bound model-token costs.
 
 New run folders use `YYMMDD_hhmmss_<run_id>`, where the timestamp is UTC and
 `run_id` is the existing 32-character random UUID hex identifier. Existing run

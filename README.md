@@ -113,7 +113,7 @@ judge whether claims are factually supported. Failed citation validation never p
 
 - Parallel workers run as separately checkpointed LangGraph graphs, joined with `asyncio.gather`.
   Results are delivered in assignment order, with typed failures retained alongside successes.
-- Prompts are shortened, documented adaptations of pinned Cookbook references. See
+- Prompts retain the full pinned Cookbook guidance with documented pipeline adaptations. See
   [prompt provenance](src/multi_agent_research/prompts/README.md). There is no separate writer
   or page-summary model, and no mandatory `think_tool`.
 - Search uses Tavily; fetching supports public HTML/plain text with byte and text limits.

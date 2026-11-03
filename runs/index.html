@@ -147,7 +147,7 @@ function collectReport(data){
    if(event.event_type==='model.response')citationResponses.set(event.event_id,event);
    if(event.event_type==='citation.validated'){
     const response=[...(event.parent_event_ids||[])].reverse().map(id=>citationResponses.get(id)).find(Boolean);
-    const content=response?.payload?.content;
+    const content=typeof payload.report==='string'?payload.report:response?.payload?.content;
     if(typeof content==='string')citationReport=content;
     else if(Array.isArray(content)){
      const text=content.filter(block=>block.type==='text'&&typeof block.text==='string');

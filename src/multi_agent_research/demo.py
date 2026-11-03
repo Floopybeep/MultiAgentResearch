@@ -65,9 +65,14 @@ class DemoModel:
                     )
                 ]
         else:
-            payload = json.loads(messages[-1].content)
-            source = payload["sources"][0]["source_id"]
-            content = payload["draft"] + f"[[cite:{source}:p1]]"
+            payload = messages[-1].content
+            draft = payload.split("<synthesized_text>", 1)[1].split("</synthesized_text>", 1)[0]
+            sources = json.loads(payload.split("<sources>", 1)[1].split("</sources>", 1)[0])
+            source = sources[0]["source_id"]
+            content = (
+                "<exact_text_with_citation>" + draft
+                + f"[[cite:{source}:p1]]</exact_text_with_citation>"
+            )
         return AIMessage(
             content=content,
             tool_calls=calls,

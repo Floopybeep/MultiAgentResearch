@@ -148,3 +148,15 @@ renderReport({events:events.filter(e=>e.event_type!=='citation.validated')});
 articles=panel.children.filter(n=>n.tag==='article');
 assert.equal(articles[0].children[0].textContent,'Lead researcher draft');
 """)
+
+
+def test_report_prefers_validated_extracted_content(tmp_path):
+    run_js(tmp_path, """
+const events=[
+ {event_id:'response',event_type:'model.response',agent_id:'citation',
+ payload:{content:'Preamble<exact_text_with_citation>report</exact_text_with_citation>'}},
+ {event_type:'citation.validated',agent_id:'citation',parent_event_ids:['response'],
+ payload:{report:'report',citation_count:0}}
+];
+assert.equal(collectReport({events}).citationReport,'report');
+""")

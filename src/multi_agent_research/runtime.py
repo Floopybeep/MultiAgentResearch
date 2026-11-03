@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from langchain_core.messages import messages_to_dict
 
+from . import prompts
 from .observability.events import EventLogger, now
 from .observability.usage import Usage
 from .schemas import SourceDocument
@@ -28,6 +29,10 @@ class BudgetExceeded(RuntimeError):
 class Runtime:
     def __init__(self, config, model, search, fetcher, root: Path | None = None):
         self.config, self.model, self.search, self.fetcher = config, model, search, fetcher
+        self.prompt_context = prompts.context(config, now()[:10])
+        self.rendered_prompts = {
+            role: prompts.render(prompts.load(role), self.prompt_context) for role in prompts.ROLES
+        }
         self.run_id = uuid4().hex
         timestamp = datetime.now(timezone.utc).strftime("%y%m%d_%H%M%S")
         self.root = root or config.output_dir / f"{timestamp}_{self.run_id}"
@@ -42,6 +47,11 @@ class Runtime:
         self.observed = {}
         redacted_config = self.log.redact(config.model_dump(mode="json"))
         self.db.record("config", redacted_config)
+        self.db.record("prompt_context", self.prompt_context)
+        self.db.record("rendered_prompt_hashes", {
+            role: hashlib.sha256(text.encode()).hexdigest()
+            for role, text in self.rendered_prompts.items()
+        })
         self.viewer_export = None
         try:
             self.viewer_export = ViewerExport(self.root, redacted_config)

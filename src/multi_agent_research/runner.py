@@ -6,7 +6,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from . import prompts
 from .graphs.research import build_research
-from .observability.events import now
 from .runtime import Runtime
 from .storage.checkpoints import checkpoint_store
 
@@ -27,10 +26,7 @@ async def run_research(query, config, model, search, fetcher):
                         {
                             "messages": [
                                 SystemMessage(
-                                    content=prompts.load("lead")
-                                    + f"\nCurrent UTC date: {now()[:10]}."
-                                    + f"\nLimits: {config.max_lead_turns} lead turns, {config.max_batches} batches, "
-                                    f"{config.max_workers_per_batch} workers per batch."
+                                    content=runtime.rendered_prompts["lead"]
                                 ),
                                 HumanMessage(content=query),
                             ],

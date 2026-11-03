@@ -66,8 +66,8 @@ async def test_workers_are_parallel_and_isolated(tmp_path):
     result = await execute(tmp_path, model)
     assert result["status"] == "completed"
     assert model.peak == 2
-    assert model.seen["batch1-worker1"] == ["Research alpha. Fetch the source."]
-    assert model.seen["batch1-worker2"] == ["Research beta. Fetch the source."]
+    assert model.seen["batch1-worker1"] == ["<task>Research alpha. Fetch the source.</task>"]
+    assert model.seen["batch1-worker2"] == ["<task>Research beta. Fetch the source.</task>"]
 
 
 async def test_failed_worker_does_not_erase_siblings(tmp_path):
@@ -173,3 +173,31 @@ async def test_completion_requires_a_worker(tmp_path):
     result = await execute(tmp_path, Premature(), max_lead_turns=2)
     assert result["status"] == "budget_exhausted"
     assert "report_path" not in result
+
+
+async def test_full_prompt_context_and_wrapped_citation_audit(tmp_path):
+    from multi_agent_research import prompts
+
+    result = await execute(tmp_path)
+    assert result['status'] == 'completed'
+    root = Path(result['output_dir'])
+    with sqlite3.connect(root / 'events.sqlite') as db:
+        records = {key: json.loads(body) for key, body in db.execute('SELECT key, body FROM records')}
+    assert set(records['rendered_prompt_hashes']) == set(prompts.ROLES)
+    date = records['prompt_context']['CurrentDate']
+    log = events(result)
+    payloads = [(event, json.loads((root / 'artifacts' / (event['payload_ref'] + '.json')).read_text()))
+                for event in log]
+    for event, payload in payloads:
+        if event['event_type'] == 'model.request':
+            system = payload['messages'][0]['data']['content']
+            assert '{{.' not in system
+            if event['agent_id'] != 'citation':
+                assert date in system
+            if 'worker' in event['agent_id']:
+                assert payload['messages'][1]['data']['content'].startswith('<task>')
+        if event['event_type'] == 'citation.validated':
+            assert payload['report'] == Path(result['report_path']).read_text()
+            assert '<exact_text_with_citation>' not in payload['report']
+        if event['event_type'] == 'model.response' and event['agent_id'] == 'citation':
+            assert '<exact_text_with_citation>' in payload['content']

@@ -4,8 +4,6 @@ import json
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
 
-from .. import prompts
-from ..observability.events import now
 from ..runtime import BudgetExceeded
 from ..schemas import AgentState, WorkerResult, complete_task, web_fetch, web_search
 
@@ -111,12 +109,9 @@ async def run_worker(runtime, agent, prompt, checkpointer):
                 {
                     "messages": [
                         SystemMessage(
-                            content=prompts.load("worker")
-                            + f"\nCurrent UTC date: {now()[:10]}."
-                            + f"\nLimits: {runtime.config.max_worker_turns} model turns, "
-                            f"{runtime.config.max_worker_tool_calls} tool calls."
+                            content=runtime.rendered_prompts["worker"]
                         ),
-                        HumanMessage(content=prompt),
+                        HumanMessage(content=f"<task>{prompt}</task>"),
                     ],
                     "sources": [],
                     "turns": 0,
