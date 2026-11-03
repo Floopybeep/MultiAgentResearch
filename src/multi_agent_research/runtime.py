@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from langchain_core.messages import messages_to_dict
 
+from . import prompts
 from .observability.events import EventLogger
 from .observability.usage import Usage
 from .storage.artifacts import ArtifactStore
@@ -42,6 +43,11 @@ class Runtime:
         self.observed = {}
         redacted_config = self.log.redact(config.model_dump(mode="json"))
         self.db.record("config", redacted_config)
+        self.db.record("prompt_context", self.prompt_context)
+        self.db.record("rendered_prompt_hashes", {
+            role: hashlib.sha256(text.encode()).hexdigest()
+            for role, text in self.rendered_prompts.items()
+        })
         self.viewer_export = None
         try:
             self.viewer_export = ViewerExport(self.root, redacted_config)

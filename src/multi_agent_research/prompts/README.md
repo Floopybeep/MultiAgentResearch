@@ -8,7 +8,7 @@ hashes through `prompts.hashes()`.
 
 | Prompt | Input | Tools / output |
 | --- | --- | --- |
-| Lead | Question, document catalog and returned Worker findings | `memory_write`, `memory_read`, parallel `run_blocking_subagent`, then `submit_answer` with `{answer}` |
+| Lead | Question, document catalog and returned Worker findings | `memory_write`, `memory_read`, parallel `run_blocking_subagent`, then `submit_answer` with `\boxed{answer}` |
 | Worker | Self-contained assignment and document catalog | Paged `read_document`, then `complete_task` with findings, read document IDs and uncertainties |
 | Judge | Question, reference answer and candidate response | JSON with boolean `correct` and string `reason` |
 

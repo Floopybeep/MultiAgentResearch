@@ -18,7 +18,8 @@ judge:
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
 max_lead_turns: 20
 max_worker_turns: 12
-max_worker_tool_calls: 20
+# Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
+max_worker_tool_calls: 15
 max_batches: 6
 max_workers_per_batch: 4
 max_run_tokens: 200000
