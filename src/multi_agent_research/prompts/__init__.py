@@ -4,7 +4,7 @@ import re
 from importlib.resources import files
 
 VARIABLE = re.compile(r"{{\s*\.([A-Za-z][A-Za-z0-9_]*)\s*}}")
-ROLES = ("lead", "worker", "citation")
+ROLES = ("lead", "worker", "judge")
 
 
 def load(role):
@@ -40,4 +40,4 @@ def context(config, date):
 
 
 def hashes():
-    return {r: hashlib.sha256(load(r).encode()).hexdigest() for r in ("lead", "worker", "judge")}
+    return {r: hashlib.sha256(load(r).encode()).hexdigest() for r in ROLES}
