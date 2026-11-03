@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from langchain_core.messages import messages_to_dict
 
+from . import prompts
 from .observability.events import EventLogger
 from .observability.usage import Usage
 from .storage.artifacts import ArtifactStore
@@ -30,7 +31,9 @@ class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None):
         self.config, self.model, self.documents = config, model, documents
         self.run_id = uuid4().hex
-        timestamp = datetime.now(timezone.utc).strftime("%y%m%d_%H%M%S")
+        now = datetime.now(timezone.utc)
+        self.prompt_context = prompts.context(config, now.date().isoformat())
+        timestamp = now.strftime("%y%m%d_%H%M%S")
         self.root = root or config.output_dir / f"{timestamp}_{self.run_id}"
         self.root.mkdir(parents=True, exist_ok=False)
         self.artifacts = ArtifactStore(self.root / "artifacts")

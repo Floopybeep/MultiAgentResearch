@@ -279,7 +279,7 @@ English `# TODO:` comments mark the extension points below. Paths are relative t
 
 | Area and entry point | Current interface | Design work |
 |---|---|---|
-| Grading — `grading.py:grade_answer` | Extract one `{...}` span; normalize Unicode, case and whitespace; exact match followed by an LLM judge. Store correctness and format validity separately. | Answer aliases, numbers/units, multi-part answers, partial credit, judge rubric/model and error handling. |
+| Grading — `grading.py:grade_answer` | Extract the contents of one nonempty, unnested `\boxed{...}` answer; normalize Unicode, case and whitespace; exact match followed by an LLM judge. Missing, multiple or malformed boxes go to the judge. Store correctness and format validity separately. | Answer aliases, numbers/units, multi-part answers, partial credit, judge rubric/model and error handling. |
 | Tool → Worker injection — `runtime.py:read_document` | Paged response with document ID, text, offsets and next-page position. | Target text or table fields; select timing and fault type; record original and injected responses. |
 | Worker → Lead injection — `graphs/research.py:build_research` | Structured findings, document IDs and uncertainties at the delivery boundary. | Target Worker/fact; corruption, malicious content, timeouts and stale results; fault scheduling and paired clean/fault runs. |
 | Propagation metrics — `runner.py:run_qa` result construction | Event IDs, parent dependencies, handoff payloads, task outcome, usage and timing. | Exposure, adoption and answer impact; affected stages, wasted work and attribution method. |

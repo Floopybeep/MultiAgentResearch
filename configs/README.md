@@ -24,6 +24,39 @@ Allowed generation options: `temperature`, `top_p`, `seed`, `stop`,
 The adapter reads `OPENAI_API_KEY` and `OPENAI_BASE_URL` from the shell environment.
 It uses async Chat Completions with `use_responses_api=False` and `max_retries=0`.
 
+## Prompts
+
+`lead_prompt` and `worker_prompt` are optional top-level file paths. Omit them or
+set them to `null` to use the bundled `lead.md` and `worker.md`. Relative paths
+resolve from the working directory, not the config file's directory. Each role
+can be selected independently; the judge prompt remains bundled.
+
+To use the previous prompts when running from the repository root:
+
+```yaml
+lead_prompt: src/multi_agent_research/prompts/lead_old.md
+worker_prompt: src/multi_agent_research/prompts/worker_old.md
+```
+
+Selected files replace the role's system prompt text; runtime limits are still
+appended for compatibility with prompts that omit limit placeholders. Both bundled
+and custom lead/worker prompts support direct context substitution:
+
+| Placeholder | Value |
+| --- | --- |
+| `{{.MaxLeadTurns}}` | `max_lead_turns` |
+| `{{.MaxBatches}}` | `max_batches` |
+| `{{.MaxWorkersPerBatch}}` | `max_workers_per_batch` |
+| `{{.MinimumWorker}}` | `minimum_worker` |
+| `{{.MaxWorkerTurns}}` | `max_worker_turns` |
+| `{{.MaxWorkerToolCalls}}` | `max_worker_tool_calls` |
+| `{{.CurrentDate}}` | Run start date in UTC (`YYYY-MM-DD`) |
+
+Substitution is performed once on the system prompt template. Unknown variables
+and unsupported template expressions raise errors. Question text, assignments,
+and document contents are not rendered as templates. Run metadata records hashes
+of the source templates; model request traces retain the rendered system prompts.
+
 ## Usage and cost fields
 
 Input tokens include cached input. Given the endpoint's returned usage:
@@ -47,12 +80,18 @@ details use the ordinary input rate for that response and set aggregate
 | `max_worker_tool_calls` | 20 | Tool calls per Worker, including completion |
 | `max_batches` | 6 | Delegation rounds per question |
 | `max_workers_per_batch` | 4 | Parallel Workers; excess assignments return errors |
+| `minimum_worker` | 1 | Lead instruction to spawn at least this many Workers in each delegation batch |
 | `max_run_tokens` | 200000 | Reported input + output, all roles including judge |
 | `run_timeout_seconds` | 900 | Lead/Worker graph timeout, excluding grading |
 | `worker_timeout_seconds` | 180 | Individual Worker graph timeout |
 | `call_timeout_seconds` | 60 | Individual model/local tool call timeout |
 | `max_document_chars` | 24000 | Characters per reader page; continue at `next_offset` |
 | `output_dir` | `runs` | Per-question outputs and batch manifests |
+
+`minimum_worker` must be positive and no greater than `max_workers_per_batch`.
+It is injected into the Lead instructions for bundled and custom prompts, including
+the old prompt. This minimum guides the Lead; the runtime does not reject smaller
+batches.
 
 The token limit is checked before model calls against accumulated returned usage.
 In-flight parallel calls can exceed the limit. A failed judge call records

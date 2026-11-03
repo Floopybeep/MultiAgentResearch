@@ -16,12 +16,17 @@ judge:
   output_cost_per_million: 0.50
   max_output_tokens: 1024
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
+# Optional prompt files, relative to the working directory; null uses bundled defaults.
+lead_prompt: null
+worker_prompt: null
 max_lead_turns: 20
 max_worker_turns: 12
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
 max_worker_tool_calls: 15
 max_batches: 6
 max_workers_per_batch: 4
+# Lead instruction: minimum workers to spawn in each delegation batch.
+minimum_worker: 1
 max_run_tokens: 200000
 run_timeout_seconds: 900
 worker_timeout_seconds: 180

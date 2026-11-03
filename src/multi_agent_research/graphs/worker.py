@@ -108,7 +108,10 @@ async def run_worker(runtime, agent, prompt, checkpointer):
                 {
                     "messages": [
                         SystemMessage(
-                            content=prompts.load("worker")
+                            content=prompts.render(
+                                prompts.load("worker", runtime.config.worker_prompt),
+                                runtime.prompt_context,
+                            )
                             + f"\nLimits: {runtime.config.max_worker_turns} model turns, "
                             f"{runtime.config.max_worker_tool_calls} tool calls."
                         ),

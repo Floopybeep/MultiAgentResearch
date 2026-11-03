@@ -30,12 +30,19 @@ judge:
     temperature: 0
     seed: 42
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
-max_lead_turns: 20
-max_worker_turns: 12
+# Optional prompt files, relative to the working directory; null uses bundled defaults.
+# lead_prompt: src/multi_agent_research/prompts/lead_old.md
+# worker_prompt: src/multi_agent_research/prompts/worker_old.md
+lead_prompt: src/multi_agent_research/prompts/lead.md
+worker_prompt: src/multi_agent_research/prompts/worker.md
+max_lead_turns: 10
+max_worker_turns: 5
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
 max_worker_tool_calls: 15
 max_batches: 6
 max_workers_per_batch: 4
+# Lead instruction: minimum workers to spawn in each delegation batch.
+minimum_worker: 3
 # Raised from baseline.yaml's 200000. That budget is cumulative across the Lead
 # AND every worker, so document-heavy questions exhausted it inside the worker
 # stage and returned no answer: measured on Q25 (workers burned 207508 of 208356

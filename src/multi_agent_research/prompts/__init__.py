@@ -2,14 +2,17 @@
 import hashlib
 import re
 from importlib.resources import files
+from pathlib import Path
 
 VARIABLE = re.compile(r"{{\s*\.([A-Za-z][A-Za-z0-9_]*)\s*}}")
 ROLES = ("lead", "worker", "judge")
 
 
-def load(role):
+def load(role, path=None):
     if role not in ROLES:
         raise ValueError(f"Unknown prompt role: {role}")
+    if path is not None:
+        return Path(path).read_text(encoding="utf-8")
     return files(__package__).joinpath(f"{role}.md").read_text()
 
 
@@ -34,10 +37,16 @@ def context(config, date):
         "MaxLeadTurns": config.max_lead_turns,
         "MaxBatches": config.max_batches,
         "MaxWorkersPerBatch": config.max_workers_per_batch,
+        "MinimumWorker": config.minimum_worker,
         "MaxWorkerTurns": config.max_worker_turns,
         "MaxWorkerToolCalls": config.max_worker_tool_calls,
     }
 
 
-def hashes():
-    return {r: hashlib.sha256(load(r).encode()).hexdigest() for r in ROLES}
+def hashes(config=None):
+    return {
+        role: hashlib.sha256(load(
+            role, getattr(config, f"{role}_prompt", None)
+        ).encode()).hexdigest()
+        for role in ROLES
+    }
