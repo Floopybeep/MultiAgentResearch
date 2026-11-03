@@ -217,5 +217,6 @@ Cost is configured rates × returned usage — an estimate, not a bill.
 | `baseline_50_question_ids.txt` | The 50 baseline IDs, space-separated for `--question-ids` |
 | `baseline_50_provenance.json` | Selection, hashes, fingerprints, pilot record, derived subsets |
 | `stable_38_question_ids.txt` | The 38 stable, consistently correct IDs |
+| `stable_38_questions.html` | Open directly in a browser to select a stable question ID and view its question, gold answer, and collapsible full local articles. Embeds corpus snapshots; uses the repository’s local Markdown renderer. |
 | `screen_baseline.py` | Offline screening script |
 | `screening_report.json` | Full machine-readable results, including per-question targets and caveats |
