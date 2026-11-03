@@ -1,7 +1,7 @@
 """Validated, credential-free run settings."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -31,6 +31,17 @@ class ModelConfig(BaseModel):
         return value
 
 
+class PipelineFaultConfig(BaseModel):
+    """Assignment IDs are stable batchN-workerM positions within each question."""
+
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    fault_type: Literal["dropped_result", "dispatch_failure", "timeout"] = "dropped_result"
+    assignment_ids: list[str] = Field(default_factory=list)
+    probability: float = Field(default=1.0, ge=0, le=1)
+    seed: int = 0
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
@@ -48,6 +59,7 @@ class RunConfig(BaseModel):
     worker_timeout_seconds: float = Field(default=180, gt=0)
     call_timeout_seconds: float = Field(default=60, gt=0)
     max_document_chars: int = Field(default=24000, gt=0)
+    pipeline_fault: PipelineFaultConfig = Field(default_factory=PipelineFaultConfig)
     output_dir: Path = Path("runs")
 
     @classmethod

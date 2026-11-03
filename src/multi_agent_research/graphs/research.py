@@ -9,6 +9,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from ..faults.pipeline import PipelineFaultInjector
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
@@ -27,6 +28,7 @@ def build_research(
     runtime: Runtime, checkpointer: BaseCheckpointSaver | None,
 ) -> CompiledStateGraph:
     cfg = runtime.config
+    injector = PipelineFaultInjector(cfg.pipeline_fault)
 
     async def lead(state):
         if state.get("turns", 0) >= cfg.max_lead_turns:
@@ -98,20 +100,35 @@ def build_research(
                     args = run_blocking_subagent.model_validate(call["args"])
                     agent = f"batch{batch}-worker{position + 1}"
                     runtime.observed[agent] = [start]
+                    decision = injector.decide(agent)
+                    fault_parent = injector.log_decision(runtime, agent, batch, start, decision)
+                    if decision["selected"] and cfg.pipeline_fault.fault_type == "dispatch_failure":
+                        value, event = injector.inject(runtime, agent, batch, fault_parent,
+                                                       worker_executed=False)
+                        delivery_parents[:] = [event]
+                        return value
                     result = await run_worker(runtime, agent, args.prompt, checkpointer)
-                    # TODO: Input agent/batch IDs and raw WorkerResult; output a delivery dict.
-                    # Apply Worker-to-Lead faults and log raw/delivered payload links.
+                    delivery_parent = runtime.observed[agent][-1]
+                    value = result.model_dump()
+                    if (decision["selected"] and result.status == "completed"
+                            and cfg.pipeline_fault.fault_type != "dispatch_failure"):
+                        value, delivery_parent = injector.inject(
+                            runtime, agent, batch, delivery_parent, worker_executed=True,
+                            original=value, decision_event=fault_parent,
+                        )
                     runtime.event(
-                        "worker.delivered", "lead", result.model_dump(),
-                        [runtime.observed[agent][-1]], batch_id=batch, assignment_id=agent,
+                        "worker.delivered", "lead", value,
+                        [delivery_parent], batch_id=batch, assignment_id=agent,
                     )
-                    return result.model_dump()
+                    delivery_parents[:] = [runtime.observed["lead"][-1]]
+                    return value
 
                 # Delegation is bounded by the worker timeout, not the shorter tool timeout.
                 started = asyncio.get_running_loop().time()
                 start = runtime.event(
                     "delegation.request", "lead", call, lead_dependencies, batch_id=batch
                 )
+                delivery_parents = [start]
                 try:
                     value = await handler()
                 except Exception as exc:
@@ -120,7 +137,7 @@ def build_research(
                     "delegation.result",
                     "lead",
                     value,
-                    [start],
+                    delivery_parents,
                     batch_id=batch,
                     tool_call_id=call["id"],
                     duration_seconds=asyncio.get_running_loop().time() - started,

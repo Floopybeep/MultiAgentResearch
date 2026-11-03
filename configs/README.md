@@ -77,3 +77,57 @@ produce a `preparation_failed` result in the batch manifest.
 ```bash
 uv run mar --config configs/baseline.yaml --sample-size 10 --seed 42
 ```
+
+## Pipeline fault injection
+
+Baseline defaults to `pipeline_fault.enabled: false`; `configs/baseline.yaml`
+remains unchanged. Copy that file to a separate experiment YAML and append:
+
+```yaml
+pipeline_fault:
+  enabled: true
+  fault_type: dropped_result
+  assignment_ids: [batch1-worker1]
+  probability: 1.0
+  seed: 42
+```
+
+Run `uv run mar --config configs/experiment.yaml --sample-size 10 --seed 42`.
+Use `dropped_result` for a dropped successful result, `dispatch_failure` to prevent
+worker startup, or `timeout` for a communication timeout after successful execution.
+Set `enabled: false` for a clean baseline. The copied YAML retains the same models
+and resource budgets. No additional CLI mode or API credentials are introduced.
+
+`assignment_ids` selects exact `batchN-workerM` IDs (one-based batch and tool-call
+position); an empty list targets all eligible assignments. A target is per question,
+not a global worker identity. `probability` is in [0, 1]. The SHA-256 draw keyed by
+`seed:assignment_id` is independent of asynchronous completion order. Identical IDs
+and seeds reuse the same decisions across questions and repeated runs; this does
+not make model outputs or delegation plans deterministic. CLI `--seed` controls
+question sampling separately. Invalid or over-budget assignments are rejected by
+existing validation before fault selection.
+
+Dispatch failures return a failed `WorkerResult` with stop reason
+`InjectedWorkerDispatchFailure` without invoking the worker. Dropped results and
+communication timeouts preserve a successful worker execution, then deliver a
+failed result with empty findings/document IDs and stop reason
+`InjectedDroppedWorkerResult` or `InjectedCommunicationTimeout`. They consume the
+worker's normal tokens/time. A timeout is an immediate simulated delivery failure,
+with no artificial wait or extra task; natural execution/model timeouts retain their
+existing behavior and external cancellation propagates. Failed workers are never
+relabelled as injected communication failures. Unaffected siblings run normally.
+
+Enabled eligible assignments record `fault.decision`, including selected, target,
+draw, probability and seed. `selected` is eligibility, not proof of injection: a
+worker that fails naturally cannot have a successful result withheld.
+`fault.injected` records actual triggering, stage, assignment/batch IDs, execution
+status, original immutable payload reference (when present), delivered error, and
+parent dependencies linking the decision and worker completion. `worker.finished`
+retains the original result; `worker.delivered` and `delegation.result` contain only
+the delivered result. Dispatch failures have no `worker.finished` event. Audit
+artifacts and checkpoints are not agent-visible context. Normal runtime redaction
+applies. Disabled injection adds no fault events.
+
+Focused regression checks (scripted models; no experiment accuracy claims):
+`uv run python -X utf8 -m pytest tests/integration/test_pipeline_faults.py tests/integration/test_qa_pipeline.py -q`.
+UTF-8 mode avoids the existing viewer asset decoding issue on Windows.
