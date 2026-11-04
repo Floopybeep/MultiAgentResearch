@@ -42,13 +42,6 @@ class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None):
         self.config, self.model, self.documents = config, model, documents
         self.document_injection_count = 0
-        self.tool_failure_state = tool_failures.ToolFailureState()
-        self.question_key = tool_failures.question_key(documents.documents)
-        self.attempt_number = 1
-        self.faults_enabled: bool = True
-        self.injected_faults: list[dict[str, Any]] = []
-        self.model_inputs: dict[str, list[dict[str, Any]]] = {}
-        self.verifications: list[dict[str, Any]] = []
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
         self.prompt_context = prompts.context(config, now.date().isoformat())
@@ -203,47 +196,21 @@ class Runtime:
         self.event("documents.available", "lead", {"documents": snapshots})
         return snapshots
 
-    async def deny_document(
-        self, document_id: str, offset: int, agent: str, original: dict[str, Any],
-    ) -> None:
-        config = self.config.tool_failure
-        decision = tool_failures.decide(
-            config, self.tool_failure_state,
-            key=self.question_key, document_id=document_id, offset=offset,
-        )
-        if not decision.fail:
-            return
-        number = self.tool_failure_state.reserve(document_id, offset)
-        delay = (
-            tool_failures.delay_seconds(config, self.config.call_timeout_seconds)
-            if config.mode == "timeout" else 0.0
-        )
-        self.event(
-            "tool.failure_injected", agent,
-            {
-                "tool": tool_failures.TOOL_NAME,
-                "mode": config.mode,
-                "document_id": document_id,
-                "offset": offset,
-                "agent": agent,
-                "failure_number": number,
-                "attempt": decision.attempt,
-                "delay_seconds": delay,
-                "persistent": config.persistent,
-                "original_artifact_ref": self.artifacts.put(self.log.redact(original)),
-            },
-            self.observed.get(agent, []).copy(),
-        )
-        if config.mode == "timeout":
-            await asyncio.sleep(delay)
-        raise tool_failures.ToolUnavailableError(tool_failures.UNAVAILABLE_MESSAGE)
-
-    async def read_document(
+    def read_document(
         self, document_id: str, offset: int, *, agent: str = "worker",
     ) -> dict[str, Any]:
+        """Read a page, unless a configured accidental fault denies it.
+
+        Two invariants future changes must preserve. First, the document
+        injection below checks `document_injection_count` and increments it with
+        no suspension point in between, so concurrent workers cannot both claim
+        the last slot; keep that pair synchronous and adjacent. The `await`
+        above is the only suspension point in this method and it precedes the
+        check, which is why the pair stays atomic. Second, `deny_document`
+        either returns without suspending or raises, so a read that is not
+        denied is never delayed.
+        """
         original = self.documents.read(document_id, offset, self.config.max_document_chars)
-        if self.faults_enabled and self.config.tool_failure.enabled:
-            await self.deny_document(document_id, offset, agent, original)
         injection = self.config.document_injection
         if (self.faults_enabled and injection.enabled
                 and self.document_injection_count < injection.num_docs):
