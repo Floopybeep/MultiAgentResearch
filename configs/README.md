@@ -169,6 +169,8 @@ In-flight parallel calls can exceed the limit. A failed judge call records
 | `--sample-size` | 10 | Number of sampled questions |
 | `--seed` | 42 | Local question-sampling seed |
 | `--question-ids` | unset | Explicit unique TSV row IDs, overriding sampling |
+| `--full-restart` | off | Enable oracle-triggered clean restart |
+| `--always-verify` | off | Enable planning and Worker-result diagnostics |
 
 The dataset contains 822 questions with original IDs. `index.json` maps questions
 to document IDs and documents to titles, URLs and Markdown filenames. Each

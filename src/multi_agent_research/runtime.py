@@ -24,6 +24,11 @@ from .viewer_export import ViewerExport
 
 logger = logging.getLogger(__name__)
 
+# Explicit events emitted by the implemented fault hooks.
+INJECTION_EVENTS = frozenset({
+    "document.injected", "connection.dropped", "result.timed_out", "tool.failure_injected",
+})
+
 
 class BudgetExceeded(RuntimeError):
     pass
@@ -39,7 +44,11 @@ class Runtime:
         self.document_injection_count = 0
         self.tool_failure_state = tool_failures.ToolFailureState()
         self.question_key = tool_failures.question_key(documents.documents)
+        self.attempt_number = 1
         self.faults_enabled: bool = True
+        self.injected_faults: list[dict[str, Any]] = []
+        self.model_inputs: dict[str, list[dict[str, Any]]] = {}
+        self.verifications: list[dict[str, Any]] = []
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
         self.prompt_context = prompts.context(config, now.date().isoformat())
@@ -51,7 +60,8 @@ class Runtime:
         self.log = EventLogger(self.db, self.artifacts, self.run_id)
         self.memory = PlanMemory(self.db, self.artifacts)
         self.usage = Usage()
-        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge")}
+        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge", "verifier")}
+        self.usage.by_role = self.usage_by_role
         self.observed = {}
         redacted_config = self.log.redact(config.model_dump(mode="json"))
         self.db.record("config", redacted_config)
@@ -66,6 +76,12 @@ class Runtime:
     def event(self, kind, agent, payload, parents=(), **metadata):
         event = self.log.emit(kind, agent, payload, parents, **metadata)
         self.observed.setdefault(agent, []).append(event)
+        # Ordinary errors, timeouts and low budgets are never injection signals.
+        if kind in INJECTION_EVENTS:
+            self.injected_faults.append({
+                "run_id": self.run_id, "event_id": event,
+                "event_type": kind, "agent": agent, "payload": self.log.redact(payload),
+            })
         if kind == "model.request":
             logger.info("[%s] Calling model...", agent)
         elif kind == "model.error":
@@ -74,24 +90,37 @@ class Runtime:
             logger.info("[%s] Worker %s.", agent, payload["status"])
         elif kind == "grade.finished":
             logger.info("[judge] Grading finished (%s).", payload["method"])
+        elif kind == "verification":
+            logger.info("[%s] %s verification finished (verified=%s).",
+                        agent, payload["boundary"], payload["verified"])
+        elif kind == "attempt.interrupted":
+            logger.info("Injected fault recorded: current node finished; ending Attempt 1.")
+        elif kind == "recovery.restart":
+            logger.info("Full restart: scheduling clean Attempt 2.")
         return event
 
     async def call_model(self, role, agent, messages, tools):
         if self.usage.input_tokens + self.usage.output_tokens >= self.config.max_run_tokens:
             raise BudgetExceeded("run_token_budget")
         config = getattr(self.config, role)
+        visible_messages = messages_to_dict(messages)
+        if self.config.always_verify and role in ("lead", "worker"):
+            # These are the messages actually passed to this model call, including
+            # delivered ToolMessages. Never reconstruct them from clean documents.
+            self.model_inputs[agent] = visible_messages
         start = time.monotonic()
         request = self.event(
             "model.request",
             agent,
             {
-                "messages": messages_to_dict(messages),
+                "messages": visible_messages,
                 "tools": [t.model_json_schema() for t in tools],
             },
             self.observed.get(agent, []).copy(),
             model=config.model,
             retry_number=0,
         )
+        response = None
         try:
             try:
                 response = await asyncio.wait_for(
@@ -113,6 +142,9 @@ class Runtime:
             )
             return response
         except BaseException as exc:
+            if response is None:
+                self.usage.add(None, config)
+                self.usage_by_role[role].add(None, config)
             self.event(
                 "model.error",
                 agent,
@@ -121,6 +153,10 @@ class Runtime:
                 duration_seconds=time.monotonic() - start,
             )
             raise
+        finally:
+            elapsed = time.monotonic() - start
+            self.usage.duration_seconds += elapsed
+            self.usage_by_role[role].duration_seconds += elapsed
 
     async def call_tool(self, agent, call, handler):
         start = time.monotonic()

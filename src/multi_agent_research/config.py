@@ -104,8 +104,11 @@ class RunConfig(BaseModel):
     )
     worker: ModelConfig = Field(default_factory=ModelConfig)
     judge: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=1024))
+    verifier: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=1024))
     lead_prompt: Path | None = None
     worker_prompt: Path | None = None
+    full_restart: bool = False
+    always_verify: bool = False
     max_lead_turns: int = Field(default=20, gt=0)
     max_worker_turns: int = Field(default=12, gt=0)
     max_worker_tool_calls: int = Field(default=20, gt=0)
@@ -139,6 +142,18 @@ class RunConfig(BaseModel):
                 "result_timeout.timeout_seconds must not exceed worker_timeout_seconds"
             )
         return self
+
+    @model_validator(mode="after")
+    def separate_strategies(self):
+        if self.full_restart and self.always_verify:
+            raise ValueError("full_restart and always_verify are mutually exclusive")
+        return self
+
+    @property
+    def strategy(self) -> str:
+        if self.full_restart:
+            return "full-restart"
+        return "always-verify" if self.always_verify else "baseline"
 
     @classmethod
     def load(cls, path: str | Path):

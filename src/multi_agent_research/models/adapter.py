@@ -33,4 +33,5 @@ class OpenAIChatCompletionsAdapter:
         model = self.models[role]
         if tools:
             model = model.bind_tools(tools)
-        return await model.ainvoke(messages)
+        # A clean restart can restore a cap without replacing the cached client.
+        return await model.ainvoke(messages, max_tokens=config.max_output_tokens)

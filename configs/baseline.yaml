@@ -15,6 +15,12 @@ judge:
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
   max_output_tokens: 1024
+verifier:
+  model: glm-5.3-flash
+  input_cost_per_million: 0.15
+  cached_input_cost_per_million: 0.03
+  output_cost_per_million: 0.50
+  max_output_tokens: 1024
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
 # Optional prompt files, relative to the working directory; null uses bundled defaults.
 lead_prompt: null
@@ -35,6 +41,8 @@ tool_failure:
   enabled: false
   mode: timeout
   max_failures: 1
+full_restart: false
+always_verify: false
 max_lead_turns: 20
 max_worker_turns: 12
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.

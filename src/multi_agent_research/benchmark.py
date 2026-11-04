@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from .frames import DEFAULT_CORPUS, load_frames, prepare_documents, select_examples
 from .observability.events import Redactor
+from .observability.usage import sum_usage
 from .runner import run_qa
 from .viewer_export import atomic_write
 
@@ -29,13 +30,23 @@ def summarize(results):
             if all(u["cached_input_tokens"] is not None for u in usage) else None
         ),
         "output_tokens": sum(u["output_tokens"] for u in usage),
+        "total_tokens": sum(u["input_tokens"] + u["output_tokens"] for u in usage),
         "model_calls": sum(u["model_calls"] for u in usage),
+        "unreported_calls": sum(u.get("unreported_calls", 0) for u in usage),
+        "usage_complete": all(u.get("usage_complete", True) for u in usage),
         "estimated_cost_usd": (
             sum(u["estimated_cost_usd"] for u in usage)
             if usage and all(u["estimated_cost_usd"] is not None for u in usage) else None
         ),
         "solve_duration_seconds": sum(r.get("solve_duration_seconds", 0) for r in results),
-        "grading_duration_seconds": sum(g.get("duration_seconds", 0) for g in grades),
+        "grading_duration_seconds": sum(
+            (a.get("grade") or {}).get("duration_seconds", 0)
+            for r in results for a in r.get("attempts", [r])
+        ),
+        "elapsed_seconds": sum(r.get("elapsed_seconds", 0) for r in results),
+        "verifier_usage": sum_usage(
+            r["usage_by_role"]["verifier"] for r in results if "usage_by_role" in r
+        ),
     }
 
 

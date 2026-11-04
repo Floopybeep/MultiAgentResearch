@@ -131,6 +131,10 @@ uv run pytest -q
 uv run ruff check src tests
 ```
 
+Two mutually exclusive recovery options can be added to the CLI:
+- `--full-restart`: retry once from fresh agent state with faults disabled after an explicit injection event.
+- `--always-verify`: attach diagnostic checks of Lead plans and delivered Worker results.
+
 Defaults: 10 questions sampled with seed 42. Use `--sample-size N` to change the
 count, `--seed N` to change the sample, or `--question-ids ID...` to select original
 question IDs. Questions run sequentially; Worker assignments run in parallel batches.
