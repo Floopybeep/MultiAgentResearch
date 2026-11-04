@@ -206,3 +206,70 @@ applies. Disabled injection adds no fault events.
 Focused regression checks (scripted models; no experiment accuracy claims):
 `uv run python -X utf8 -m pytest tests/integration/test_pipeline_faults.py tests/integration/test_qa_pipeline.py -q`.
 UTF-8 mode avoids the existing viewer asset decoding issue on Windows.
+
+## Worker budget faults
+
+`worker_budget_faults` holds two independent, disabled-by-default faults.
+`configs/baseline.yaml` lists them disabled. To run one, copy that file to a separate
+experiment YAML, set `enabled: true` and adjust the values:
+
+```yaml
+worker_budget_faults:
+  generation_budget:
+    enabled: true
+    probability: 1.0
+    max_output_tokens: 256
+    budget_scope: per_call        # or per_worker
+    target_workers: [batch1-worker1]
+    seed: 42
+  tool_call_budget:
+    enabled: true
+    probability: 0.5
+    max_tool_calls: 2
+    target_workers: []            # empty: every assignment
+    seed: 42
+```
+
+**Selection.** A SHA-256 draw over `seed`, fault type, question identity and
+assignment ID decides each fault separately, so results do not depend on completion
+order, and each question draws anew. Question identity is the question ID, or the
+question text if no ID exists. `target_workers` entries are per-question
+`batchN-workerM` positions. A selected fault is only *active* if it reduces the
+configured limit: a `per_call` cap or `max_tool_calls` at or above the configured
+worker value has no effect. Agents are not told about injected limits; rendered
+prompts keep the configured values.
+
+**`generation_budget` severity.** `per_call` caps each request at `max_output_tokens`.
+`per_worker` gives one assignment that many returned output tokens in total, and each
+request is capped at `min(remaining, worker.max_output_tokens)`. The cap applies to
+the individual API request, so siblings sharing a cached role client are unaffected.
+A reduced budget is not itself a failure: a worker finishing within it stays
+`completed`, including a `complete_task` that spends the budget exactly.
+
+| Observation on an active worker | Status | `stop_reason` | Event |
+| --- | --- | --- | --- |
+| `finish_reason: length`, injected budget binding (including a tie with the configured cap), or `per_worker` budget already spent | `budget_exhausted` | `injected_generation_budget_exhausted` | `fault.budget.exhausted` |
+| `finish_reason: length`, injected budget not binding | `budget_exhausted` | `worker_output_limit` | `fault.budget.natural_limit` |
+| Reported output tokens above the requested cap | `failed` | `generation_budget_not_honored` | `fault.budget.error` |
+| `per_worker` response with no usable output-token count | `failed` | `generation_budget_usage_unavailable` | `fault.budget.error` |
+| API or configuration error | `failed` | Exception type and message | None |
+
+Tool calls in any of these responses never run. Workers without an active generation
+fault keep baseline handling of truncated responses.
+
+**`tool_call_budget` severity.** `max_tool_calls` replaces `max_worker_tool_calls`
+for the selected assignment, with the same counting: `read_document`, `complete_task`,
+failed and unknown admitted calls each use a slot. Calls in one response are admitted
+in list order before running concurrently; excess calls never reach their handlers.
+Blocking any call ends the worker with `budget_exhausted` and stop reason
+`injected_tool_call_budget_exhausted`, returning only the documents it read. Because
+`complete_task` needs a document read in the same assignment, `0` and `1` cannot
+complete; `2` allows one read and completion.
+
+**Logs.** With either fault enabled, each worker records a `fault.budget.decision` per
+enabled fault (selected, active, draw, severity) and a `fault.budget.outcome` (result,
+final `tool_calls`/`output_tokens`, null if the graph ended abnormally). Active
+generation faults add `fault.budget.generation` per call, and `model.request` records
+the effective `max_output_tokens`. These events show that a limit applied or was hit;
+they do not establish an effect on the answer. Disabled faults add no events.
+A worker stopped by `dispatch_failure` never runs and so has no budget decision.

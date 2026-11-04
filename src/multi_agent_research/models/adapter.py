@@ -33,4 +33,5 @@ class OpenAIChatCompletionsAdapter:
         model = self.models[role]
         if tools:
             model = model.bind_tools(tools)
-        return await model.ainvoke(messages)
+        # Request-local overrides keep concurrent workers independent of the role cache.
+        return await model.ainvoke(messages, max_tokens=config.max_output_tokens)

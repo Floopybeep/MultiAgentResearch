@@ -47,7 +47,7 @@ class ScriptedModel:
                     ("run_blocking_subagent", {"prompt": f"Read doc{i} and report its value."})
                     for i in (1, 2)
                 ])
-            return response(("submit_answer", {"answer": "{42}"}))
+            return response(("submit_answer", {"answer": "\\boxed{42}"}))
         assert role == "worker"
         doc = "doc1" if agent.endswith("worker1") else "doc2"
         if turn == 1:
@@ -96,7 +96,7 @@ async def test_qa_parallel_workers_and_audit(tmp_path):
             assert {d["document_id"] for d in payload["available_documents"]} == {"doc1", "doc2"}
             assert "reference_answer" not in payload
     root = Path(result["output_dir"])
-    assert Path(result["answer_path"]).read_text() == "{42}"
+    assert Path(result["answer_path"]).read_text() == "\\boxed{42}"
     assert json.loads((root / "run.json").read_text())["status"] == "completed"
     assert len(json.loads((root / "documents.json").read_text())) == 2
     assert (root / "viewer-data.js").is_file()

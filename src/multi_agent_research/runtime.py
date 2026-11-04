@@ -29,8 +29,10 @@ class BudgetExceeded(RuntimeError):
 
 
 class Runtime:
-    def __init__(self, config, model, documents, root: Path | None = None):
+    def __init__(self, config, model, documents, root: Path | None = None, *,
+                 question_key: str = ""):
         self.config, self.model, self.documents = config, model, documents
+        self.question_key = question_key
         self.document_injection_count = 0
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
@@ -68,10 +70,10 @@ class Runtime:
             logger.info("[judge] Grading finished (%s).", payload["method"])
         return event
 
-    async def call_model(self, role, agent, messages, tools):
+    async def call_model(self, role, agent, messages, tools, *, model_config=None):
         if self.usage.input_tokens + self.usage.output_tokens >= self.config.max_run_tokens:
             raise BudgetExceeded("run_token_budget")
-        config = getattr(self.config, role)
+        config = model_config if model_config is not None else getattr(self.config, role)
         start = time.monotonic()
         request = self.event(
             "model.request",
@@ -82,6 +84,7 @@ class Runtime:
             },
             self.observed.get(agent, []).copy(),
             model=config.model,
+            max_output_tokens=config.max_output_tokens,
             retry_number=0,
         )
         try:

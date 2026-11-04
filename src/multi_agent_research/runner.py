@@ -25,7 +25,10 @@ async def run_qa(
     # always-verify dispatch. Output linked attempts, outcome and combined usage/time.
     if not question.strip():
         raise ValueError("Question cannot be empty")
-    runtime = Runtime(config, model, documents)
+    runtime = Runtime(
+        config, model, documents,
+        question_key=str((metadata or {}).get("question_id", question)),
+    )
     started = time.monotonic()
     try:
         runtime.db.record("prompts", prompts.hashes(config))
