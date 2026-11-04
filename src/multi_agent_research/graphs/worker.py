@@ -52,7 +52,7 @@ def build_worker(runtime, agent, checkpointer, *, document_id: str):
                     args = read_document.model_validate(call["args"])
                     if args.document_id != document_id:
                         raise PermissionError("Document is not assigned to this worker")
-                    return runtime.read_document(args.document_id, args.offset, agent=agent)
+                    return await runtime.read_document(args.document_id, args.offset, agent=agent)
                 if call["name"] == "complete_task":
                     if len(calls) != 1:
                         raise ValueError("complete_task must be the only call")

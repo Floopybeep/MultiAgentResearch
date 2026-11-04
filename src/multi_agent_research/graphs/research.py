@@ -12,12 +12,14 @@ from langgraph.graph.state import CompiledStateGraph
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
+    WorkerResult,
     memory_read,
     memory_write,
     merge_results,
     run_blocking_subagent,
     submit_answer,
 )
+from ..tools.connection_drop import select_dropped
 from .worker import run_worker
 
 TOOLS = [memory_read, memory_write, run_blocking_subagent, submit_answer]
@@ -75,13 +77,22 @@ def build_research(
             outputs[index] = await runtime.call_tool("lead", call, handler)
             if "completed" in outputs[index]:
                 answer = outputs[index]["completed"]["answer"]
-                runtime.event("answer.submitted", "lead", {"answer": answer}, runtime.observed["lead"].copy())
+                runtime.event(
+                    "answer.submitted", "lead", {"answer": answer},
+                    runtime.observed["lead"].copy(),
+                )
                 return {"answer": answer, "status": "completed", "stop_reason": "submit_answer"}
 
         delegated = [(i, c) for i, c in enumerate(calls) if c["name"] == "run_blocking_subagent"]
         if delegated:
             batch = batches + 1
             lead_dependencies = runtime.observed.get("lead", []).copy()
+            dropped, timed_out = [], []
+            if (runtime.faults_enabled and runtime.memory.ref and batch <= cfg.max_batches):
+                executable = min(len(delegated), cfg.max_workers_per_batch)
+                dropped = select_dropped(cfg.connection_drop, batch, executable)
+                timed_out = select_dropped(cfg.result_timeout, batch, executable)
+            delivery_parents = {}
 
             async def dispatch(position: int, index: int, call: dict[str, Any]):
                 async def handler() -> dict[str, Any]:
@@ -97,17 +108,55 @@ def build_research(
                         )
                     args = run_blocking_subagent.model_validate(call["args"])
                     agent = f"batch{batch}-worker{position + 1}"
+                    if position in dropped:
+                        runtime.event(
+                            "connection.dropped", "lead",
+                            {
+                                "assignment_id": agent,
+                                "document_id": args.document_id,
+                                "position": position + 1,
+                                "drop_number": dropped.index(position) + 1,
+                                "assignment": args.prompt,
+                            },
+                            [start], batch_id=batch, assignment_id=agent,
+                        )
+                        raise ConnectionError(
+                            "Connection to worker lost; assignment was not delivered"
+                        )
                     runtime.observed[agent] = [start]
                     result = await run_worker(
                         runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
                     )
-                    # TODO: Input agent/batch IDs and raw WorkerResult; output a delivery dict.
-                    # Apply Worker-to-Lead faults and log raw/delivered payload links.
-                    runtime.event(
-                        "worker.delivered", "lead", result.model_dump(),
-                        [runtime.observed[agent][-1]], batch_id=batch, assignment_id=agent,
-                    )
-                    return result.model_dump()
+                    parents = [runtime.observed[agent][-1]]
+                    if position in timed_out:
+                        deadline = cfg.result_timeout.timeout_seconds
+                        elapsed = asyncio.get_running_loop().time() - started
+                        injected = runtime.event(
+                            "result.timed_out", "lead",
+                            {
+                                "assignment_id": agent,
+                                "document_id": args.document_id,
+                                "position": position + 1,
+                                "timeout_number": timed_out.index(position) + 1,
+                                "timeout_seconds": deadline,
+                                "late": elapsed > deadline,
+                                "worker_status": result.status,
+                                "original_result_ref": runtime.artifacts.put(
+                                    runtime.log.redact(result.model_dump())
+                                ),
+                            },
+                            parents, batch_id=batch, assignment_id=agent,
+                        )
+                        parents.append(injected)
+                        await asyncio.sleep(max(
+                            deadline - (asyncio.get_running_loop().time() - started), 0,
+                        ))
+                        result = WorkerResult(
+                            assignment_id=agent, status="failed", stop_reason="TimeoutError: ",
+                        )
+                    delivery = result.model_dump()
+                    delivery_parents[index] = parents
+                    return delivery
 
                 # Delegation is bounded by the worker timeout, not the shorter tool timeout.
                 started = asyncio.get_running_loop().time()
@@ -133,8 +182,13 @@ def build_research(
                 *(dispatch(p, i, c) for p, (i, c) in enumerate(delegated))
             )
             for index, value in returned:
+                parents = delivery_parents.get(index, lead_dependencies).copy()
                 outputs[index] = value
                 if "assignment_id" in value:
+                    runtime.event(
+                        "worker.delivered", "lead", value, parents,
+                        batch_id=batch, assignment_id=value["assignment_id"],
+                    )
                     results = merge_results(results, {value["assignment_id"]: value})
             batches = batch
         for index, call in enumerate(calls):

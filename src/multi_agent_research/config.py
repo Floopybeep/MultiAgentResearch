@@ -1,7 +1,7 @@
 """Validated, credential-free run settings."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -44,6 +44,59 @@ class DocumentInjectionConfig(BaseModel):
         return self
 
 
+class ConnectionDropConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    batch: int = Field(default=1, gt=0)
+    num_delivered: int = Field(default=1, ge=0)
+    select: Literal["last", "random"] = "last"
+    seed: int = 0
+    persistent: bool = False
+
+
+class ResultTimeoutConfig(ConnectionDropConfig):
+    timeout_seconds: float = Field(default=180, gt=0)
+
+
+class ToolFailureConfig(BaseModel):
+    """Accidental read_document failures at the worker boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    mode: Literal["immediate", "timeout"] = "immediate"
+    document_ids: list[str] = Field(default_factory=list)
+    offsets: list[int] = Field(default_factory=list)
+    max_failures: int | None = Field(default=1, ge=0)
+    failure_probability: float = Field(default=1.0, ge=0, le=1)
+    persistent: bool = True
+    timeout_margin: float = Field(default=1.5, gt=1.0)
+    seed: int = 0
+    allow_total_denial: bool = False
+
+    @field_validator("offsets")
+    @classmethod
+    def nonnegative_offsets(cls, value):
+        if any(offset < 0 for offset in value):
+            raise ValueError("tool_failure.offsets must be nonnegative character positions")
+        return value
+
+    @model_validator(mode="after")
+    def require_total_denial_optin(self):
+        if (
+            self.enabled
+            and self.max_failures is None
+            and not self.document_ids
+            and not self.allow_total_denial
+        ):
+            raise ValueError(
+                "Uncapped failures over every document deny all evidence, so no worker "
+                "completes and the Lead raises 'At least one successful worker result is "
+                "required'. Set tool_failure.allow_total_denial to opt in, or restrict "
+                "max_failures or document_ids"
+            )
+        return self
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
@@ -65,12 +118,26 @@ class RunConfig(BaseModel):
     call_timeout_seconds: float = Field(default=60, gt=0)
     max_document_chars: int = Field(default=24000, gt=0)
     document_injection: DocumentInjectionConfig = Field(default_factory=DocumentInjectionConfig)
+    connection_drop: ConnectionDropConfig = Field(default_factory=ConnectionDropConfig)
+    result_timeout: ResultTimeoutConfig = Field(default_factory=ResultTimeoutConfig)
+    tool_failure: ToolFailureConfig = Field(default_factory=ToolFailureConfig)
     output_dir: Path = Path("runs")
 
     @model_validator(mode="after")
     def validate_worker_limits(self):
         if self.minimum_worker > self.max_workers_per_batch:
             raise ValueError("minimum_worker must not exceed max_workers_per_batch")
+        return self
+
+    @model_validator(mode="after")
+    def validate_delivery_faults(self):
+        if self.connection_drop.enabled and self.result_timeout.enabled:
+            raise ValueError("connection_drop and result_timeout are mutually exclusive")
+        if (self.result_timeout.enabled
+                and self.result_timeout.timeout_seconds > self.worker_timeout_seconds):
+            raise ValueError(
+                "result_timeout.timeout_seconds must not exceed worker_timeout_seconds"
+            )
         return self
 
     @classmethod

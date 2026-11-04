@@ -24,6 +24,17 @@ document_injection:
   enabled: false
   num_docs: 1
   prompt: ""
+connection_drop:
+  enabled: false
+  num_delivered: 1
+result_timeout:
+  enabled: false
+  num_delivered: 1
+  timeout_seconds: 1
+tool_failure:
+  enabled: false
+  mode: timeout
+  max_failures: 1
 max_lead_turns: 20
 max_worker_turns: 12
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.

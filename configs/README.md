@@ -93,6 +93,32 @@ capture the delivered page, and run config metadata captures the enabled flag,
 cap, and prompt. Injection events include the one-based `injection_number`.
 Normal credential redaction applies to all recorded payloads.
 
+## Other injections
+Each time, at most one injection is allowed
+
+Example:
+```yaml
+document_injection:
+  enabled: false
+  num_docs: 1
+  prompt: ""
+
+connection_drop:
+  enabled: false
+  num_delivered: 1
+
+result_timeout:
+  enabled: false
+  num_delivered: 1
+  timeout_seconds: 1
+
+tool_failure:
+  enabled: false
+  mode: timeout  # timeout | immediate
+  max_failures: 1
+```
+
+
 ## Usage and cost fields
 
 Input tokens include cached input. Given the endpoint's returned usage:
