@@ -50,7 +50,7 @@ def build_worker(runtime, agent, checkpointer):
             async def handler():
                 if call["name"] == "read_document":
                     args = read_document.model_validate(call["args"])
-                    return runtime.read_document(args.document_id, args.offset)
+                    return runtime.read_document(args.document_id, args.offset, agent=agent)
                 if call["name"] == "complete_task":
                     if len(calls) != 1:
                         raise ValueError("complete_task must be the only call")
@@ -108,7 +108,10 @@ async def run_worker(runtime, agent, prompt, checkpointer):
                 {
                     "messages": [
                         SystemMessage(
-                            content=prompts.load("worker")
+                            content=prompts.render(
+                                prompts.load("worker", runtime.config.worker_prompt),
+                                runtime.prompt_context,
+                            )
                             + f"\nLimits: {runtime.config.max_worker_turns} model turns, "
                             f"{runtime.config.max_worker_tool_calls} tool calls."
                         ),

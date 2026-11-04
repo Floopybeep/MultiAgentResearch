@@ -28,10 +28,10 @@ async def run_qa(
     runtime = Runtime(config, model, documents)
     started = time.monotonic()
     try:
-        runtime.db.record("prompts", prompts.hashes())
+        runtime.db.record("prompts", prompts.hashes(config))
         runtime.event("run.started", "lead", {
             "task_type": "frames_qa", "query": question, "metadata": metadata or {},
-            "prompt_hashes": prompts.hashes(),
+            "prompt_hashes": prompts.hashes(config),
         })
         snapshots = runtime.snapshot_documents()
         async with checkpoint_store(runtime.root / "checkpoints.sqlite") as saver:
@@ -45,10 +45,14 @@ async def run_qa(
                     graph.ainvoke({
                         "messages": [
                             SystemMessage(
-                                content=prompts.load("lead")
+                                content=prompts.render(
+                                    prompts.load("lead", config.lead_prompt),
+                                    runtime.prompt_context,
+                                )
                                 + f"\nLimits: {config.max_lead_turns} lead turns, "
                                 f"{config.max_batches} batches, "
-                                f"{config.max_workers_per_batch} workers per batch."
+                                f"{config.max_workers_per_batch} workers per batch. "
+                                f"Spawn at least {config.minimum_worker} workers in each delegation batch."
                             ),
                             HumanMessage(content=json.dumps({
                                 "question": question, "available_documents": documents.catalog(),

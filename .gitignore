@@ -18,3 +18,5 @@ __pycache__/
 .ruff_cache/
 dist/
 *.egg-info/
+progress_records/
+api_keys.txt

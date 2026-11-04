@@ -18,9 +18,11 @@ def normalize_answer(value: str) -> str:
 
 
 def extract_answer(response: str) -> str | None:
-    if response.count("{") != 1 or response.count("}") != 1:
+    """Extract only the contents of one nonempty, unnested boxed answer."""
+    boxes = list(re.finditer(r"\\boxed\b", response))
+    if len(boxes) != 1:
         return None
-    match = re.search(r"\{([^{}]+)\}", response)
+    match = re.match(r"\s*\{([^{}]+)\}", response[boxes[0].end():])
     return (match.group(1).strip() or None) if match else None
 
 
