@@ -255,6 +255,77 @@ Reads that would fail anyway — an unknown document, or an out-of-range offset 
 propagate unchanged and consume no failure slot, since they would have failed
 without the fault. `observability/trace_reader.py` resolves these events and
 their payload artifacts offline for inspection.
+## Connection drop
+
+`connection_drop` simulates lost Lead-to-Worker connections with the hook in
+`tools/connection_drop.py`, called by the Lead delegation step in
+`graphs/research.py`. It defaults to disabled:
+
+```yaml
+connection_drop:
+  enabled: true
+  batch: 1
+  num_delivered: 1
+  select: last
+  seed: 0
+  persistent: false
+```
+
+Only delegation batch number `batch` (one-based) is affected, unless `persistent` is
+true, in which case every later batch is dropped the same way (a degraded link that
+also drops retries). Of the assignments in
+that batch that pass the Lead-side checks (saved plan, `max_batches`,
+`max_workers_per_batch`), `num_delivered` reach their Workers and the rest are
+dropped. `select: last` drops the highest positions; `select: random` draws them with
+`seed`. `num_delivered: 0` drops the whole batch, and a value at or above the number
+of assignments drops nothing. Use `minimum_worker` to ask the Lead for enough
+assignments.
+
+A dropped assignment never starts a Worker and costs no tokens. The Lead receives
+`{"error": "ConnectionError", "message": "Connection to worker lost; assignment was
+not delivered"}` for that tool call, in the same format as other delegation errors.
+With `persistent: false`, retries in later batches are delivered normally.
+
+Each dropped assignment records a `connection.dropped` event whose parent is its
+`delegation.request`, with `assignment_id`, one-based `position`, `drop_number` within
+the batch, and the undelivered assignment text. Batches with nothing to drop record no
+event; run config metadata captures the settings.
+
+## Result timeout
+
+`result_timeout` simulates Worker results that never reach the Lead, at the Worker
+delivery step in `graphs/research.py`. It defaults to disabled:
+
+```yaml
+result_timeout:
+  enabled: true
+  batch: 1
+  num_delivered: 1
+  timeout_seconds: 180  # Deadline from dispatch; same as worker_timeout_seconds.
+  select: last
+  seed: 0
+  persistent: false
+```
+
+`batch`, `num_delivered`, `select`, `seed`, and `persistent` select assignments exactly
+as in `connection_drop`. A selected Worker runs normally, and its result is withheld
+whatever its status, so the schedule is fully controlled. The Lead cannot see the
+result, so it waits until `timeout_seconds` after dispatch and then receives the same
+result as a natural worker timeout (`status: failed`, `stop_reason: "TimeoutError: "`).
+The Lead cannot tell the two apart; the event below records what really happened,
+including the Worker's own status, so injected timeouts stay distinguishable from Worker
+budget failures in analysis. Because a batch returns only when all of its assignments finish, the
+wait is part of end-to-end latency. `timeout_seconds` must be positive and no greater
+than `worker_timeout_seconds`.
+
+Each timeout records a `result.timed_out` event when the Worker finishes, whose parent
+is its `worker.finished`, with `assignment_id`, one-based `position`, `timeout_number`
+within the batch, `timeout_seconds`, `worker_status` (the withheld result's status),
+`late` (true if the Worker finished after the
+deadline, in which case the Lead receives the timeout immediately), and
+`original_result_ref` pointing to the withheld result. `worker.delivered` records the
+failed result the Lead actually received. `connection_drop` and `result_timeout` cannot
+be enabled together.
 
 ## Usage and cost fields
 
