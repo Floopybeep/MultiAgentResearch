@@ -28,6 +28,10 @@ class BudgetExceeded(RuntimeError):
     pass
 
 
+class ModelCallTimeout(RuntimeError):
+    """A single model request timed out, not the overall run."""
+
+
 class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None):
         self.config, self.model, self.documents = config, model, documents
@@ -85,10 +89,15 @@ class Runtime:
             retry_number=0,
         )
         try:
-            response = await asyncio.wait_for(
-                self.model.invoke(role, agent, messages, tools, config),
-                self.config.call_timeout_seconds,
-            )
+            try:
+                response = await asyncio.wait_for(
+                    self.model.invoke(role, agent, messages, tools, config),
+                    self.config.call_timeout_seconds,
+                )
+            except TimeoutError as exc:
+                raise ModelCallTimeout(
+                    f"{agent}: model call timed out (limit: {self.config.call_timeout_seconds:g}s)"
+                ) from exc
             self.usage.add(response.usage_metadata, config)
             self.usage_by_role[role].add(response.usage_metadata, config)
             self.event(

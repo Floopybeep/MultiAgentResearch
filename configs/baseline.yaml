@@ -35,6 +35,6 @@ minimum_worker: 1
 max_run_tokens: 200000
 run_timeout_seconds: 900
 worker_timeout_seconds: 180
-call_timeout_seconds: 60
+call_timeout_seconds: 120
 max_document_chars: 24000
 output_dir: runs
