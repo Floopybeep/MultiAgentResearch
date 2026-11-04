@@ -20,9 +20,12 @@ class memory_read(Contract):
 
 
 class run_blocking_subagent(Contract):
-    """Delegate one self-contained evidence-reading task; independent calls form a parallel batch."""
+    """Delegate a task for one article; independent calls form a parallel batch."""
 
     prompt: str = Field(min_length=1)
+    document_id: str = Field(
+        min_length=1, description="The single article assigned to this worker, from the question's catalog"
+    )
 
 
 class submit_answer(Contract):

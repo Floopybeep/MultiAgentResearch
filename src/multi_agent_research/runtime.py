@@ -17,23 +17,41 @@ from .observability.events import EventLogger
 from .observability.usage import Usage
 from .storage.artifacts import ArtifactStore
 from .storage.database import Database
+from .tools import tool_failures
 from .tools.memory import PlanMemory
 from .tools.prompt_injection import inject_document_prompt
 from .viewer_export import ViewerExport
 
 logger = logging.getLogger(__name__)
 
+# Explicit events emitted by the implemented fault hooks.
+INJECTION_EVENTS = frozenset({
+    "document.injected", "connection.dropped", "result.timed_out", "tool.failure_injected",
+    "fault.injected", "fault.budget.exhausted",
+})
+
 
 class BudgetExceeded(RuntimeError):
     pass
 
 
+class ModelCallTimeout(RuntimeError):
+    """A single model request timed out, not the overall run."""
+
+
 class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None, *,
-                 question_key: str = ""):
+                 budget_question_key: str = ""):
         self.config, self.model, self.documents = config, model, documents
-        self.question_key = question_key
+        self.budget_question_key = budget_question_key
         self.document_injection_count = 0
+        self.tool_failure_state = tool_failures.ToolFailureState()
+        self.question_key = tool_failures.question_key(documents.documents)
+        self.attempt_number = 1
+        self.faults_enabled: bool = True
+        self.injected_faults: list[dict[str, Any]] = []
+        self.model_inputs: dict[str, list[dict[str, Any]]] = {}
+        self.verifications: list[dict[str, Any]] = []
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
         self.prompt_context = prompts.context(config, now.date().isoformat())
@@ -45,7 +63,8 @@ class Runtime:
         self.log = EventLogger(self.db, self.artifacts, self.run_id)
         self.memory = PlanMemory(self.db, self.artifacts)
         self.usage = Usage()
-        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge")}
+        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge", "verifier")}
+        self.usage.by_role = self.usage_by_role
         self.observed = {}
         redacted_config = self.log.redact(config.model_dump(mode="json"))
         self.db.record("config", redacted_config)
@@ -60,6 +79,12 @@ class Runtime:
     def event(self, kind, agent, payload, parents=(), **metadata):
         event = self.log.emit(kind, agent, payload, parents, **metadata)
         self.observed.setdefault(agent, []).append(event)
+        # Ordinary errors, timeouts and low budgets are never injection signals.
+        if kind in INJECTION_EVENTS:
+            self.injected_faults.append({
+                "run_id": self.run_id, "event_id": event,
+                "event_type": kind, "agent": agent, "payload": self.log.redact(payload),
+            })
         if kind == "model.request":
             logger.info("[%s] Calling model...", agent)
         elif kind == "model.error":
@@ -68,18 +93,30 @@ class Runtime:
             logger.info("[%s] Worker %s.", agent, payload["status"])
         elif kind == "grade.finished":
             logger.info("[judge] Grading finished (%s).", payload["method"])
+        elif kind == "verification":
+            logger.info("[%s] %s verification finished (verified=%s).",
+                        agent, payload["boundary"], payload["verified"])
+        elif kind == "attempt.interrupted":
+            logger.info("Injected fault recorded: current node finished; ending Attempt 1.")
+        elif kind == "recovery.restart":
+            logger.info("Full restart: scheduling clean Attempt 2.")
         return event
 
     async def call_model(self, role, agent, messages, tools, *, model_config=None):
         if self.usage.input_tokens + self.usage.output_tokens >= self.config.max_run_tokens:
             raise BudgetExceeded("run_token_budget")
         config = model_config if model_config is not None else getattr(self.config, role)
+        visible_messages = messages_to_dict(messages)
+        if self.config.always_verify and role in ("lead", "worker"):
+            # These are the messages actually passed to this model call, including
+            # delivered ToolMessages. Never reconstruct them from clean documents.
+            self.model_inputs[agent] = visible_messages
         start = time.monotonic()
         request = self.event(
             "model.request",
             agent,
             {
-                "messages": messages_to_dict(messages),
+                "messages": visible_messages,
                 "tools": [t.model_json_schema() for t in tools],
             },
             self.observed.get(agent, []).copy(),
@@ -87,11 +124,17 @@ class Runtime:
             max_output_tokens=config.max_output_tokens,
             retry_number=0,
         )
+        response = None
         try:
-            response = await asyncio.wait_for(
-                self.model.invoke(role, agent, messages, tools, config),
-                self.config.call_timeout_seconds,
-            )
+            try:
+                response = await asyncio.wait_for(
+                    self.model.invoke(role, agent, messages, tools, config),
+                    self.config.call_timeout_seconds,
+                )
+            except TimeoutError as exc:
+                raise ModelCallTimeout(
+                    f"{agent}: model call timed out (limit: {self.config.call_timeout_seconds:g}s)"
+                ) from exc
             self.usage.add(response.usage_metadata, config)
             self.usage_by_role[role].add(response.usage_metadata, config)
             self.event(
@@ -103,6 +146,9 @@ class Runtime:
             )
             return response
         except BaseException as exc:
+            if response is None:
+                self.usage.add(None, config)
+                self.usage_by_role[role].add(None, config)
             self.event(
                 "model.error",
                 agent,
@@ -111,6 +157,10 @@ class Runtime:
                 duration_seconds=time.monotonic() - start,
             )
             raise
+        finally:
+            elapsed = time.monotonic() - start
+            self.usage.duration_seconds += elapsed
+            self.usage_by_role[role].duration_seconds += elapsed
 
     async def call_tool(self, agent, call, handler):
         start = time.monotonic()
@@ -157,14 +207,72 @@ class Runtime:
         self.event("documents.available", "lead", {"documents": snapshots})
         return snapshots
 
-    def read_document(
+    async def deny_document(
+        self, document_id: str, offset: int, agent: str, original: dict[str, Any],
+    ) -> None:
+        """Fail an eligible read, immediately or by outlasting the tool timeout.
+
+        The slot is reserved and the event emitted before any delay: if the
+        worker's own timeout cancels the call mid-sleep, the trace must still
+        show the fault triggered.
+
+        Invariant, relied on by the caller: this either returns without ever
+        suspending, when no fault applies, or raises. It must never await and
+        then let the read succeed, which would delay a page without denying it.
+        """
+        config = self.config.tool_failure
+        decision = tool_failures.decide(
+            config, self.tool_failure_state,
+            key=self.question_key, document_id=document_id, offset=offset,
+        )
+        if not decision.fail:
+            return
+        number = self.tool_failure_state.reserve(document_id, offset)
+        delay = tool_failures.delay_seconds(config, self.config.call_timeout_seconds)
+        self.event(
+            "tool.failure_injected", agent,
+            {
+                "tool": tool_failures.TOOL_NAME,
+                "mode": config.mode,
+                "document_id": document_id,
+                "offset": offset,
+                "agent": agent,
+                "failure_number": number,
+                "attempt": decision.attempt,
+                "delay_seconds": delay if config.mode == "timeout" else None,
+                "persistent": config.persistent,
+                "original_artifact_ref": self.artifacts.put(self.log.redact(original)),
+            },
+            self.observed.get(agent, []).copy(),
+        )
+        if config.mode == "timeout":
+            await asyncio.sleep(delay)
+        # A timeout_margin above 1.0 means call_tool cancels the sleep first, so
+        # this raise is the guarantee that a denied page is never returned.
+        raise tool_failures.ToolUnavailableError(tool_failures.UNAVAILABLE_MESSAGE)
+
+    async def read_document(
         self, document_id: str, offset: int, *, agent: str = "worker",
     ) -> dict[str, Any]:
+        """Read a page, unless a configured accidental fault denies it.
+
+        Two invariants future changes must preserve. First, the document
+        injection below checks `document_injection_count` and increments it with
+        no suspension point in between, so concurrent workers cannot both claim
+        the last slot; keep that pair synchronous and adjacent. The `await`
+        below is the only suspension point in this method and it precedes the
+        check, which is why the pair stays atomic. Second, `deny_document`
+        either returns without suspending or raises, so a read that is not
+        denied is never delayed.
+        """
         original = self.documents.read(document_id, offset, self.config.max_document_chars)
+        if self.faults_enabled and self.config.tool_failure.enabled:
+            await self.deny_document(document_id, offset, agent, original)
         injection = self.config.document_injection
-        if injection.enabled and self.document_injection_count < injection.num_docs:
+        if (self.faults_enabled and injection.enabled
+                and self.document_injection_count < injection.num_docs):
             injected = inject_document_prompt(original, injection)
-            # This synchronous boundary shares one cap across all workers in the run.
+            # No await between this cap check and increment: workers share one cap.
             self.document_injection_count += 1
             self.event(
                 "document.injected", agent,

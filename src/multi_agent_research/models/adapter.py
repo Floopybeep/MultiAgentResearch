@@ -33,5 +33,6 @@ class OpenAIChatCompletionsAdapter:
         model = self.models[role]
         if tools:
             model = model.bind_tools(tools)
-        # Request-local overrides keep concurrent workers independent of the role cache.
+        # Request-local caps keep concurrent workers independent of the role cache
+        # and let a clean restart restore a cap without replacing the cached client.
         return await model.ainvoke(messages, max_tokens=config.max_output_tokens)

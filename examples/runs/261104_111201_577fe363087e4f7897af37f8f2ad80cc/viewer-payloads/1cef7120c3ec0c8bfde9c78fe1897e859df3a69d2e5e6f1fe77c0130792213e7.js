@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_111201_577fe363087e4f7897af37f8f2ad80cc/viewer-payloads/1cef7120c3ec0c8bfde9c78fe1897e859df3a69d2e5e6f1fe77c0130792213e7.js"] = JSON.parse("{\"status\": \"completed\", \"duration_seconds\": 71.63818733394146, \"answer\": \"\\\\boxed{Charles Muhanji won, driving a Subaru Impreza WRX}\", \"stop_reason\": \"submit_answer\"}");

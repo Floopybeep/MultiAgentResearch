@@ -93,6 +93,48 @@ capture the delivered page, and run config metadata captures the enabled flag,
 cap, and prompt. Injection events include the one-based `injection_number`.
 Normal credential redaction applies to all recorded payloads.
 
+## Delivery faults and recovery
+
+The restored fault settings are optional and disabled by default:
+
+- `connection_drop`: `enabled`, `batch` (default 1), `num_delivered` (default 1),
+  `select` (`last` or `random`), `seed`, and `persistent`. Drops assignments beyond
+  the number delivered in the selected batch; persistent selection continues in later batches.
+- `result_timeout`: the same selection settings plus `timeout_seconds` (default
+  180). Selected worker results are withheld and delivered as timeout failures.
+  Workers finish before this fault is applied. The deadline is measured from dispatch.
+
+These two delivery faults are mutually exclusive. An enabled result timeout must
+not exceed `worker_timeout_seconds`.
+
+### Tool failure injection
+
+`tool_failure` supports `mode: immediate` (raises a tool error) or `mode: timeout`
+(delays beyond `call_timeout_seconds`). `document_ids` and `offsets` select pages;
+empty lists match any valid page. `max_failures` defaults to 1 and counts selected
+calls across all workers in a question run. `failure_probability`, `seed`, and
+`persistent` control selection and repeated denial. `timeout_margin` must exceed
+1; uncapped denial of every document requires `allow_total_denial: true`.
+See `faults-tool-read-denial.yaml` for the complete configuration.
+
+Tool denial runs before document prompt injection. A denied read does not consume
+`document_injection.num_docs`; successful reads still use its shared per-run cap.
+
+### Recovery strategy
+
+Set `full_restart: true` or pass `--full-restart` to interrupt after a node/batch
+finishes with an explicit injection event and retry once with fresh state and all
+fault settings disabled. Pipeline `fault.injected` and worker budget
+`fault.budget.exhausted` count as injection events. Ordinary errors, natural
+output limits and budgets that never bind do not trigger this restart. Attempt
+artifacts and combined usage retain both attempts.
+
+Set `always_verify: true` or pass `--always-verify` to diagnose the actual Lead
+plan and delivered Worker results. Verification is diagnostic only: it does not
+rewrite results or restart. The two strategies are mutually exclusive, including
+when configured in YAML. Configure the `verifier` model using the same fields as
+`judge`; its default model is `glm-5.3-flash`.
+
 ## Usage and cost fields
 
 Input tokens include cached input. Given the endpoint's returned usage:
@@ -143,6 +185,8 @@ In-flight parallel calls can exceed the limit. A failed judge call records
 | `--sample-size` | 10 | Number of sampled questions |
 | `--seed` | 42 | Local question-sampling seed |
 | `--question-ids` | unset | Explicit unique TSV row IDs, overriding sampling |
+| `--full-restart` | off | Enable oracle-triggered clean restart |
+| `--always-verify` | off | Enable planning and Worker-result diagnostics |
 
 The dataset contains 822 questions with original IDs. `index.json` maps questions
 to document IDs and documents to titles, URLs and Markdown filenames. Each

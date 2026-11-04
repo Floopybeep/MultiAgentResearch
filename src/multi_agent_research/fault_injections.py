@@ -45,7 +45,7 @@ class WorkerBudgetFaults:
         active = {}
         for name in ("generation_budget", "tool_call_budget"):
             fault = getattr(settings, name)
-            decision = select_fault(fault, name, runtime.question_key, agent)
+            decision = select_fault(fault, name, runtime.budget_question_key, agent)
             if name == "generation_budget":
                 severity = {"max_output_tokens": fault.max_output_tokens,
                             "budget_scope": fault.budget_scope,

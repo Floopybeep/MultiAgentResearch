@@ -12,7 +12,7 @@ from ..schemas import AgentState, WorkerResult, complete_task, read_document
 TOOLS = [read_document, complete_task]
 
 
-def build_worker(runtime, agent, checkpointer, faults=None):
+def build_worker(runtime, agent, checkpointer, *, document_id: str, faults=None):
     cfg = runtime.config
     faults = faults if faults is not None else WorkerBudgetFaults.for_worker(runtime, agent)
 
@@ -94,7 +94,7 @@ def build_worker(runtime, agent, checkpointer, faults=None):
             async def handler():
                 if call["name"] == "read_document":
                     args = read_document.model_validate(call["args"])
-                    return runtime.read_document(args.document_id, args.offset, agent=agent)
+                    return await runtime.read_document(args.document_id, args.offset, agent=agent)
                 if call["name"] == "complete_task":
                     if len(calls) != 1:
                         raise ValueError("complete_task must be the only call")
@@ -150,13 +150,17 @@ def build_worker(runtime, agent, checkpointer, faults=None):
     return graph.compile(checkpointer=checkpointer)
 
 
-async def run_worker(runtime, agent, prompt, checkpointer):
+async def run_worker(runtime, agent, prompt, checkpointer, *, document_id: str):
+    document = runtime.documents.documents.get(document_id)
+    if document is None:
+        raise ValueError("Assigned document is outside this question's catalog")
     started = asyncio.get_running_loop().time()
     runtime.event(
-        "worker.started", agent, {"assignment": prompt}, runtime.observed.get(agent, []).copy()
+        "worker.started", agent, {"assignment": prompt, "document_id": document_id},
+        runtime.observed.get(agent, []).copy(),
     )
     faults = WorkerBudgetFaults.for_worker(runtime, agent)
-    graph = build_worker(runtime, agent, checkpointer, faults)
+    graph = build_worker(runtime, agent, checkpointer, document_id=document_id, faults=faults)
     state = None
     try:
         state = await asyncio.wait_for(
@@ -172,7 +176,7 @@ async def run_worker(runtime, agent, prompt, checkpointer):
                             f"{runtime.config.max_worker_tool_calls} tool calls."
                         ),
                         HumanMessage(content=json.dumps({
-                            "assignment": prompt, "available_documents": runtime.documents.catalog(),
+                            "assignment": prompt, "available_documents": [document.catalog_entry()],
                         })),
                     ],
                     "documents": [],

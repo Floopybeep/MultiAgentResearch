@@ -11,6 +11,8 @@ h1{font-size:18px;margin:0}h2{font-size:16px;margin:0}p{line-height:1.5}button{b
 main{overflow:auto;position:relative}#run-list{padding:10px}.run{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;background:#1b293b;border-color:transparent}.run.selected{border-color:#6bb9ff;background:#243d59}.run strong{display:block;overflow-wrap:anywhere}.run small{overflow-wrap:anywhere;display:block;color:#a8b9ce;margin-top:6px}.run .query{margin-top:8px;font-size:12px;line-height:1.5}
 #summary{padding:18px 24px 0}#summary .stats{display:flex;gap:12px;flex-wrap:wrap;color:#a8c8e7}.notice{color:#e8c98a}#flow-wrap{position:relative;padding:25px;min-height:200px;overflow:auto}#flow{position:relative;z-index:1;min-width:650px}
 .stage{margin:0 0 74px}.stage-heading{margin:0 0 16px;font-size:13px;color:#a8b9ce;text-transform:uppercase;letter-spacing:.08em}
+.attempt-heading{padding:16px 20px;margin:0 0 28px;border-left:3px solid #8bc8ff;background:#1b293b;border-radius:7px}.attempt-heading p{margin-bottom:0;color:#a8b9ce;font-size:12px;overflow-wrap:anywhere}
+.restart-boundary{padding:20px;margin:0 0 28px;text-align:center;color:#e8c98a;border:1px dashed #887548;border-radius:8px;background:#29261f}
 .lanes{display:flex;gap:28px;align-items:flex-start;justify-content:safe center}.lane{flex:1;min-width:240px;max-width:700px}.lane-heading{padding:9px 12px;background:var(--lane-bg,#203147);border-radius:8px;color:var(--role-accent,#8bc8ff);font-weight:600;margin-bottom:16px}
 .card{border:1px solid var(--card-border,#42546c);background:var(--card-bg,#1b293b);border-radius:10px;margin-bottom:24px;box-shadow:0 5px 15px #0002;position:relative;overflow:hidden}.card.error{border-color:#d47d7d}.card.pending{border-style:dashed}.card-head{padding:12px 14px;display:flex;justify-content:space-between;gap:10px;font-weight:600;background:var(--card-head-bg,#213248)}.card-head small{font-size:11px;color:var(--role-muted,#b1c0d4);font-weight:400;white-space:nowrap}.preview{padding:12px 14px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:150px;overflow:auto;color:var(--role-text,#d0deee)}
 details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summary{cursor:pointer;color:var(--role-accent,#9dccf7)}pre{font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:480px;overflow:auto;margin:10px 0 0}svg#arrows{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
@@ -95,7 +97,7 @@ function loadData(path){
  promise.then(()=>pendingLoads.delete(path),()=>pendingLoads.delete(path));
  return promise;
 }
-async function loadRun(name){
+async function loadSingleRun(name){
  if(!/^(?:\d{6}_\d{6}_)?[a-f0-9]{32}$/.test(name))throw Error('Invalid run directory');
  const data=await loadData(name+'/viewer-data.js');
  data.warnings=[...(data.warnings||[])];
@@ -114,22 +116,48 @@ async function loadRun(name){
  await Promise.all(Array.from({length:8},worker));
  return data;
 }
+async function loadRun(name){
+ const data=await loadSingleRun(name);
+ if((data.attempts||[]).length>1){
+  data.attempt_runs=await Promise.all(data.attempts.map(async attempt=>{
+   try{
+    const trace=attempt.directory===name?data:await loadSingleRun(attempt.directory);
+    if(attempt.directory!==name)data.warnings.push(...trace.warnings);
+    return {...trace,attempt};
+   }catch(error){
+    data.warnings.push('Attempt '+attempt.attempt_number+': '+error.message);
+    return {directory:attempt.directory,events:[],attempt,warnings:[error.message]};
+   }
+  }));
+ }
+ return data;
+}
 function showError(e){$('#error').textContent=e.message}
+function visibleRuns(){
+ const hidden=new Set();
+ for(const run of runs)if((run.attempts||[]).length>1)
+  for(const attempt of run.attempts)if(attempt.directory!==run.directory)hidden.add(attempt.directory);
+ return runs.filter(run=>!hidden.has(run.directory));
+}
 function drawList(){
- const list=$('#run-list');list.replaceChildren();
- if(!runs.length)list.append(el('p','empty','No runs found.'));
- for(const run of runs){
+ const list=$('#run-list'),visible=visibleRuns();list.replaceChildren();
+ if(!visible.length)list.append(el('p','empty','No runs found.'));
+ for(const run of visible){
   const b=el('button','run'+(selected===run.directory?' selected':''));
   b.append(el('strong','',run.started_at?new Date(run.started_at).toLocaleString():run.directory),
-   el('small','',run.status),el('small','',run.directory),
+   el('small','',run.status+((run.attempts||[]).length>1?' · Full Restart · '+run.attempts.length+' attempts':'')),el('small','',run.directory),
    el('div','query',(run.query||run.error||'No query recorded').slice(0,180)));
   b.onclick=()=>selectRun(run.directory);list.append(b);
  }
 }
 async function refreshList(){
  const button=$('#refresh-list');button.disabled=true;
- try{runs=await loadData('viewer-manifest.js');drawList();if(!selected&&runs.length)await selectRun(runs[0].directory)}
- catch(e){showError(e)}finally{button.disabled=false}
+ try{
+  runs=await loadData('viewer-manifest.js');drawList();
+  const visible=visibleRuns(),parent=visible.find(run=>(run.attempts||[]).some(attempt=>attempt.directory===selected));
+  if(parent&&parent.directory!==selected)await selectRun(parent.directory);
+  else if(!selected&&visible.length)await selectRun(visible[0].directory);
+ }catch(e){showError(e)}finally{button.disabled=false}
 }
 function section(card,label,value,open=false){
  const d=el('details');d.open=open;d.append(el('summary','',label),el('pre','',pretty(value)));card.append(d);
@@ -235,6 +263,10 @@ function renderReport(data){
   const badges=el('div','qa-badges'),g=qa.grade;
   const badge=(text,tone='')=>badges.append(el('span','qa-badge '+tone,text));
   badge('Execution: '+(qa.final?.status||data.status||'In progress'));
+  if((data.attempts||[]).length>1){
+   badge('Full Restart · '+data.attempts.length+' attempts · selected: '+data.selected_attempt);
+   badge('Clean state reset: '+(data.clean_slate_reset===true?'yes':data.clean_slate_reset===false?'no':'not recorded'),data.clean_slate_reset===true?'qa-good':'qa-warn');
+  }
   if(g){
    badge(g.correct===true?'Correct':g.correct===false?'Incorrect':'Unresolved',g.correct===true?'qa-good':g.correct===false?'qa-bad':'qa-warn');
    badge(g.format_valid==null?'Format: not recorded':g.format_valid?'Format: valid':'Format: invalid',g.format_valid===false?'qa-warn':'');
@@ -255,6 +287,17 @@ function renderReport(data){
    const item=el('div','qa-metric');item.append(el('dt','',label),el('dd','',value));metrics.append(item);
   }
   panel.append(metrics,el('p','report-note','Input includes cached tokens. Cost is an estimate, not the provider bill.'));
+  if((data.attempts||[]).length>1){
+   const details=el('details','qa-details'),table=el('table','qa-table'),head=el('tr');
+   for(const title of ['Attempt','Status','Injection','Calls','Tokens','Time','Estimated cost'])head.append(el('th','',title));
+   const thead=el('thead');thead.append(head);table.append(thead);const body=el('tbody');
+   for(const attempt of data.attempts){
+    const row=el('tr'),injection=attempt.faults_enabled==null?'Not recorded':attempt.faults_enabled?'On':'Off';
+    for(const value of [attempt.attempt_number+(attempt.attempt_number===data.selected_attempt?' (selected)':''),attempt.status,injection+(attempt.fault_injected?' · injected':''),number(attempt.model_calls),number(attempt.total_tokens),seconds(attempt.elapsed_seconds),money(attempt.estimated_cost_usd)])row.append(el('td','',value));
+    body.append(row);
+   }
+   table.append(body);details.append(el('summary','','Attempts · totals above include both attempts'),table);panel.append(details);
+  }
   if(g?.error)panel.append(el('p','notice',g.error));
   if(g?.judge_reason){
    const details=el('details','qa-details');
@@ -271,7 +314,7 @@ function renderReport(data){
    }
    table.append(body);details.append(el('summary','','Usage by role'),table);panel.append(details);
   }
-  panel.append(el('h3','worker-results-heading','Worker findings ('+result.workers.length+')'));
+  panel.append(el('h3','worker-results-heading','Worker findings ('+result.workers.length+')'+((data.attempts||[]).length>1?' · Attempt '+data.selected_attempt:'')));
   for(const [id,worker] of result.workers){
    const details=el('details','qa-details');
    details.append(el('summary','',id+' · '+(worker.status||'Unknown status')));
@@ -366,27 +409,37 @@ function buildStages(events){
 }
 function renderFlow(data){
  const flow=$('#flow');flow.replaceChildren();stageElements=[];
- for(const s of buildStages(data.events)){
-  const wrapper=el('section','stage');wrapper.append(el('h3','stage-heading',s.label));
-  // Delegation inputs precede the parallel worker columns.
-  const delegation=s.lanes.get('lead delegation');
-  if(delegation){
-   const box=el('div','lanes'), l=el('div','lane');
-   const first=delegation[0].event;
-   l.append(renderCard({event:{...first,event_type:'lead · parallel delegation',
-    payload:{assignments:delegation.map(x=>x.event.payload)},
-    delegation_event_ids:delegation.map(x=>x.event.event_id)}}));
-   box.append(l);wrapper.append(box);
-   s.lanes.delete('lead delegation');
+ for(const [index,trace] of (data.attempt_runs||[data]).entries()){
+  if(data.attempt_runs){
+   if(index)flow.append(el('div','restart-boundary','↓ Full Restart · discard previous execution state · begin a fresh attempt ↓'));
+   const heading=el('section','attempt-heading'),attempt=trace.attempt;
+   heading.append(el('h2','','Attempt '+attempt.attempt_number+' · '+attempt.status+(attempt.attempt_number===data.selected_attempt?' · selected result':'')),el('p','',trace.directory+' · injection '+(attempt.faults_enabled?'enabled':'disabled')));
+   for(const warning of trace.warnings||[])heading.append(el('p','notice',warning));
+   flow.append(heading);
   }
-  const lanes=el('div','lanes'), columns=[];
-  for(const [id,entries] of s.lanes){
-   const roleClass=/^batch\d+-worker\d+$/.test(id)?' role-worker':id==='citation'?' role-citation':id==='judge'?' role-judge':'';
-   const l=el('div','lane'+roleClass);l.append(el('div','lane-heading',id));
-   for(const entry of entries)l.append(renderCard(entry));
-   lanes.append(l);columns.push(l);
+  let firstStage=true;
+  for(const s of buildStages(trace.events)){
+   const wrapper=el('section','stage');wrapper.append(el('h3','stage-heading',s.label));
+   // Delegation inputs precede the parallel worker columns.
+   const delegation=s.lanes.get('lead delegation');
+   if(delegation){
+    const box=el('div','lanes'), l=el('div','lane');
+    const first=delegation[0].event;
+    l.append(renderCard({event:{...first,event_type:'lead · parallel delegation',
+     payload:{assignments:delegation.map(x=>x.event.payload)},
+     delegation_event_ids:delegation.map(x=>x.event.event_id)}}));
+    box.append(l);wrapper.append(box);
+    s.lanes.delete('lead delegation');
+   }
+   const lanes=el('div','lanes'), columns=[];
+   for(const [id,entries] of s.lanes){
+    const roleClass=/^batch\d+-worker\d+$/.test(id)?' role-worker':id==='citation'?' role-citation':id==='judge'?' role-judge':'';
+    const l=el('div','lane'+roleClass);l.append(el('div','lane-heading',id));
+    for(const entry of entries)l.append(renderCard(entry));
+    lanes.append(l);columns.push(l);
+   }
+   wrapper.append(lanes);flow.append(wrapper);stageElements.push({wrapper,columns,attemptStart:firstStage});firstStage=false;
   }
-  wrapper.append(lanes);flow.append(wrapper);stageElements.push({wrapper,columns});
  }
  requestAnimationFrame(drawArrows);
 }
@@ -400,6 +453,7 @@ function drawArrows(){
  function arrow(a,b){const [x,y]=point(a,true),[xx,yy]=point(b,false);const p=document.createElementNS(ns,'path');p.setAttribute('d',`M ${x} ${y} C ${x} ${(y+yy)/2}, ${xx} ${(y+yy)/2}, ${xx} ${yy-3}`);p.setAttribute('fill','none');p.setAttribute('stroke','#7795b7');p.setAttribute('stroke-width','1.5');p.setAttribute('marker-end','url(#head)');svg.append(p)}
  let previous=[];
  for(const stage of stageElements){
+  if(stage.attemptStart)previous=[];
   const topBox=stage.wrapper.querySelector(':scope > .lanes'),delegation=topBox&&topBox!==stage.wrapper.lastElementChild?[...topBox.querySelectorAll('.card')]:[];
   const first=[],last=[];
   for(const col of stage.columns){const cards=[...col.querySelectorAll('.card')];if(!cards.length)continue;first.push(cards[0]);last.push(cards.at(-1));for(let i=1;i<cards.length;i++)arrow(cards[i-1],cards[i])}
@@ -419,13 +473,15 @@ async function selectRun(name){
  const openIds=new Set([...document.querySelectorAll('.card details[open]')].map(d=>d.parentElement.dataset.event+'|'+d.querySelector('summary').textContent));
  try{
   const data=await loadRun(name);if(version!==requestVersion)return;
-  $('#title').textContent=name;const summary=$('#summary');summary.replaceChildren();
+  $('#title').textContent=(data.attempt_runs?'Full Restart · ':'')+name;const summary=$('#summary');summary.replaceChildren();
   summary.append(el('h2','',data.query||'No query recorded'));
   const u=data.usage;summary.append(el('p','stats',`Status: ${data.status} · ${u.model_calls||0} model calls · ${(u.input_tokens||0).toLocaleString()} input / ${(u.output_tokens||0).toLocaleString()} output tokens`));
+  if(data.attempt_runs)summary.append(el('p','stats',data.attempt_runs.length+' attempts · selected result: Attempt '+data.selected_attempt+' · usage totals include both attempts'));
   if(data.stop_reason)summary.append(el('p','notice','Stop reason: '+data.stop_reason));
   if(data.status==='unfinished')summary.append(el('p','notice','No final run event: this run may be active or interrupted.'));
   if(data.warnings.length)summary.append(el('p','notice',data.warnings.join('\n')));
-  const config=el('details');config.append(el('summary','','Run configuration'),el('pre','',pretty(data.config)));summary.append(config);
+  const baseConfig=data.attempt_runs?collectQA(data).final?.base_config:null;
+  const config=el('details');config.append(el('summary','',baseConfig?'Experiment baseline configuration':data.attempt_runs?'Selected attempt configuration':'Run configuration'),el('pre','',pretty(baseConfig||data.config)));summary.append(config);
   renderFlow(data);renderReport(data);selectTab(activeTab);
   for(const d of document.querySelectorAll('.card details'))if(openIds.has(d.parentElement.dataset.event+'|'+d.querySelector('summary').textContent))d.open=true;
  }catch(e){if(version===requestVersion)showError(e)}finally{if(version===requestVersion)$('#refresh-run').disabled=false}

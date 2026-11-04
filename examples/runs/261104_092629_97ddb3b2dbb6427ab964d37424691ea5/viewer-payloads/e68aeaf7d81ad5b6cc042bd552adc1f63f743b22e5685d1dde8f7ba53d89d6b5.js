@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_092629_97ddb3b2dbb6427ab964d37424691ea5/viewer-payloads/e68aeaf7d81ad5b6cc042bd552adc1f63f743b22e5685d1dde8f7ba53d89d6b5.js"] = JSON.parse("{\"answer\": \"\\\\boxed{Daniel Kamau; Mitsubishi Lancer Evolution VI}\"}");
