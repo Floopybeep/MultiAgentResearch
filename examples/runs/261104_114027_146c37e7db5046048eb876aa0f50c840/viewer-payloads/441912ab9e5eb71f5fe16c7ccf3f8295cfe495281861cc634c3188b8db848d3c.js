@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_114027_146c37e7db5046048eb876aa0f50c840/viewer-payloads/441912ab9e5eb71f5fe16c7ccf3f8295cfe495281861cc634c3188b8db848d3c.js"] = JSON.parse("{\"assignment_id\": \"batch1-worker2\", \"status\": \"failed\", \"findings\": \"\", \"document_ids\": [], \"uncertainties\": [], \"stop_reason\": \"TimeoutError: \"}");

@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_113304_67216e1a06d9407491d96ac676e40bad/viewer-payloads/321c76d0ce7f4799e21c22b8a83c308c5969f6152472845e684975a6d3f8ec99.js"] = JSON.parse("{\"error\": \"ConnectionError\", \"message\": \"Connection to worker lost; assignment was not delivered\"}");

@@ -1,0 +1,2 @@
+# Keep recorded browser snapshots out of normal source-code review diffs.
+examples/runs/** linguist-generated=true

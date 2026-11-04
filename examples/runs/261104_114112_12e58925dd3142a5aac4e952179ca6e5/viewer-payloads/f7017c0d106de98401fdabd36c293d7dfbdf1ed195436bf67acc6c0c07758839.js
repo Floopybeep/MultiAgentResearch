@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_114112_12e58925dd3142a5aac4e952179ca6e5/viewer-payloads/f7017c0d106de98401fdabd36c293d7dfbdf1ed195436bf67acc6c0c07758839.js"] = JSON.parse("{\"completed\": {\"answer\": \"\\\\boxed{Charles Muhanji, driving a Subaru Impreza WRX}\"}}");
