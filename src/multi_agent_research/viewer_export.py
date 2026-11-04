@@ -66,17 +66,44 @@ def publish_manifest(root, summary):
         write_data(root, "viewer-manifest.js", runs)
 
 
+def _attempt_metadata(result):
+    metadata = {
+        key: result[key]
+        for key in ("strategy", "selected_attempt", "restarted", "clean_slate_reset")
+        if key in result
+    }
+    metadata["attempts"] = []
+    for attempt in result.get("attempts", []):
+        if not attempt.get("output_dir"):
+            continue
+        usage = attempt.get("usage", {})
+        metadata["attempts"].append({
+            **{key: attempt.get(key) for key in (
+                "attempt_number", "run_id", "status", "faults_enabled", "fault_injected",
+                "elapsed_seconds",
+            )},
+            "directory": Path(attempt["output_dir"]).name,
+            "model_calls": usage.get("model_calls"),
+            "total_tokens": usage.get("total_tokens"),
+            "estimated_cost_usd": usage.get("estimated_cost_usd"),
+        })
+    return metadata
+
+
 def publish_snapshot(root, data):
     """Used by migration; publish payloads before the index that references them."""
     name = data["directory"]
     events = []
+    attempts = {}
     for event in data["events"]:
+        if event["event_type"] == "run.finished":
+            attempts.update(_attempt_metadata(event["payload"]))
         metadata = {k: v for k, v in event.items() if k != "payload"}
         write_data(
             root, f"{name}/viewer-payloads/{event['payload_ref']}.js", event["payload"]
         )
         events.append(metadata)
-    trace = {**data, "events": events}
+    trace = {**data, **attempts, "events": events}
     write_data(root, f"{name}/viewer-data.js", trace)
     publish_manifest(root, {k: v for k, v in trace.items() if k not in ("events", "config")})
 
@@ -123,6 +150,7 @@ class ViewerExport:
             for key in ("input_tokens", "output_tokens"):
                 self.data["usage"][key] += usage.get(key, 0)
         elif kind == "run.finished":
+            self.data.update(_attempt_metadata(payload))
             for key in ("status", "stop_reason", "usage"):
                 if key in payload:
                     self.data[key] = payload[key]
