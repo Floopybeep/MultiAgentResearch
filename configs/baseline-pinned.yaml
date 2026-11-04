@@ -40,6 +40,14 @@ document_injection:
   enabled: false
   num_docs: 1
   prompt: ""
+# Drop Lead-to-Worker assignments in one delegation batch; num_delivered reach Workers.
+connection_drop:
+  enabled: false
+  batch: 1
+  num_delivered: 1
+  select: last
+  seed: 0
+  persistent: false
 max_lead_turns: 10
 max_worker_turns: 5
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.

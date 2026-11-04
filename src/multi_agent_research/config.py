@@ -1,7 +1,7 @@
 """Validated, credential-free run settings."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -44,6 +44,16 @@ class DocumentInjectionConfig(BaseModel):
         return self
 
 
+class ConnectionDropConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    batch: int = Field(default=1, gt=0)
+    num_delivered: int = Field(default=1, ge=0)
+    select: Literal["last", "random"] = "last"
+    seed: int = 0
+    persistent: bool = False
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
@@ -65,6 +75,7 @@ class RunConfig(BaseModel):
     call_timeout_seconds: float = Field(default=60, gt=0)
     max_document_chars: int = Field(default=24000, gt=0)
     document_injection: DocumentInjectionConfig = Field(default_factory=DocumentInjectionConfig)
+    connection_drop: ConnectionDropConfig = Field(default_factory=ConnectionDropConfig)
     output_dir: Path = Path("runs")
 
     @model_validator(mode="after")

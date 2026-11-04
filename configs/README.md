@@ -93,6 +93,42 @@ capture the delivered page, and run config metadata captures the enabled flag,
 cap, and prompt. Injection events include the one-based `injection_number`.
 Normal credential redaction applies to all recorded payloads.
 
+## Connection drop
+
+`connection_drop` simulates lost Lead-to-Worker connections with the hook in
+`tools/connection_drop.py`, called by the Lead delegation step in
+`graphs/research.py`. It defaults to disabled:
+
+```yaml
+connection_drop:
+  enabled: true
+  batch: 1
+  num_delivered: 1
+  select: last
+  seed: 0
+  persistent: false
+```
+
+Only delegation batch number `batch` (one-based) is affected, unless `persistent` is
+true, in which case every later batch is dropped the same way (a degraded link that
+also drops retries). Of the assignments in
+that batch that pass the Lead-side checks (saved plan, `max_batches`,
+`max_workers_per_batch`), `num_delivered` reach their Workers and the rest are
+dropped. `select: last` drops the highest positions; `select: random` draws them with
+`seed`. `num_delivered: 0` drops the whole batch, and a value at or above the number
+of assignments drops nothing. Use `minimum_worker` to ask the Lead for enough
+assignments.
+
+A dropped assignment never starts a Worker and costs no tokens. The Lead receives
+`{"error": "ConnectionError", "message": "Connection to worker lost; assignment was
+not delivered"}` for that tool call, in the same format as other delegation errors.
+With `persistent: false`, retries in later batches are delivered normally.
+
+Each dropped assignment records a `connection.dropped` event whose parent is its
+`delegation.request`, with `assignment_id`, one-based `position`, `drop_number` within
+the batch, and the undelivered assignment text. Batches with nothing to drop record no
+event; run config metadata captures the settings.
+
 ## Usage and cost fields
 
 Input tokens include cached input. Given the endpoint's returned usage:
