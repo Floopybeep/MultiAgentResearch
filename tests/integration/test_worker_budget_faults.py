@@ -465,7 +465,7 @@ async def test_parallel_calls_admit_list_prefix(tmp_path):
     worker = result["worker_results"][W1]
     assert (worker["status"], worker["stop_reason"]) == ("budget_exhausted", TOOL_EXHAUSTED)
     assert [p["args"]["document_id"] for _, p in of(audit, "tool.request", W1)] == ["doc2", "doc1"]
-    assert worker["document_ids"] == ["doc1", "doc2"]
+    assert worker["document_ids"] == ["doc1"]
     exhausted = of(audit, "fault.budget.exhausted", W1)[0][1]
     assert exhausted["tool_calls"] == 2
     assert exhausted["blocked_tool_call_ids"] == [f"{W1}-0-2", f"{W1}-0-3"]

@@ -476,17 +476,20 @@ class ScriptedModel:
             return response(("read_document", {"document_id": "doc1", "offset": 0}))
         if turn == 2:
             return response(("read_document", {"document_id": "doc2", "offset": 0}))
+        if turn == 3:
+            return response(("read_document", {"document_id": "doc1", "offset": 0}))
         return response(("complete_task", {
-            "findings": "doc2 gives the value 42.", "document_ids": ["doc2"],
+            "findings": "doc1 gives the value 42.", "document_ids": ["doc1"],
         }))
 
 
 @pytest.mark.asyncio
-async def test_the_worker_receives_the_error_and_falls_back_through_the_real_graph(tmp_path):
+@pytest.mark.parametrize("fault_enabled", [False, True])
+async def test_worker_cannot_read_another_assignment_after_a_fault(tmp_path, fault_enabled):
     from multi_agent_research.runner import run_qa
 
-    # Distinct bodies, so "the denied page was never delivered" is checkable.
-    bodies = {"doc1": "DENIED-" + TEXT, "doc2": "VISIBLE-" + TEXT}
+    # Distinct bodies make unauthorized content exposure observable.
+    bodies = {"doc1": "ASSIGNED-" + TEXT, "doc2": "UNASSIGNED-" + TEXT}
     documents = OracleDocuments([
         LocalDocument(
             document_id=key, title=f"Fixture {key}",
@@ -499,7 +502,7 @@ async def test_the_worker_receives_the_error_and_falls_back_through_the_real_gra
         minimum_worker=1,
         output_dir=tmp_path / "runs",
         tool_failure={
-            "enabled": True, "mode": "immediate",
+            "enabled": fault_enabled, "mode": "immediate",
             "document_ids": ["doc1"], "offsets": [0], "max_failures": 1,
         },
     )
@@ -507,25 +510,29 @@ async def test_the_worker_receives_the_error_and_falls_back_through_the_real_gra
     result = await run_qa("How many?", config, model, documents)
 
     assert result["status"] == "completed"
-    # Stage 4: the denial reached the worker's own message history.
-    assert any(
-        '"error": "ToolUnavailableError"' in m or '"error":"ToolUnavailableError"' in m
-        for m in model.worker_tool_messages
-    ), model.worker_tool_messages
-    # The withheld page never appears in anything the worker was shown, while
-    # the document it fell back to does.
-    assert not any("DENIED" in m for m in model.worker_tool_messages)
-    assert any("VISIBLE" in m for m in model.worker_tool_messages)
+    assert any('"error": "PermissionError"' in m for m in model.worker_tool_messages)
+    assert not any("UNASSIGNED-" in m for m in model.worker_tool_messages)
+    assert any("ASSIGNED-" in m for m in model.worker_tool_messages)
+    assert any('"error": "ToolUnavailableError"' in m
+               for m in model.worker_tool_messages) == fault_enabled
 
     reader = TraceReader(result["output_dir"])
-    (failure,) = reader.failures()
-    assert (failure["document_id"], failure["offset"]) == ("doc1", 0)
-    assert failure["agent"].startswith("batch1-worker")
-    # Only the targeted document was denied; doc2 was read and cited.
-    assert sorted({doc for _, doc, _, _ in reader.reads()}) == ["doc1", "doc2"]
+    failures = reader.failures()
+    assert len(failures) == int(fault_enabled)
+    if fault_enabled:
+        assert (failures[0]["document_id"], failures[0]["offset"]) == ("doc1", 0)
+    # The unauthorized call is logged as an error and never returns article text.
+    requests = {e["tool_call_id"]: e["payload"] for e in reader.events("tool.request")}
+    errors = [e for e in reader.events("tool.error")
+              if e["payload"]["error"] == "PermissionError"]
+    assert len(errors) == 1
+    assert requests[errors[0]["tool_call_id"]]["args"]["document_id"] == "doc2"
+    pages = [e["payload"] for e in reader.events("tool.result")
+             if "text" in e["payload"]]
+    assert pages and all(page["document_id"] == "doc1" for page in pages)
     worker = reader.events("worker.finished")[0]["payload"]
     assert worker["status"] == "completed"
-    assert worker["document_ids"] == ["doc2"]
+    assert worker["document_ids"] == ["doc1"]
 
 
 # --- asynchronous execution invariants ----------------------------------------
