@@ -129,6 +129,42 @@ Each dropped assignment records a `connection.dropped` event whose parent is its
 the batch, and the undelivered assignment text. Batches with nothing to drop record no
 event; run config metadata captures the settings.
 
+## Result timeout
+
+`result_timeout` simulates Worker results that never reach the Lead, at the Worker
+delivery step in `graphs/research.py`. It defaults to disabled:
+
+```yaml
+result_timeout:
+  enabled: true
+  batch: 1
+  num_delivered: 1
+  timeout_seconds: 180  # Deadline from dispatch; same as worker_timeout_seconds.
+  select: last
+  seed: 0
+  persistent: false
+```
+
+`batch`, `num_delivered`, `select`, `seed`, and `persistent` select assignments exactly
+as in `connection_drop`. A selected Worker runs normally, and its result is withheld
+whatever its status, so the schedule is fully controlled. The Lead cannot see the
+result, so it waits until `timeout_seconds` after dispatch and then receives the same
+result as a natural worker timeout (`status: failed`, `stop_reason: "TimeoutError: "`).
+The Lead cannot tell the two apart; the event below records what really happened,
+including the Worker's own status, so injected timeouts stay distinguishable from Worker
+budget failures in analysis. Because a batch returns only when all of its assignments finish, the
+wait is part of end-to-end latency. `timeout_seconds` must be positive and no greater
+than `worker_timeout_seconds`.
+
+Each timeout records a `result.timed_out` event when the Worker finishes, whose parent
+is its `worker.finished`, with `assignment_id`, one-based `position`, `timeout_number`
+within the batch, `timeout_seconds`, `worker_status` (the withheld result's status),
+`late` (true if the Worker finished after the
+deadline, in which case the Lead receives the timeout immediately), and
+`original_result_ref` pointing to the withheld result. `worker.delivered` records the
+failed result the Lead actually received. `connection_drop` and `result_timeout` cannot
+be enabled together.
+
 ## Usage and cost fields
 
 Input tokens include cached input. Given the endpoint's returned usage:
