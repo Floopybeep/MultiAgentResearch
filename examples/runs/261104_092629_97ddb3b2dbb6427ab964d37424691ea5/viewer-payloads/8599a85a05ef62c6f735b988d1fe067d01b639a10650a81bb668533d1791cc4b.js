@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_092629_97ddb3b2dbb6427ab964d37424691ea5/viewer-payloads/8599a85a05ef62c6f735b988d1fe067d01b639a10650a81bb668533d1791cc4b.js"] = JSON.parse("{\"name\": \"submit_answer\", \"args\": {\"answer\": \"\\\\boxed{Daniel Kamau; Mitsubishi Lancer Evolution VI}\"}, \"id\": \"call_-7107909088033367562\", \"type\": \"tool_call\"}");

@@ -15,6 +15,12 @@ judge:
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
   max_output_tokens: 1024
+verifier:
+  model: glm-5.3-flash
+  input_cost_per_million: 0.15
+  cached_input_cost_per_million: 0.03
+  output_cost_per_million: 0.50
+  max_output_tokens: 1024
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
 # Optional prompt files, relative to the working directory; null uses bundled defaults.
 lead_prompt: null
@@ -24,23 +30,6 @@ document_injection:
   enabled: false
   num_docs: 1
   prompt: ""
-# Drop Lead-to-Worker assignments in one delegation batch; num_delivered reach Workers.
-connection_drop:
-  enabled: false
-  batch: 1
-  num_delivered: 1
-  select: last
-  seed: 0
-  persistent: false
-# Withhold Worker-to-Lead results in one batch; num_delivered results arrive.
-result_timeout:
-  enabled: false
-  batch: 1
-  num_delivered: 1
-  timeout_seconds: 180  # Deadline from dispatch; same as worker_timeout_seconds.
-  select: last
-  seed: 0
-  persistent: false
 max_lead_turns: 20
 max_worker_turns: 12
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
@@ -52,6 +41,6 @@ minimum_worker: 1
 max_run_tokens: 200000
 run_timeout_seconds: 900
 worker_timeout_seconds: 180
-call_timeout_seconds: 60
+call_timeout_seconds: 120
 max_document_chars: 24000
 output_dir: runs

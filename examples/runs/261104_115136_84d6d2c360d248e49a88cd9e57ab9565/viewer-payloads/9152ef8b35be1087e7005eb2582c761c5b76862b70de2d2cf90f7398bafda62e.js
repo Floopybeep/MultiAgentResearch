@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_115136_84d6d2c360d248e49a88cd9e57ab9565/viewer-payloads/9152ef8b35be1087e7005eb2582c761c5b76862b70de2d2cf90f7398bafda62e.js"] = JSON.parse("{\"name\": \"read_document\", \"args\": {\"document_id\": \"doc_2023\", \"offset\": 0}, \"id\": \"call_-7107843770170733406\", \"type\": \"tool_call\"}");

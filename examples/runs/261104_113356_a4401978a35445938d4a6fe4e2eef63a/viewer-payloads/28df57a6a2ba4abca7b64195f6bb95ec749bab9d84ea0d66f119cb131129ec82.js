@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_113356_a4401978a35445938d4a6fe4e2eef63a/viewer-payloads/28df57a6a2ba4abca7b64195f6bb95ec749bab9d84ea0d66f119cb131129ec82.js"] = JSON.parse("{\"name\": \"submit_answer\", \"args\": {\"answer\": \"\\\\boxed{Charles Muhanji; Subaru Impreza WRX}\"}, \"id\": \"call_-7107748662414928993\", \"type\": \"tool_call\"}");

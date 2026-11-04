@@ -5,7 +5,7 @@ from importlib.resources import files
 from pathlib import Path
 
 VARIABLE = re.compile(r"{{\s*\.([A-Za-z][A-Za-z0-9_]*)\s*}}")
-ROLES = ("lead", "worker", "judge")
+ROLES = ("lead", "worker", "judge", "verifier")
 
 
 def load(role, path=None):
@@ -43,10 +43,10 @@ def context(config, date):
     }
 
 
-def hashes(config=None):
+def hashes(config=None, *, include_verifier: bool = False):
     return {
         role: hashlib.sha256(load(
             role, getattr(config, f"{role}_prompt", None)
         ).encode()).hexdigest()
-        for role in ROLES
+        for role in ROLES if include_verifier or role != "verifier"
     }

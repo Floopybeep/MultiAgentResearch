@@ -1,0 +1,1 @@
+window.__MAR_DATA__["261104_092629_97ddb3b2dbb6427ab964d37424691ea5/viewer-payloads/aa40bd6c8c8f5cf8c031953bcf0f0e3b15cda0e6465a2de366fe532d9b517c00.js"] = JSON.parse("{\"status\": \"completed\", \"duration_seconds\": 181.07917637494393, \"answer\": \"\\\\boxed{Daniel Kamau; Mitsubishi Lancer Evolution VI}\", \"stop_reason\": \"submit_answer\"}");
