@@ -30,39 +30,6 @@ document_injection:
   enabled: false
   num_docs: 1
   prompt: ""
-<<<<<<< HEAD
-connection_drop:
-  enabled: false
-  num_delivered: 1
-result_timeout:
-  enabled: false
-  num_delivered: 1
-  timeout_seconds: 1
-tool_failure:
-  enabled: false
-  mode: timeout
-  max_failures: 1
-full_restart: false
-always_verify: false
-=======
-# Drop Lead-to-Worker assignments in one delegation batch; num_delivered reach Workers.
-connection_drop:
-  enabled: false
-  batch: 1
-  num_delivered: 1
-  select: last
-  seed: 0
-  persistent: false
-# Withhold Worker-to-Lead results in one batch; num_delivered results arrive.
-result_timeout:
-  enabled: false
-  batch: 1
-  num_delivered: 1
-  timeout_seconds: 180  # Deadline from dispatch; same as worker_timeout_seconds.
-  select: last
-  seed: 0
-  persistent: false
->>>>>>> origin/main
 max_lead_turns: 20
 max_worker_turns: 12
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
