@@ -60,7 +60,7 @@ max_worker_turns: 5
 max_worker_tool_calls: 15
 max_batches: 6
 max_workers_per_batch: 4
-minimum_worker: 3
+minimum_worker: 2
 # lead + workers budget - document-heavy tasks eat up a large amount
 max_run_tokens: 600000
 run_timeout_seconds: 900
