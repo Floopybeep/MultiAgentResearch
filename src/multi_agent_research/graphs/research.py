@@ -18,6 +18,7 @@ from ..schemas import (
     run_blocking_subagent,
     submit_answer,
 )
+from ..tools.connection_drop import select_dropped
 from .worker import run_worker
 
 TOOLS = [memory_read, memory_write, run_blocking_subagent, submit_answer]
@@ -82,6 +83,11 @@ def build_research(
         if delegated:
             batch = batches + 1
             lead_dependencies = runtime.observed.get("lead", []).copy()
+            # Connection drop applies only to assignments that pass the Lead-side checks.
+            executable = 0
+            if runtime.memory.ref and batch <= cfg.max_batches:
+                executable = min(len(delegated), cfg.max_workers_per_batch)
+            dropped = select_dropped(cfg.connection_drop, batch, executable)
 
             async def dispatch(position: int, index: int, call: dict[str, Any]):
                 async def handler() -> dict[str, Any]:
@@ -97,6 +103,20 @@ def build_research(
                         )
                     args = run_blocking_subagent.model_validate(call["args"])
                     agent = f"batch{batch}-worker{position + 1}"
+                    if position in dropped:
+                        runtime.event(
+                            "connection.dropped", "lead",
+                            {
+                                "assignment_id": agent,
+                                "position": position + 1,
+                                "drop_number": dropped.index(position) + 1,
+                                "assignment": args.prompt,
+                            },
+                            [start], batch_id=batch, assignment_id=agent,
+                        )
+                        raise ConnectionError(
+                            "Connection to worker lost; assignment was not delivered"
+                        )
                     runtime.observed[agent] = [start]
                     result = await run_worker(runtime, agent, args.prompt, checkpointer)
                     # TODO: Input agent/batch IDs and raw WorkerResult; output a delivery dict.
