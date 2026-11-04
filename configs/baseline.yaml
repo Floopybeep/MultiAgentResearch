@@ -1,20 +1,28 @@
-# Per-role Chat Completions models and USD-per-million token rates.
 lead:
   model: api-glm-5.3-flash
   input_cost_per_million: 0.15
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
+  options:
+    temperature: 0
+    seed: 42
 worker:
   model: api-glm-5.3-flash
   input_cost_per_million: 0.15
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
+  options:
+    temperature: 0
+    seed: 42
 judge:
   model: api-glm-5.3-flash
   input_cost_per_million: 0.15
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
   max_output_tokens: 1024
+  options:
+    temperature: 0
+    seed: 42
 verifier:
   model: glm-5.3-flash
   input_cost_per_million: 0.15
@@ -22,25 +30,41 @@ verifier:
   output_cost_per_million: 0.50
   max_output_tokens: 1024
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
-# Optional prompt files, relative to the working directory; null uses bundled defaults.
-lead_prompt: null
-worker_prompt: null
+lead_prompt: src/multi_agent_research/prompts/lead.md
+worker_prompt: src/multi_agent_research/prompts/worker.md
 # Inject into at most num_docs successful read_document calls per question run.
 document_injection:
   enabled: false
   num_docs: 1
   prompt: ""
-max_lead_turns: 20
-max_worker_turns: 12
+# Drop Lead-to-Worker assignments in one delegation batch; num_delivered reach Workers.
+connection_drop:
+  enabled: false
+  batch: 1
+  num_delivered: 1
+  select: last
+  seed: 0
+  persistent: false
+# Withhold Worker-to-Lead results in one batch; num_delivered results arrive.
+result_timeout:
+  enabled: false
+  batch: 1
+  num_delivered: 1
+  timeout_seconds: 180  # Deadline from dispatch; same as worker_timeout_seconds.
+  select: last
+  seed: 0
+  persistent: false
+max_lead_turns: 10
+max_worker_turns: 5
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
 max_worker_tool_calls: 15
 max_batches: 6
 max_workers_per_batch: 4
-# Lead instruction: minimum workers to spawn in each delegation batch.
-minimum_worker: 1
-max_run_tokens: 200000
+minimum_worker: 3
+# lead + workers budget - document-heavy tasks eat up a large amount
+max_run_tokens: 600000
 run_timeout_seconds: 900
 worker_timeout_seconds: 180
-call_timeout_seconds: 120
+call_timeout_seconds: 60
 max_document_chars: 24000
 output_dir: runs
