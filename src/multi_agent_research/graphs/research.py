@@ -98,7 +98,9 @@ def build_research(
                     args = run_blocking_subagent.model_validate(call["args"])
                     agent = f"batch{batch}-worker{position + 1}"
                     runtime.observed[agent] = [start]
-                    result = await run_worker(runtime, agent, args.prompt, checkpointer)
+                    result = await run_worker(
+                        runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
+                    )
                     # TODO: Input agent/batch IDs and raw WorkerResult; output a delivery dict.
                     # Apply Worker-to-Lead faults and log raw/delivered payload links.
                     runtime.event(

@@ -12,6 +12,12 @@ hashes through `prompts.hashes()`.
 | Worker | Self-contained assignment and document catalog | Paged `read_document`, then `complete_task` with findings, read document IDs and uncertainties |
 | Judge | Question, reference answer and candidate response | JSON with boolean `correct` and string `reason` |
 
+Each `run_blocking_subagent` call specifies one `document_id` from the question's
+catalog. The active Lead and Worker prompts follow this single-article boundary:
+a Worker receives only that article's catalog entry, and the tool handler enforces
+its assigned ID. Pagination within that article and new Lead assignments for
+follow-up reading remain available.
+
 The Lead plans, delegates and reassesses in one context. Workers use independent
 contexts. The grader calls the Judge after answer submission when exact match
 requires semantic evaluation. Format validity, exact match and correctness are

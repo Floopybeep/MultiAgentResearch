@@ -11,7 +11,7 @@ from ..schemas import AgentState, WorkerResult, complete_task, read_document
 TOOLS = [read_document, complete_task]
 
 
-def build_worker(runtime, agent, checkpointer):
+def build_worker(runtime, agent, checkpointer, *, document_id: str):
     cfg = runtime.config
 
     def finish(state, status, reason, **kwargs):
@@ -50,6 +50,8 @@ def build_worker(runtime, agent, checkpointer):
             async def handler():
                 if call["name"] == "read_document":
                     args = read_document.model_validate(call["args"])
+                    if args.document_id != document_id:
+                        raise PermissionError("Document is not assigned to this worker")
                     return runtime.read_document(args.document_id, args.offset, agent=agent)
                 if call["name"] == "complete_task":
                     if len(calls) != 1:
@@ -96,12 +98,16 @@ def build_worker(runtime, agent, checkpointer):
     return graph.compile(checkpointer=checkpointer)
 
 
-async def run_worker(runtime, agent, prompt, checkpointer):
+async def run_worker(runtime, agent, prompt, checkpointer, *, document_id: str):
+    document = runtime.documents.documents.get(document_id)
+    if document is None:
+        raise ValueError("Assigned document is outside this question's catalog")
     started = asyncio.get_running_loop().time()
     runtime.event(
-        "worker.started", agent, {"assignment": prompt}, runtime.observed.get(agent, []).copy()
+        "worker.started", agent, {"assignment": prompt, "document_id": document_id},
+        runtime.observed.get(agent, []).copy(),
     )
-    graph = build_worker(runtime, agent, checkpointer)
+    graph = build_worker(runtime, agent, checkpointer, document_id=document_id)
     try:
         state = await asyncio.wait_for(
             graph.ainvoke(
@@ -116,7 +122,7 @@ async def run_worker(runtime, agent, prompt, checkpointer):
                             f"{runtime.config.max_worker_tool_calls} tool calls."
                         ),
                         HumanMessage(content=json.dumps({
-                            "assignment": prompt, "available_documents": runtime.documents.catalog(),
+                            "assignment": prompt, "available_documents": [document.catalog_entry()],
                         })),
                     ],
                     "documents": [],
