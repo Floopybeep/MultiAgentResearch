@@ -50,7 +50,7 @@ def build_worker(runtime, agent, checkpointer):
             async def handler():
                 if call["name"] == "read_document":
                     args = read_document.model_validate(call["args"])
-                    return runtime.read_document(args.document_id, args.offset)
+                    return runtime.read_document(args.document_id, args.offset, agent=agent)
                 if call["name"] == "complete_task":
                     if len(calls) != 1:
                         raise ValueError("complete_task must be the only call")

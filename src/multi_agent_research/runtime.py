@@ -18,6 +18,7 @@ from .observability.usage import Usage
 from .storage.artifacts import ArtifactStore
 from .storage.database import Database
 from .tools.memory import PlanMemory
+from .tools.prompt_injection import inject_document_prompt
 from .viewer_export import ViewerExport
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ class BudgetExceeded(RuntimeError):
 class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None):
         self.config, self.model, self.documents = config, model, documents
+        self.document_injection_count = 0
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
         self.prompt_context = prompts.context(config, now.date().isoformat())
@@ -152,10 +154,28 @@ class Runtime:
         self.event("documents.available", "lead", {"documents": snapshots})
         return snapshots
 
-    def read_document(self, document_id: str, offset: int) -> dict[str, Any]:
-        # TODO: Input document_id/offset; output the Worker-visible page dict.
-        # Apply Tool-to-Worker faults and record linked original/injected payloads.
-        return self.documents.read(document_id, offset, self.config.max_document_chars)
+    def read_document(
+        self, document_id: str, offset: int, *, agent: str = "worker",
+    ) -> dict[str, Any]:
+        original = self.documents.read(document_id, offset, self.config.max_document_chars)
+        injection = self.config.document_injection
+        if injection.enabled and self.document_injection_count < injection.num_docs:
+            injected = inject_document_prompt(original, injection)
+            # This synchronous boundary shares one cap across all workers in the run.
+            self.document_injection_count += 1
+            self.event(
+                "document.injected", agent,
+                {
+                    "document_id": document_id,
+                    "offset": offset,
+                    "injection_number": self.document_injection_count,
+                    "original_artifact_ref": self.artifacts.put(self.log.redact(original)),
+                    "injected_artifact_ref": self.artifacts.put(self.log.redact(injected)),
+                },
+                self.observed.get(agent, []).copy(),
+            )
+            return injected
+        return original
 
     def close(self):
         try:

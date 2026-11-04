@@ -31,6 +31,19 @@ class ModelConfig(BaseModel):
         return value
 
 
+class DocumentInjectionConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    num_docs: int = Field(default=1, ge=0)
+    prompt: str = ""
+
+    @model_validator(mode="after")
+    def require_prompt_when_enabled(self):
+        if self.enabled and not self.prompt.strip():
+            raise ValueError("document_injection.prompt must be nonempty when enabled")
+        return self
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
@@ -51,6 +64,7 @@ class RunConfig(BaseModel):
     worker_timeout_seconds: float = Field(default=180, gt=0)
     call_timeout_seconds: float = Field(default=60, gt=0)
     max_document_chars: int = Field(default=24000, gt=0)
+    document_injection: DocumentInjectionConfig = Field(default_factory=DocumentInjectionConfig)
     output_dir: Path = Path("runs")
 
     @model_validator(mode="after")

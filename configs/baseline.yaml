@@ -19,6 +19,11 @@ judge:
 # Optional prompt files, relative to the working directory; null uses bundled defaults.
 lead_prompt: null
 worker_prompt: null
+# Inject into at most num_docs successful read_document calls per question run.
+document_injection:
+  enabled: false
+  num_docs: 1
+  prompt: ""
 max_lead_turns: 20
 max_worker_turns: 12
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.

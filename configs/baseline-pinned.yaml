@@ -35,6 +35,11 @@ judge:
 # worker_prompt: src/multi_agent_research/prompts/worker_old.md
 lead_prompt: src/multi_agent_research/prompts/lead.md
 worker_prompt: src/multi_agent_research/prompts/worker.md
+# Inject into at most num_docs successful read_document calls per question run.
+document_injection:
+  enabled: false
+  num_docs: 1
+  prompt: ""
 max_lead_turns: 10
 max_worker_turns: 5
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
