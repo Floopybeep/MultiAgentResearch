@@ -885,6 +885,7 @@ async def test_config_target_workers_chooses_who_is_hit(tmp_path, name, severity
 ])
 async def test_config_baseline_block_works_by_flipping_enabled(tmp_path, name, reason):
     settings = yaml.safe_load(Path("configs/baseline.yaml").read_text())
+    settings["output_dir"] = str(tmp_path)
     block = settings["worker_budget_faults"]
     assert not any(fault["enabled"] for fault in block.values())
     block[name].update(enabled=True, target_workers=[W1])
