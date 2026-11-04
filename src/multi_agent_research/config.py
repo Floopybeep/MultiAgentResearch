@@ -1,7 +1,7 @@
 """Validated, credential-free run settings."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -44,6 +44,45 @@ class DocumentInjectionConfig(BaseModel):
         return self
 
 
+class ToolFailureConfig(BaseModel):
+    """Accidental `read_document` failures: evidence denial at the worker boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    mode: Literal["immediate", "timeout"] = "immediate"
+    document_ids: list[str] = Field(default_factory=list)
+    offsets: list[int] = Field(default_factory=list)
+    max_failures: int | None = Field(default=1, ge=0)
+    failure_probability: float = Field(default=1.0, ge=0, le=1)
+    persistent: bool = True
+    timeout_margin: float = Field(default=1.5, gt=1.0)
+    seed: int = 0
+    allow_total_denial: bool = False
+
+    @field_validator("offsets")
+    @classmethod
+    def nonnegative_offsets(cls, value):
+        if any(offset < 0 for offset in value):
+            raise ValueError("tool_failure.offsets must be nonnegative character positions")
+        return value
+
+    @model_validator(mode="after")
+    def require_total_denial_optin(self):
+        if (
+            self.enabled
+            and self.max_failures is None
+            and not self.document_ids
+            and not self.allow_total_denial
+        ):
+            raise ValueError(
+                "Uncapped failures over every document deny all evidence, so no worker "
+                "completes and the Lead raises 'At least one successful worker result is "
+                "required'. Set tool_failure.allow_total_denial to opt in, or restrict "
+                "max_failures or document_ids"
+            )
+        return self
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
@@ -65,6 +104,7 @@ class RunConfig(BaseModel):
     call_timeout_seconds: float = Field(default=60, gt=0)
     max_document_chars: int = Field(default=24000, gt=0)
     document_injection: DocumentInjectionConfig = Field(default_factory=DocumentInjectionConfig)
+    tool_failure: ToolFailureConfig = Field(default_factory=ToolFailureConfig)
     output_dir: Path = Path("runs")
 
     @model_validator(mode="after")

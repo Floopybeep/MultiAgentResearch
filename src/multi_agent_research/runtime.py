@@ -17,6 +17,7 @@ from .observability.events import EventLogger
 from .observability.usage import Usage
 from .storage.artifacts import ArtifactStore
 from .storage.database import Database
+from .tools import tool_failures
 from .tools.memory import PlanMemory
 from .tools.prompt_injection import inject_document_prompt
 from .viewer_export import ViewerExport
@@ -32,6 +33,8 @@ class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None):
         self.config, self.model, self.documents = config, model, documents
         self.document_injection_count = 0
+        self.tool_failure_state = tool_failures.ToolFailureState()
+        self.question_key = tool_failures.question_key(documents.documents)
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
         self.prompt_context = prompts.context(config, now.date().isoformat())
@@ -154,10 +157,67 @@ class Runtime:
         self.event("documents.available", "lead", {"documents": snapshots})
         return snapshots
 
-    def read_document(
+    async def deny_document(
+        self, document_id: str, offset: int, agent: str, original: dict[str, Any],
+    ) -> None:
+        """Fail an eligible read, immediately or by outlasting the tool timeout.
+
+        The slot is reserved and the event emitted before any delay: if the
+        worker's own timeout cancels the call mid-sleep, the trace must still
+        show the fault triggered.
+
+        Invariant, relied on by the caller: this either returns without ever
+        suspending, when no fault applies, or raises. It must never await and
+        then let the read succeed, which would delay a page without denying it.
+        """
+        config = self.config.tool_failure
+        decision = tool_failures.decide(
+            config, self.tool_failure_state,
+            key=self.question_key, document_id=document_id, offset=offset,
+        )
+        if not decision.fail:
+            return
+        number = self.tool_failure_state.reserve(document_id, offset)
+        delay = tool_failures.delay_seconds(config, self.config.call_timeout_seconds)
+        self.event(
+            "tool.failure_injected", agent,
+            {
+                "tool": tool_failures.TOOL_NAME,
+                "mode": config.mode,
+                "document_id": document_id,
+                "offset": offset,
+                "agent": agent,
+                "failure_number": number,
+                "attempt": decision.attempt,
+                "delay_seconds": delay if config.mode == "timeout" else None,
+                "persistent": config.persistent,
+                "original_artifact_ref": self.artifacts.put(self.log.redact(original)),
+            },
+            self.observed.get(agent, []).copy(),
+        )
+        if config.mode == "timeout":
+            await asyncio.sleep(delay)
+        # A timeout_margin above 1.0 means call_tool cancels the sleep first, so
+        # this raise is the guarantee that a denied page is never returned.
+        raise tool_failures.ToolUnavailableError(tool_failures.UNAVAILABLE_MESSAGE)
+
+    async def read_document(
         self, document_id: str, offset: int, *, agent: str = "worker",
     ) -> dict[str, Any]:
+        """Read a page, unless a configured accidental fault denies it.
+
+        Two invariants future changes must preserve. First, the document
+        injection below checks `document_injection_count` and increments it with
+        no suspension point in between, so concurrent workers cannot both claim
+        the last slot; keep that pair synchronous and adjacent. The `await`
+        above is the only suspension point in this method and it precedes the
+        check, which is why the pair stays atomic. Second, `deny_document`
+        either returns without suspending or raises, so a read that is not
+        denied is never delayed.
+        """
         original = self.documents.read(document_id, offset, self.config.max_document_chars)
+        if self.config.tool_failure.enabled:
+            await self.deny_document(document_id, offset, agent, original)
         injection = self.config.document_injection
         if injection.enabled and self.document_injection_count < injection.num_docs:
             injected = inject_document_prompt(original, injection)
