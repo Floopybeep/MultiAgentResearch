@@ -465,8 +465,8 @@ class ScriptedModel:
             if turn == 1:
                 return response(("memory_write", {"plan": "Read doc1, then doc2."}))
             if turn == 2:
-                return response(("run_blocking_subagent", {"prompt": "Read doc1 and doc2."}))
-            return response(("submit_answer", {"answer": "{42}"}))
+                return response(("run_blocking_subagent", {"prompt": "Read doc1 and doc2.", "document_id": "doc1"}))
+            return response(("submit_answer", {"answer": r"\boxed{42}"}))
 
         assert role == "worker"
         self.worker_tool_messages.extend(

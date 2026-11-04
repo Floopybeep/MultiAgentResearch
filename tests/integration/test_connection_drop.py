@@ -75,10 +75,10 @@ class ScriptedModel:
                 return response(("memory_write", {"plan": "Read every document."}))
             if turn == 2:
                 return response(*[
-                    ("run_blocking_subagent", {"prompt": f"Read doc{i} and report its value."})
+                    ("run_blocking_subagent", {"prompt": f"Read doc{i} and report its value.", "document_id": f"doc{i}"})
                     for i in range(1, WORKERS + 1)
                 ])
-            return response(("submit_answer", {"answer": "{42}"}))
+            return response(("submit_answer", {"answer": r"\boxed{42}"}))
         if turn == 1:
             self.workers.append(agent)
             return response(("read_document", {"document_id": f"doc{agent[-1]}"}))
@@ -155,7 +155,7 @@ class RetryingModel(ScriptedModel):
         if role == "lead" and self.turns[agent] == 2:
             self.turns[agent] += 1
             return AIMessage(content="", tool_calls=[
-                {"name": "run_blocking_subagent", "args": {"prompt": f"Retry doc{i}."},
+                {"name": "run_blocking_subagent", "args": {"prompt": f"Retry doc{i}.", "document_id": f"doc{i}"},
                  "id": f"lead-retry-{i}"}
                 for i in (2, 3)
             ], usage_metadata={"input_tokens": 10, "output_tokens": 5, "total_tokens": 15})

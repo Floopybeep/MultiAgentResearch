@@ -15,8 +15,8 @@ from multi_agent_research.runner import run_qa
 from multi_agent_research.tools.documents import LocalDocument, OracleDocuments
 
 WORKERS = 3
-TIMEOUT = 0.3
-SLOW = 0.15
+TIMEOUT = 2.0
+SLOW = 1.0
 
 
 @pytest.mark.parametrize("settings", [{"timeout_seconds": 0}, {"unknown": 1}])
@@ -29,7 +29,7 @@ def test_default_deadline_matches_worker_timeout():
     config = RunConfig()
     assert config.result_timeout.timeout_seconds == config.worker_timeout_seconds == 180
     with pytest.raises(ValidationError):
-        RunConfig(worker_timeout_seconds=60, result_timeout={"timeout_seconds": 61})
+        RunConfig(worker_timeout_seconds=60, result_timeout={"enabled": True, "timeout_seconds": 61})
 
 
 def test_only_one_delegation_fault():
@@ -55,10 +55,10 @@ class ScriptedModel:
             return [("memory_write", {"plan": "Read every document."})]
         if turn == 2:
             return [
-                ("run_blocking_subagent", {"prompt": f"Read doc{i} and report its value."})
+                ("run_blocking_subagent", {"prompt": f"Read doc{i} and report its value.", "document_id": f"doc{i}"})
                 for i in range(1, WORKERS + 1)
             ]
-        return [("submit_answer", {"answer": "{42}"})]
+        return [("submit_answer", {"answer": r"\boxed{42}"})]
 
     async def invoke(self, role, agent, messages, tools, config):
         self.turns[agent] += 1
@@ -91,7 +91,7 @@ class RetryingModel(ScriptedModel):
 
     def lead(self, agent, turn):
         if turn == 3:
-            return [("run_blocking_subagent", {"prompt": f"Retry doc{i}."}) for i in (1, 2)]
+            return [("run_blocking_subagent", {"prompt": f"Retry doc{i}.", "document_id": f"doc{i}"}) for i in (1, 2)]
         return super().lead(agent, turn if turn < 3 else turn - 1)
 
 

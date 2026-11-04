@@ -44,10 +44,10 @@ class ScriptedModel:
                 return response(("memory_write", {"plan": "Read both documents independently."}))
             if turn == 2:
                 return response(*[
-                    ("run_blocking_subagent", {"prompt": f"Read doc{i} and report its value."})
+                    ("run_blocking_subagent", {"prompt": f"Read doc{i} and report its value.", "document_id": f"doc{i}"})
                     for i in (1, 2)
                 ])
-            return response(("submit_answer", {"answer": "{42}"}))
+            return response(("submit_answer", {"answer": r"\boxed{42}"}))
         assert role == "worker"
         doc = "doc1" if agent.endswith("worker1") else "doc2"
         if turn == 1:
@@ -93,10 +93,10 @@ async def test_qa_parallel_workers_and_audit(tmp_path):
             payload = json.loads(messages[1].content)
             number = agent[-1]
             assert payload["assignment"] == f"Read doc{number} and report its value."
-            assert {d["document_id"] for d in payload["available_documents"]} == {"doc1", "doc2"}
+            assert {d["document_id"] for d in payload["available_documents"]} == {f"doc{number}"}
             assert "reference_answer" not in payload
     root = Path(result["output_dir"])
-    assert Path(result["answer_path"]).read_text() == "{42}"
+    assert Path(result["answer_path"]).read_text() == r"\boxed{42}"
     assert json.loads((root / "run.json").read_text())["status"] == "completed"
     assert len(json.loads((root / "documents.json").read_text())) == 2
     assert (root / "viewer-data.js").is_file()
@@ -150,3 +150,74 @@ async def test_qa_budget_failure_does_not_publish_answer(tmp_path, limits, reaso
     if "max_worker_turns" in limits or "max_worker_tool_calls" in limits:
         assert len(result["worker_results"]) == 2
         assert all(r["status"] == "budget_exhausted" for r in result["worker_results"].values())
+
+
+class RestartModel(ScriptedModel):
+    """Use visible conversation turns so a new attempt starts fresh."""
+
+    async def invoke(self, role, agent, messages, tools, config):
+        if role == "verifier":
+            self.requests.append((role, agent, list(messages)))
+            return AIMessage(
+                content='{"verified": false, "diagnostic": "Regression diagnostic"}',
+                usage_metadata={"input_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+            )
+        self.turns[agent] = sum(isinstance(message, AIMessage) for message in messages)
+        return await super().invoke(role, agent, messages, tools, config)
+
+
+@pytest.mark.parametrize("fault,event_type", [
+    ({"document_injection": {"enabled": True, "num_docs": 1, "prompt": "FAULT_MARKER"}},
+     "document.injected"),
+    ({"connection_drop": {"enabled": True, "num_delivered": 1}}, "connection.dropped"),
+    ({"result_timeout": {"enabled": True, "num_delivered": 1, "timeout_seconds": 0.01}},
+     "result.timed_out"),
+    ({"tool_failure": {"enabled": True, "mode": "immediate"}}, "tool.failure_injected"),
+    ({"tool_failure": {"enabled": True, "mode": "timeout"}}, "tool.failure_injected"),
+])
+async def test_fault_restarts_with_clean_state(tmp_path, fault, event_type):
+    result = await execute(
+        tmp_path, RestartModel(), full_restart=True, call_timeout_seconds=0.1, **fault,
+    )
+    assert result["restarted"] and result["clean_slate_reset"]
+    assert result["selected_attempt"] == 2
+    first, clean = result["attempts"]
+    assert first["status"] == "interrupted"
+    assert [event["event_type"] for event in first["injected_faults"]] == [event_type]
+    assert clean["status"] == "completed" and clean["correct"] is True
+    assert not clean["fault_injected"] and not clean["faults_enabled"]
+    for name in ("document_injection", "connection_drop", "result_timeout", "tool_failure"):
+        assert not clean["config"][name]["enabled"]
+    assert result["usage"]["model_calls"] == sum(
+        attempt["usage"]["model_calls"] for attempt in result["attempts"]
+    )
+    for attempt in result["attempts"]:
+        with sqlite3.connect(Path(attempt["output_dir"]) / "events.sqlite") as db:
+            events = [json.loads(row[0]) for row in db.execute("SELECT body FROM events")]
+        kinds = {event["event_type"] for event in events}
+        assert (event_type in kinds) == (attempt["attempt_number"] == 1)
+        assert ("recovery.restart" in kinds) == (attempt["attempt_number"] == 1)
+
+
+async def test_ordinary_failure_does_not_trigger_restart(tmp_path):
+    result = await execute(tmp_path, RestartModel(fail_worker=True), full_restart=True)
+    assert result["status"] == "completed"
+    assert not result["restarted"] and not result["fault_injected"]
+    assert len(result["attempts"]) == 1
+
+
+async def test_verification_observes_injection_without_restarting(tmp_path):
+    model = RestartModel()
+    result = await execute(
+        tmp_path, model, always_verify=True,
+        document_injection={"enabled": True, "num_docs": 1, "prompt": "FAULT_MARKER"},
+    )
+    assert result["status"] == "completed" and result["correct"] is True
+    assert result["document_injection_count"] == 1
+    assert not result["restarted"] and len(result["attempts"]) == 1
+    assert len(result["verifications"]) == 3
+    assert all(v["verified"] is False and v["error"] is None for v in result["verifications"])
+    inputs = [json.loads(messages[1].content) for role, _, messages in model.requests
+              if role == "verifier"]
+    assert any("FAULT_MARKER" in json.dumps(item["actual_input"]) for item in inputs)
+    assert all("reference_answer" not in item for item in inputs)
