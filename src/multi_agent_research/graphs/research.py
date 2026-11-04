@@ -12,6 +12,7 @@ from langgraph.graph.state import CompiledStateGraph
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
+    WorkerResult,
     memory_read,
     memory_write,
     merge_results,
@@ -88,6 +89,7 @@ def build_research(
             if runtime.memory.ref and batch <= cfg.max_batches:
                 executable = min(len(delegated), cfg.max_workers_per_batch)
             dropped = select_dropped(cfg.connection_drop, batch, executable)
+            timed_out = select_dropped(cfg.result_timeout, batch, executable)
 
             async def dispatch(position: int, index: int, call: dict[str, Any]):
                 async def handler() -> dict[str, Any]:
@@ -121,6 +123,31 @@ def build_research(
                     result = await run_worker(runtime, agent, args.prompt, checkpointer)
                     # TODO: Input agent/batch IDs and raw WorkerResult; output a delivery dict.
                     # Apply Worker-to-Lead faults and log raw/delivered payload links.
+                    if position in timed_out:
+                        # The result is lost on the way back, whatever the Worker's status.
+                        # The Lead cannot see it, so it waits until the deadline counted from
+                        # dispatch and then receives the same result as a natural timeout.
+                        deadline = cfg.result_timeout.timeout_seconds
+                        elapsed = asyncio.get_running_loop().time() - started
+                        runtime.event(
+                            "result.timed_out", "lead",
+                            {
+                                "assignment_id": agent,
+                                "position": position + 1,
+                                "timeout_number": timed_out.index(position) + 1,
+                                "timeout_seconds": deadline,
+                                "late": elapsed > deadline,
+                                "worker_status": result.status,
+                                "original_result_ref": runtime.artifacts.put(
+                                    runtime.log.redact(result.model_dump())
+                                ),
+                            },
+                            [runtime.observed[agent][-1]], batch_id=batch, assignment_id=agent,
+                        )
+                        await asyncio.sleep(max(deadline - elapsed, 0))
+                        result = WorkerResult(
+                            assignment_id=agent, status="failed", stop_reason="TimeoutError: "
+                        )
                     runtime.event(
                         "worker.delivered", "lead", result.model_dump(),
                         [runtime.observed[agent][-1]], batch_id=batch, assignment_id=agent,

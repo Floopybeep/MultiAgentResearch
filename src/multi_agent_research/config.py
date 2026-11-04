@@ -54,6 +54,11 @@ class ConnectionDropConfig(BaseModel):
     persistent: bool = False
 
 
+class ResultTimeoutConfig(ConnectionDropConfig):
+    # Deadline counted from dispatch; defaults to the standard worker_timeout_seconds.
+    timeout_seconds: float = Field(default=180, gt=0)
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
@@ -76,12 +81,21 @@ class RunConfig(BaseModel):
     max_document_chars: int = Field(default=24000, gt=0)
     document_injection: DocumentInjectionConfig = Field(default_factory=DocumentInjectionConfig)
     connection_drop: ConnectionDropConfig = Field(default_factory=ConnectionDropConfig)
+    result_timeout: ResultTimeoutConfig = Field(default_factory=ResultTimeoutConfig)
     output_dir: Path = Path("runs")
 
     @model_validator(mode="after")
     def validate_worker_limits(self):
         if self.minimum_worker > self.max_workers_per_batch:
             raise ValueError("minimum_worker must not exceed max_workers_per_batch")
+        return self
+
+    @model_validator(mode="after")
+    def one_delegation_fault(self):
+        if self.connection_drop.enabled and self.result_timeout.enabled:
+            raise ValueError("Enable at most one of connection_drop and result_timeout")
+        if self.result_timeout.timeout_seconds > self.worker_timeout_seconds:
+            raise ValueError("result_timeout.timeout_seconds must not exceed worker_timeout_seconds")
         return self
 
     @classmethod
