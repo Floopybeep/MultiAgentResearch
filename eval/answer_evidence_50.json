@@ -1,0 +1,6089 @@
+{
+  "counts": {
+    "weak_match": 9,
+    "localized": 12,
+    "ambiguous": 23,
+    "not_found": 5,
+    "derived": 1
+  },
+  "questions": [
+    {
+      "question_id": "656",
+      "answer": "Charles Muhanji in a Subaru Impreza WRX",
+      "catalog": [
+        {
+          "document_id": "doc_2023",
+          "title": "Michel von Tell",
+          "characters": 6427
+        },
+        {
+          "document_id": "doc_2024",
+          "title": "Rwanda Mountain Gorilla Rally",
+          "characters": 3166
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Charles Muhanji in a Subaru Impreza WRX",
+        "Charles Muhanji",
+        "Subaru Impreza WRX",
+        "Charles",
+        "Muhanji",
+        "Impreza"
+      ],
+      "hits": [
+        {
+          "literal": "Charles Muhanji",
+          "documents": {
+            "doc_2024": [
+              1173
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        },
+        {
+          "literal": "Subaru Impreza WRX",
+          "documents": {
+            "doc_2024": [
+              1191,
+              1241,
+              1328,
+              1480,
+              1524,
+              1574
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Charles",
+          "documents": {
+            "doc_2024": [
+              1173
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        },
+        {
+          "literal": "Muhanji",
+          "documents": {
+            "doc_2024": [
+              1181
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        },
+        {
+          "literal": "Impreza",
+          "documents": {
+            "doc_2024": [
+              1045,
+              1198,
+              1248,
+              1335,
+              1487,
+              1531
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "Subaru Impreza WRX",
+        "document_id": "doc_2024",
+        "offsets": [
+          1191,
+          1241,
+          1328,
+          1480,
+          1524,
+          1574
+        ],
+        "title": "Rwanda Mountain Gorilla Rally",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "114",
+      "answer": "The Mona Lisa",
+      "catalog": [
+        {
+          "document_id": "doc_0379",
+          "title": "Mona Lisa",
+          "characters": 65829
+        },
+        {
+          "document_id": "doc_0380",
+          "title": "Serj Tankian",
+          "characters": 40858
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "The Mona Lisa",
+        "Mona",
+        "Lisa"
+      ],
+      "hits": [
+        {
+          "literal": "The Mona Lisa",
+          "documents": {
+            "doc_0379": [
+              599,
+              1451,
+              2021,
+              2152,
+              3772,
+              5365
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": true
+        },
+        {
+          "literal": "Mona",
+          "documents": {
+            "doc_0379": [
+              150,
+              254,
+              603,
+              1455,
+              1974,
+              2025
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Lisa",
+          "documents": {
+            "doc_0379": [
+              111,
+              155,
+              259,
+              305,
+              494,
+              608
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_0379",
+      "evidence": {
+        "literal": "The Mona Lisa",
+        "document_id": "doc_0379",
+        "offsets": [
+          599,
+          1451,
+          2021,
+          2152,
+          3772,
+          5365
+        ],
+        "title": "Mona Lisa",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "25",
+      "answer": "12 years.",
+      "catalog": [
+        {
+          "document_id": "doc_0094",
+          "title": "Tyson Fury",
+          "characters": 166541
+        },
+        {
+          "document_id": "doc_0095",
+          "title": "Mike Tyson",
+          "characters": 135540
+        },
+        {
+          "document_id": "doc_0096",
+          "title": "Mike Tyson vs. Buster Douglas",
+          "characters": 19956
+        },
+        {
+          "document_id": "doc_0097",
+          "title": "Tyson Fury vs. Oleksandr Usyk",
+          "characters": 21754
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "12 years",
+        "12"
+      ],
+      "hits": [
+        {
+          "literal": "12",
+          "documents": {
+            "doc_0094": [
+              153,
+              158,
+              1073,
+              1628,
+              2957,
+              6264
+            ],
+            "doc_0095": [
+              1664,
+              12783,
+              16595,
+              35383,
+              39281,
+              48635
+            ],
+            "doc_0096": [
+              15477,
+              16037,
+              17054,
+              17246,
+              17705,
+              17787
+            ],
+            "doc_0097": [
+              1011,
+              1041,
+              6293,
+              6585,
+              7012,
+              7097
+            ]
+          },
+          "document_count": 4,
+          "total_occurrences": 24,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "12": {
+            "doc_0094": [
+              153,
+              158,
+              1073,
+              1628,
+              2957,
+              6264
+            ],
+            "doc_0095": [
+              1664,
+              12783,
+              16595,
+              35383,
+              39281,
+              48635
+            ],
+            "doc_0096": [
+              15477,
+              16037,
+              17054,
+              17246,
+              17705,
+              17787
+            ],
+            "doc_0097": [
+              1011,
+              1041,
+              6293,
+              6585,
+              7012,
+              7097
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "761",
+      "answer": "8",
+      "catalog": [
+        {
+          "document_id": "doc_2323",
+          "title": "Frederick Ashton",
+          "characters": 29351
+        },
+        {
+          "document_id": "doc_2324",
+          "title": "List of ballets choreographed by Frederick Ashton",
+          "characters": 4887
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [],
+      "hits": [],
+      "classification": "not_found",
+      "answer_bearing_document": null,
+      "evidence": null
+    },
+    {
+      "question_id": "282",
+      "answer": "Almroth Edward Wright",
+      "catalog": [
+        {
+          "document_id": "doc_0965",
+          "title": "List of Hungarian composers",
+          "characters": 2477
+        },
+        {
+          "document_id": "doc_0966",
+          "title": "Franz Liszt",
+          "characters": 84755
+        },
+        {
+          "document_id": "doc_0967",
+          "title": "Typhoid fever",
+          "characters": 71264
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Almroth Edward Wright",
+        "Almroth",
+        "Edward",
+        "Wright"
+      ],
+      "hits": [
+        {
+          "literal": "Almroth Edward Wright",
+          "documents": {
+            "doc_0967": [
+              35661,
+              35753,
+              66253
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 3,
+          "specific": true
+        },
+        {
+          "literal": "Almroth",
+          "documents": {
+            "doc_0967": [
+              35661,
+              35753,
+              66253
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 3,
+          "specific": false
+        },
+        {
+          "literal": "Edward",
+          "documents": {
+            "doc_0967": [
+              21129,
+              35669,
+              35761,
+              40334,
+              66261,
+              68352
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Wright",
+          "documents": {
+            "doc_0967": [
+              21136,
+              35676,
+              35768,
+              36068,
+              36291,
+              36627
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_0967",
+      "evidence": {
+        "literal": "Almroth Edward Wright",
+        "document_id": "doc_0967",
+        "offsets": [
+          35661,
+          35753,
+          66253
+        ],
+        "title": "Typhoid fever",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "251",
+      "answer": "Snowflake Bentley",
+      "catalog": [
+        {
+          "document_id": "doc_0858",
+          "title": "Caldecott Medal",
+          "characters": 44634
+        },
+        {
+          "document_id": "doc_0859",
+          "title": "2000 Summer Olympics",
+          "characters": 64367
+        },
+        {
+          "document_id": "doc_0860",
+          "title": "Snowflake Bentley (book)",
+          "characters": 3862
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Snowflake Bentley",
+        "Snowflake",
+        "Bentley"
+      ],
+      "hits": [
+        {
+          "literal": "Snowflake Bentley",
+          "documents": {
+            "doc_0858": [
+              26392
+            ],
+            "doc_0860": [
+              48,
+              454,
+              871,
+              3193
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 5,
+          "specific": true
+        },
+        {
+          "literal": "Snowflake",
+          "documents": {
+            "doc_0858": [
+              26392
+            ],
+            "doc_0860": [
+              48,
+              454,
+              655,
+              871,
+              1241,
+              1477
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        },
+        {
+          "literal": "Bentley",
+          "documents": {
+            "doc_0858": [
+              26402
+            ],
+            "doc_0860": [
+              58,
+              464,
+              614,
+              881,
+              1299,
+              1508
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Snowflake Bentley": {
+            "doc_0858": [
+              26392
+            ],
+            "doc_0860": [
+              48,
+              454,
+              871,
+              3193
+            ]
+          },
+          "Snowflake": {
+            "doc_0858": [
+              26392
+            ],
+            "doc_0860": [
+              48,
+              454,
+              655,
+              871,
+              1241,
+              1477
+            ]
+          },
+          "Bentley": {
+            "doc_0858": [
+              26402
+            ],
+            "doc_0860": [
+              58,
+              464,
+              614,
+              881,
+              1299,
+              1508
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "229",
+      "answer": "Willie Mays",
+      "catalog": [
+        {
+          "document_id": "doc_0750",
+          "title": "List of Major League Baseball career home run leaders",
+          "characters": 11442
+        },
+        {
+          "document_id": "doc_0751",
+          "title": "List of Major League Baseball career runs batted in leaders",
+          "characters": 12149
+        },
+        {
+          "document_id": "doc_0752",
+          "title": "List of Major League Baseball career hits leaders",
+          "characters": 13121
+        },
+        {
+          "document_id": "doc_0753",
+          "title": "Gold Glove Award",
+          "characters": 55594
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "Willie Mays",
+        "Willie",
+        "Mays"
+      ],
+      "hits": [
+        {
+          "literal": "Willie Mays",
+          "documents": {
+            "doc_0750": [
+              921,
+              2020
+            ],
+            "doc_0751": [
+              1767
+            ],
+            "doc_0752": [
+              1733
+            ],
+            "doc_0753": [
+              6112,
+              8356,
+              19992,
+              20162,
+              20327,
+              20492
+            ]
+          },
+          "document_count": 4,
+          "total_occurrences": 10,
+          "specific": true
+        },
+        {
+          "literal": "Willie",
+          "documents": {
+            "doc_0750": [
+              921,
+              2020,
+              2437,
+              2810,
+              5728
+            ],
+            "doc_0751": [
+              1767,
+              2883,
+              2983,
+              7395,
+              9814
+            ],
+            "doc_0752": [
+              1733,
+              2523,
+              4315,
+              6783,
+              7128,
+              7411
+            ],
+            "doc_0753": [
+              6112,
+              8356,
+              12007,
+              19992,
+              20162,
+              20327
+            ]
+          },
+          "document_count": 4,
+          "total_occurrences": 22,
+          "specific": false
+        },
+        {
+          "literal": "Mays",
+          "documents": {
+            "doc_0750": [
+              928,
+              2027
+            ],
+            "doc_0751": [
+              1774
+            ],
+            "doc_0752": [
+              1740
+            ],
+            "doc_0753": [
+              6119,
+              8363,
+              19999,
+              20169,
+              20334,
+              20499
+            ]
+          },
+          "document_count": 4,
+          "total_occurrences": 10,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Willie Mays": {
+            "doc_0750": [
+              921,
+              2020
+            ],
+            "doc_0751": [
+              1767
+            ],
+            "doc_0752": [
+              1733
+            ],
+            "doc_0753": [
+              6112,
+              8356,
+              19992,
+              20162,
+              20327,
+              20492
+            ]
+          },
+          "Willie": {
+            "doc_0750": [
+              921,
+              2020,
+              2437,
+              2810,
+              5728
+            ],
+            "doc_0751": [
+              1767,
+              2883,
+              2983,
+              7395,
+              9814
+            ],
+            "doc_0752": [
+              1733,
+              2523,
+              4315,
+              6783,
+              7128,
+              7411
+            ],
+            "doc_0753": [
+              6112,
+              8356,
+              12007,
+              19992,
+              20162,
+              20327
+            ]
+          },
+          "Mays": {
+            "doc_0750": [
+              928,
+              2027
+            ],
+            "doc_0751": [
+              1774
+            ],
+            "doc_0752": [
+              1740
+            ],
+            "doc_0753": [
+              6119,
+              8363,
+              19999,
+              20169,
+              20334,
+              20499
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "143",
+      "answer": "16,086",
+      "catalog": [
+        {
+          "document_id": "doc_0478",
+          "title": "2021 Scottish Parliament election",
+          "characters": 66291
+        },
+        {
+          "document_id": "doc_0479",
+          "title": "2016 Scottish Parliament election",
+          "characters": 42805
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "16,086"
+      ],
+      "hits": [],
+      "classification": "derived",
+      "answer_bearing_document": null,
+      "evidence": {
+        "operation": "60,779 - 44,693",
+        "operands": [
+          {
+            "value": "60,779",
+            "document_id": "doc_0478",
+            "offset": 31429
+          },
+          {
+            "value": "44,693",
+            "document_id": "doc_0479",
+            "offset": 19794
+          }
+        ],
+        "cross_document": true
+      }
+    },
+    {
+      "question_id": "756",
+      "answer": "Bill Clinton was president beginning in 1993, the same year that Mary Elizabeth Butt passed away.",
+      "catalog": [
+        {
+          "document_id": "doc_1254",
+          "title": "Bill Clinton",
+          "characters": 177927
+        },
+        {
+          "document_id": "doc_2313",
+          "title": "Mary Elizabeth Butt",
+          "characters": 8524
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Bill Clinton was president beginning in 1993, the same year that Mary Elizabeth Butt passed away",
+        "Bill Clinton",
+        "Mary Elizabeth Butt",
+        "1993",
+        "president",
+        "beginning",
+        "Elizabeth"
+      ],
+      "hits": [
+        {
+          "literal": "Bill Clinton",
+          "documents": {
+            "doc_1254": [
+              155,
+              1694,
+              16974,
+              17803,
+              23442,
+              24645
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Mary Elizabeth Butt",
+          "documents": {
+            "doc_2313": [
+              458
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        },
+        {
+          "literal": "1993",
+          "documents": {
+            "doc_1254": [
+              36,
+              208,
+              293,
+              2475,
+              3161,
+              32237
+            ],
+            "doc_2313": [
+              30,
+              207,
+              213,
+              501,
+              5461,
+              6407
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        },
+        {
+          "literal": "president",
+          "documents": {
+            "doc_1254": [
+              0,
+              233,
+              329,
+              1461,
+              2013,
+              2102
+            ],
+            "doc_2313": [
+              2321,
+              4596
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 8,
+          "specific": false
+        },
+        {
+          "literal": "beginning",
+          "documents": {
+            "doc_1254": [
+              28616,
+              47497,
+              115901
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 3,
+          "specific": false
+        },
+        {
+          "literal": "Elizabeth",
+          "documents": {
+            "doc_1254": [
+              10535,
+              85861,
+              120367,
+              128085,
+              133635,
+              165937
+            ],
+            "doc_2313": [
+              43,
+              110,
+              463,
+              801,
+              1366,
+              1715
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "Mary Elizabeth Butt",
+        "document_id": "doc_2313",
+        "offsets": [
+          458
+        ],
+        "title": "Mary Elizabeth Butt",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "104",
+      "answer": "103",
+      "catalog": [
+        {
+          "document_id": "doc_0351",
+          "title": "Gunfight at the O.K. Corral",
+          "characters": 121729
+        },
+        {
+          "document_id": "doc_0352",
+          "title": "The Terminator",
+          "characters": 57504
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "103"
+      ],
+      "hits": [
+        {
+          "literal": "103",
+          "documents": {
+            "doc_0351": [
+              22638,
+              118340
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 2,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "103",
+        "document_id": "doc_0351",
+        "offsets": [
+          22638,
+          118340
+        ],
+        "title": "Gunfight at the O.K. Corral",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "694",
+      "answer": "No one, he was the youngest.",
+      "catalog": [
+        {
+          "document_id": "doc_2126",
+          "title": "Eric Jubb",
+          "characters": 1328
+        },
+        {
+          "document_id": "doc_2127",
+          "title": "Swimming at the 1948 Summer Olympics \u2013 Men's 100 metre freestyle",
+          "characters": 10746
+        },
+        {
+          "document_id": "doc_2128",
+          "title": "Sachin Nag",
+          "characters": 2357
+        },
+        {
+          "document_id": "doc_2129",
+          "title": "Ali Mustafa Baghdady",
+          "characters": 3500
+        },
+        {
+          "document_id": "doc_2130",
+          "title": "Warren Boyd (swimmer)",
+          "characters": 1074
+        },
+        {
+          "document_id": "doc_2131",
+          "title": "Alberto Isaac",
+          "characters": 1902
+        },
+        {
+          "document_id": "doc_2132",
+          "title": "G\u00e9za K\u00e1das",
+          "characters": 1515
+        }
+      ],
+      "catalog_size": 7,
+      "literals_searched": [
+        "No one, he was the youngest",
+        "youngest"
+      ],
+      "hits": [],
+      "classification": "not_found",
+      "answer_bearing_document": null,
+      "evidence": null
+    },
+    {
+      "question_id": "760",
+      "answer": "37 years old.",
+      "catalog": [
+        {
+          "document_id": "doc_2321",
+          "title": "Babar the Elephant",
+          "characters": 21689
+        },
+        {
+          "document_id": "doc_2322",
+          "title": "Jean de Brunhoff",
+          "characters": 7097
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "37 years old",
+        "37"
+      ],
+      "hits": [
+        {
+          "literal": "37 years old",
+          "documents": {
+            "doc_2322": [
+              3843
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": true
+        },
+        {
+          "literal": "37",
+          "documents": {
+            "doc_2321": [
+              5125,
+              6832
+            ],
+            "doc_2322": [
+              142,
+              148,
+              164,
+              588,
+              2261,
+              3832
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 8,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_2322",
+      "evidence": {
+        "literal": "37 years old",
+        "document_id": "doc_2322",
+        "offsets": [
+          3843
+        ],
+        "title": "Jean de Brunhoff",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "560",
+      "answer": "Recovering the Satellites",
+      "catalog": [
+        {
+          "document_id": "doc_1768",
+          "title": "Summer Olympic Games",
+          "characters": 65830
+        },
+        {
+          "document_id": "doc_1769",
+          "title": "Counting Crows",
+          "characters": 36720
+        },
+        {
+          "document_id": "doc_1770",
+          "title": "Recovering the Satellites",
+          "characters": 12223
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Recovering the Satellites",
+        "Recovering",
+        "Satellites"
+      ],
+      "hits": [
+        {
+          "literal": "Recovering the Satellites",
+          "documents": {
+            "doc_1769": [
+              1514,
+              7838,
+              8065,
+              8448,
+              12784,
+              22676
+            ],
+            "doc_1770": [
+              114,
+              592,
+              727,
+              920,
+              2813,
+              5396
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": true
+        },
+        {
+          "literal": "Recovering",
+          "documents": {
+            "doc_1769": [
+              1514,
+              7838,
+              8065,
+              8448,
+              12784,
+              22676
+            ],
+            "doc_1770": [
+              114,
+              592,
+              727,
+              920,
+              2813,
+              5396
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        },
+        {
+          "literal": "Satellites",
+          "documents": {
+            "doc_1768": [
+              17243
+            ],
+            "doc_1769": [
+              1529,
+              7853,
+              8080,
+              8463,
+              12799,
+              22691
+            ],
+            "doc_1770": [
+              129,
+              607,
+              742,
+              935,
+              2828,
+              5411
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 13,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Recovering the Satellites": {
+            "doc_1769": [
+              1514,
+              7838,
+              8065,
+              8448,
+              12784,
+              22676
+            ],
+            "doc_1770": [
+              114,
+              592,
+              727,
+              920,
+              2813,
+              5396
+            ]
+          },
+          "Recovering": {
+            "doc_1769": [
+              1514,
+              7838,
+              8065,
+              8448,
+              12784,
+              22676
+            ],
+            "doc_1770": [
+              114,
+              592,
+              727,
+              920,
+              2813,
+              5396
+            ]
+          },
+          "Satellites": {
+            "doc_1768": [
+              17243
+            ],
+            "doc_1769": [
+              1529,
+              7853,
+              8080,
+              8463,
+              12799,
+              22691
+            ],
+            "doc_1770": [
+              129,
+              607,
+              742,
+              935,
+              2828,
+              5411
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "89",
+      "answer": "November 24, 1921",
+      "catalog": [
+        {
+          "document_id": "doc_0304",
+          "title": "Snoopy",
+          "characters": 34303
+        },
+        {
+          "document_id": "doc_0305",
+          "title": "List of mayors of New York City",
+          "characters": 39638
+        },
+        {
+          "document_id": "doc_0306",
+          "title": "John Lindsay",
+          "characters": 37012
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "November 24, 1921",
+        "November",
+        "24",
+        "1921"
+      ],
+      "hits": [
+        {
+          "literal": "November 24, 1921",
+          "documents": {
+            "doc_0306": [
+              658,
+              1245
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 2,
+          "specific": true
+        },
+        {
+          "literal": "November",
+          "documents": {
+            "doc_0304": [
+              5689,
+              8443,
+              21302,
+              23804,
+              26631,
+              26862
+            ],
+            "doc_0305": [
+              1975,
+              2051,
+              11879,
+              12013,
+              12379,
+              12522
+            ],
+            "doc_0306": [
+              658,
+              1245,
+              8448,
+              22649,
+              26452,
+              26796
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 18,
+          "specific": false
+        },
+        {
+          "literal": "24",
+          "documents": {
+            "doc_0304": [
+              19912,
+              20031,
+              20861,
+              23709,
+              24964,
+              25535
+            ],
+            "doc_0305": [
+              105,
+              523,
+              4340,
+              4489,
+              8412,
+              8849
+            ],
+            "doc_0306": [
+              653,
+              667,
+              1254,
+              5630
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 16,
+          "specific": false
+        },
+        {
+          "literal": "1921",
+          "documents": {
+            "doc_0305": [
+              16200,
+              17571,
+              25684
+            ],
+            "doc_0306": [
+              21,
+              645,
+              671,
+              1258
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_0306",
+      "evidence": {
+        "literal": "November 24, 1921",
+        "document_id": "doc_0306",
+        "offsets": [
+          658,
+          1245
+        ],
+        "title": "John Lindsay",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "606",
+      "answer": "15",
+      "catalog": [
+        {
+          "document_id": "doc_1883",
+          "title": "Muhammad Ali",
+          "characters": 174880
+        },
+        {
+          "document_id": "doc_1884",
+          "title": "Joe Louis",
+          "characters": 90422
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "15"
+      ],
+      "hits": [
+        {
+          "literal": "15",
+          "documents": {
+            "doc_1883": [
+              9366,
+              20446,
+              22347,
+              33430,
+              33616,
+              44127
+            ],
+            "doc_1884": [
+              15024,
+              18110,
+              33426,
+              41253,
+              56883,
+              57129
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "15": {
+            "doc_1883": [
+              9366,
+              20446,
+              22347,
+              33430,
+              33616,
+              44127
+            ],
+            "doc_1884": [
+              15024,
+              18110,
+              33426,
+              41253,
+              56883,
+              57129
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "433",
+      "answer": "Malcolm Fraser",
+      "catalog": [
+        {
+          "document_id": "doc_1404",
+          "title": "Norman Gunston",
+          "characters": 32080
+        },
+        {
+          "document_id": "doc_1405",
+          "title": "List of prime ministers of Australia",
+          "characters": 21905
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Malcolm Fraser",
+        "Malcolm",
+        "Fraser"
+      ],
+      "hits": [
+        {
+          "literal": "Malcolm Fraser",
+          "documents": {
+            "doc_1404": [
+              25358
+            ],
+            "doc_1405": [
+              1664,
+              9186,
+              20670
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 4,
+          "specific": true
+        },
+        {
+          "literal": "Malcolm",
+          "documents": {
+            "doc_1404": [
+              12238,
+              24090,
+              25358,
+              26159
+            ],
+            "doc_1405": [
+              1283,
+              1664,
+              9186,
+              11060,
+              19394,
+              20670
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 10,
+          "specific": false
+        },
+        {
+          "literal": "Fraser",
+          "documents": {
+            "doc_1404": [
+              25366,
+              26857
+            ],
+            "doc_1405": [
+              1672,
+              9194,
+              9327,
+              9360,
+              9418,
+              9477
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 8,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Malcolm Fraser": {
+            "doc_1404": [
+              25358
+            ],
+            "doc_1405": [
+              1664,
+              9186,
+              20670
+            ]
+          },
+          "Malcolm": {
+            "doc_1404": [
+              12238,
+              24090,
+              25358,
+              26159
+            ],
+            "doc_1405": [
+              1283,
+              1664,
+              9186,
+              11060,
+              19394,
+              20670
+            ]
+          },
+          "Fraser": {
+            "doc_1404": [
+              25366,
+              26857
+            ],
+            "doc_1405": [
+              1672,
+              9194,
+              9327,
+              9360,
+              9418,
+              9477
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "32",
+      "answer": "55",
+      "catalog": [
+        {
+          "document_id": "doc_0011",
+          "title": "FIFA World Cup",
+          "characters": 76431
+        },
+        {
+          "document_id": "doc_0114",
+          "title": "Chicago Bulls",
+          "characters": 106326
+        },
+        {
+          "document_id": "doc_0115",
+          "title": "Dallas Cowboys",
+          "characters": 143254
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "55"
+      ],
+      "hits": [
+        {
+          "literal": "55",
+          "documents": {
+            "doc_0011": [
+              70566
+            ],
+            "doc_0114": [
+              13975,
+              15196,
+              38722,
+              69606,
+              72021,
+              72022
+            ],
+            "doc_0115": [
+              46744,
+              81935,
+              84890,
+              88694,
+              142836
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 12,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "55": {
+            "doc_0011": [
+              70566
+            ],
+            "doc_0114": [
+              13975,
+              15196,
+              38722,
+              69606,
+              72021,
+              72022
+            ],
+            "doc_0115": [
+              46744,
+              81935,
+              84890,
+              88694,
+              142836
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "30",
+      "answer": "Two million.",
+      "catalog": [
+        {
+          "document_id": "doc_0108",
+          "title": "Culdcept Saga",
+          "characters": 12633
+        },
+        {
+          "document_id": "doc_0109",
+          "title": "Tow Ubukata",
+          "characters": 7701
+        },
+        {
+          "document_id": "doc_0110",
+          "title": "Gifu Prefecture",
+          "characters": 27429
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Two million",
+        "million"
+      ],
+      "hits": [
+        {
+          "literal": "million",
+          "documents": {
+            "doc_0110": [
+              20285
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "million",
+        "document_id": "doc_0110",
+        "offsets": [
+          20285
+        ],
+        "title": "Gifu Prefecture",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "95",
+      "answer": "74 years",
+      "catalog": [
+        {
+          "document_id": "doc_0181",
+          "title": "List of World Series champions",
+          "characters": 26335
+        },
+        {
+          "document_id": "doc_0325",
+          "title": "2021 Atlanta Braves season",
+          "characters": 39526
+        },
+        {
+          "document_id": "doc_0326",
+          "title": "2021 Houston Astros season",
+          "characters": 107042
+        },
+        {
+          "document_id": "doc_0327",
+          "title": "Jackie Robinson",
+          "characters": 105082
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "74 years",
+        "74"
+      ],
+      "hits": [
+        {
+          "literal": "74",
+          "documents": {
+            "doc_0181": [
+              11293,
+              19078,
+              19291,
+              24093
+            ],
+            "doc_0325": [
+              4247,
+              12114,
+              15404,
+              15916,
+              21452,
+              23362
+            ],
+            "doc_0326": [
+              538,
+              15479,
+              18470,
+              18962,
+              29800,
+              35455
+            ],
+            "doc_0327": [
+              39526,
+              42089,
+              42159,
+              49223,
+              80603,
+              86451
+            ]
+          },
+          "document_count": 4,
+          "total_occurrences": 22,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "74": {
+            "doc_0181": [
+              11293,
+              19078,
+              19291,
+              24093
+            ],
+            "doc_0325": [
+              4247,
+              12114,
+              15404,
+              15916,
+              21452,
+              23362
+            ],
+            "doc_0326": [
+              538,
+              15479,
+              18470,
+              18962,
+              29800,
+              35455
+            ],
+            "doc_0327": [
+              39526,
+              42089,
+              42159,
+              49223,
+              80603,
+              86451
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "224",
+      "answer": "Verizon Center",
+      "catalog": [
+        {
+          "document_id": "doc_0725",
+          "title": "Brazil national football team",
+          "characters": 92705
+        },
+        {
+          "document_id": "doc_0726",
+          "title": "Blink-182",
+          "characters": 81856
+        },
+        {
+          "document_id": "doc_0727",
+          "title": "Pop Disaster Tour",
+          "characters": 19356
+        },
+        {
+          "document_id": "doc_0728",
+          "title": "Capital One Arena",
+          "characters": 34424
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "Verizon Center",
+        "Verizon",
+        "Center"
+      ],
+      "hits": [
+        {
+          "literal": "Verizon Center",
+          "documents": {
+            "doc_0728": [
+              459,
+              1856,
+              6804,
+              6937,
+              7597,
+              11340
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": true
+        },
+        {
+          "literal": "Verizon",
+          "documents": {
+            "doc_0727": [
+              9742,
+              10858,
+              11542,
+              11649,
+              12931
+            ],
+            "doc_0728": [
+              459,
+              1856,
+              1904,
+              6804,
+              6852,
+              6937
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 11,
+          "specific": false
+        },
+        {
+          "literal": "Center",
+          "documents": {
+            "doc_0726": [
+              6251
+            ],
+            "doc_0727": [
+              10452,
+              10792,
+              11852,
+              12011,
+              12063,
+              12277
+            ],
+            "doc_0728": [
+              52,
+              117,
+              440,
+              467,
+              1833,
+              1864
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 13,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_0728",
+      "evidence": {
+        "literal": "Verizon Center",
+        "document_id": "doc_0728",
+        "offsets": [
+          459,
+          1856,
+          6804,
+          6937,
+          7597,
+          11340
+        ],
+        "title": "Capital One Arena",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "239",
+      "answer": "Wheatland, also known as the James Buchanan House, is the same name as the town in Wyoming where Charles Hoskinson resides.  Charles Hoskinson cofounded Ethereum and founded Cardano.  Cardano was released in 2017; Ethereum was released in 2015.  Two years elapsed between the two platforms' releases.",
+      "catalog": [
+        {
+          "document_id": "doc_0810",
+          "title": "Wheatland (James Buchanan House)",
+          "characters": 17163
+        },
+        {
+          "document_id": "doc_0811",
+          "title": "Wheatland, Wyoming",
+          "characters": 15208
+        },
+        {
+          "document_id": "doc_0812",
+          "title": "Cardano (blockchain platform)",
+          "characters": 21980
+        },
+        {
+          "document_id": "doc_0813",
+          "title": "Ethereum",
+          "characters": 51780
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "Wheatland, also known as the James Buchanan House, is the same name as the town in Wyoming where Charles Hoskinson resides.  Charles Hoskinson cofounded Ethereum and founded Cardano.  Cardano was released in 2017; Ethereum was released in 2015.  Two years elapsed between the two platforms' releases",
+        "Wheatland",
+        "James Buchanan House",
+        "Wyoming",
+        "Charles Hoskinson",
+        "Ethereum",
+        "Cardano",
+        "2017",
+        "2015",
+        "platforms'",
+        "Hoskinson"
+      ],
+      "hits": [
+        {
+          "literal": "Wheatland",
+          "documents": {
+            "doc_0810": [
+              321,
+              523,
+              1109,
+              1526,
+              1774,
+              1925
+            ],
+            "doc_0811": [
+              33,
+              94,
+              123,
+              780,
+              933,
+              1030
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        },
+        {
+          "literal": "James Buchanan House",
+          "documents": {
+            "doc_0810": [
+              99,
+              1127
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 2,
+          "specific": false
+        },
+        {
+          "literal": "Wyoming",
+          "documents": {
+            "doc_0811": [
+              8,
+              44,
+              151,
+              301,
+              856,
+              1271
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Charles Hoskinson",
+          "documents": {
+            "doc_0811": [
+              12070
+            ],
+            "doc_0812": [
+              201,
+              1570,
+              1648,
+              12107
+            ],
+            "doc_0813": [
+              1041,
+              3136,
+              3837
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 8,
+          "specific": false
+        },
+        {
+          "literal": "Ethereum",
+          "documents": {
+            "doc_0811": [
+              12157
+            ],
+            "doc_0812": [
+              1630,
+              1755,
+              3783,
+              4059,
+              4857,
+              11874
+            ],
+            "doc_0813": [
+              645,
+              688,
+              944,
+              1192,
+              1545,
+              1839
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 13,
+          "specific": false
+        },
+        {
+          "literal": "Cardano",
+          "documents": {
+            "doc_0811": [
+              12112
+            ],
+            "doc_0812": [
+              99,
+              251,
+              440,
+              575,
+              806,
+              1073
+            ],
+            "doc_0813": [
+              3705
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 8,
+          "specific": false
+        },
+        {
+          "literal": "2017",
+          "documents": {
+            "doc_0811": [
+              11808
+            ],
+            "doc_0812": [
+              305,
+              326,
+              1296,
+              2133,
+              11491,
+              12053
+            ],
+            "doc_0813": [
+              7561,
+              7584,
+              7760,
+              8084,
+              8479,
+              25256
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 13,
+          "specific": false
+        },
+        {
+          "literal": "2015",
+          "documents": {
+            "doc_0811": [
+              14716
+            ],
+            "doc_0812": [
+              1273,
+              1730
+            ],
+            "doc_0813": [
+              144,
+              166,
+              1186,
+              2090,
+              5942,
+              6193
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 9,
+          "specific": false
+        },
+        {
+          "literal": "Hoskinson",
+          "documents": {
+            "doc_0811": [
+              12078
+            ],
+            "doc_0812": [
+              209,
+              1578,
+              1656,
+              1736,
+              1822,
+              1957
+            ],
+            "doc_0813": [
+              1049,
+              3144,
+              3599,
+              3845
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 11,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "James Buchanan House",
+        "document_id": "doc_0810",
+        "offsets": [
+          99,
+          1127
+        ],
+        "title": "Wheatland (James Buchanan House)",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "518",
+      "answer": "The Swine Flu.",
+      "catalog": [
+        {
+          "document_id": "doc_1644",
+          "title": "Orlando Magic",
+          "characters": 111086
+        },
+        {
+          "document_id": "doc_1645",
+          "title": "2009 swine flu pandemic",
+          "characters": 108697
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "The Swine Flu",
+        "Swine"
+      ],
+      "hits": [
+        {
+          "literal": "The Swine Flu",
+          "documents": {
+            "doc_1645": [
+              24496
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": true
+        },
+        {
+          "literal": "Swine",
+          "documents": {
+            "doc_1645": [
+              22,
+              76,
+              842,
+              1152,
+              1181,
+              1478
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_1645",
+      "evidence": {
+        "literal": "The Swine Flu",
+        "document_id": "doc_1645",
+        "offsets": [
+          24496
+        ],
+        "title": "2009 swine flu pandemic",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "618",
+      "answer": "16,351",
+      "catalog": [
+        {
+          "document_id": "doc_1263",
+          "title": "Justin Trudeau",
+          "characters": 150007
+        },
+        {
+          "document_id": "doc_1926",
+          "title": "List of Canadian federal elections",
+          "characters": 36665
+        },
+        {
+          "document_id": "doc_1927",
+          "title": "Results breakdown of the 2011 Canadian federal election",
+          "characters": 83580
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "16,351"
+      ],
+      "hits": [
+        {
+          "literal": "16,351",
+          "documents": {
+            "doc_1927": [
+              21888
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": true
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_1927",
+      "evidence": {
+        "literal": "16,351",
+        "document_id": "doc_1927",
+        "offsets": [
+          21888
+        ],
+        "title": "Results breakdown of the 2011 Canadian federal election",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "27",
+      "answer": "9",
+      "catalog": [
+        {
+          "document_id": "doc_0101",
+          "title": "Tommy Lawton",
+          "characters": 37167
+        },
+        {
+          "document_id": "doc_0102",
+          "title": "Squad number (association football)",
+          "characters": 47070
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [],
+      "hits": [],
+      "classification": "not_found",
+      "answer_bearing_document": null,
+      "evidence": null
+    },
+    {
+      "question_id": "576",
+      "answer": "Jake Pavelka",
+      "catalog": [
+        {
+          "document_id": "doc_1808",
+          "title": "Erica Rose (television personality)",
+          "characters": 7384
+        },
+        {
+          "document_id": "doc_1809",
+          "title": "The Bachelor (American TV series) season 14",
+          "characters": 21864
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Jake Pavelka",
+        "Pavelka",
+        "Jake"
+      ],
+      "hits": [
+        {
+          "literal": "Jake Pavelka",
+          "documents": {
+            "doc_1809": [
+              155,
+              864,
+              1269,
+              3513,
+              16909,
+              16936
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": true
+        },
+        {
+          "literal": "Pavelka",
+          "documents": {
+            "doc_1809": [
+              160,
+              869,
+              925,
+              1136,
+              1274,
+              3518
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Jake",
+          "documents": {
+            "doc_1808": [
+              5460
+            ],
+            "doc_1809": [
+              155,
+              864,
+              1269,
+              3513,
+              4250,
+              4365
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_1809",
+      "evidence": {
+        "literal": "Jake Pavelka",
+        "document_id": "doc_1809",
+        "offsets": [
+          155,
+          864,
+          1269,
+          3513,
+          16909,
+          16936
+        ],
+        "title": "The Bachelor (American TV series) season 14",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "204",
+      "answer": "Mike Tyson and Margaret Thatcher",
+      "catalog": [
+        {
+          "document_id": "doc_0095",
+          "title": "Mike Tyson",
+          "characters": 135540
+        },
+        {
+          "document_id": "doc_0668",
+          "title": "Margaret Thatcher",
+          "characters": 161884
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Mike Tyson and Margaret Thatcher",
+        "Margaret",
+        "Thatcher",
+        "Tyson"
+      ],
+      "hits": [
+        {
+          "literal": "Margaret",
+          "documents": {
+            "doc_0668": [
+              134,
+              2227,
+              2789,
+              2936,
+              4133,
+              7311
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Thatcher",
+          "documents": {
+            "doc_0668": [
+              143,
+              206,
+              2541,
+              2798,
+              2945,
+              3338
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Tyson",
+          "documents": {
+            "doc_0095": [
+              77,
+              93,
+              119,
+              273,
+              572,
+              1179
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "Margaret",
+        "document_id": "doc_0668",
+        "offsets": [
+          134,
+          2227,
+          2789,
+          2936,
+          4133,
+          7311
+        ],
+        "title": "Margaret Thatcher",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "735",
+      "answer": "Mondragon Corporation",
+      "catalog": [
+        {
+          "document_id": "doc_2253",
+          "title": "Jos\u00e9 Mar\u00eda Arizmendiarrieta",
+          "characters": 78808
+        },
+        {
+          "document_id": "doc_2254",
+          "title": "Mondragon Corporation",
+          "characters": 29791
+        },
+        {
+          "document_id": "doc_2255",
+          "title": "United Steelworkers",
+          "characters": 16393
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Mondragon Corporation",
+        "Corporation",
+        "Mondragon"
+      ],
+      "hits": [
+        {
+          "literal": "Mondragon Corporation",
+          "documents": {
+            "doc_2253": [
+              3677,
+              28734,
+              40087,
+              68720
+            ],
+            "doc_2254": [
+              33,
+              530,
+              2241,
+              3713,
+              7416,
+              9943
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 10,
+          "specific": true
+        },
+        {
+          "literal": "Corporation",
+          "documents": {
+            "doc_2253": [
+              3687,
+              28744,
+              39048,
+              39661,
+              40097,
+              67122
+            ],
+            "doc_2254": [
+              43,
+              507,
+              540,
+              557,
+              2251,
+              3480
+            ],
+            "doc_2255": [
+              9959
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 13,
+          "specific": false
+        },
+        {
+          "literal": "Mondragon",
+          "documents": {
+            "doc_2253": [
+              3677,
+              4626,
+              4942,
+              4980,
+              13418,
+              13575
+            ],
+            "doc_2254": [
+              33,
+              497,
+              530,
+              1278,
+              2241,
+              3419
+            ],
+            "doc_2255": [
+              7622,
+              13014
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 14,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Mondragon Corporation": {
+            "doc_2253": [
+              3677,
+              28734,
+              40087,
+              68720
+            ],
+            "doc_2254": [
+              33,
+              530,
+              2241,
+              3713,
+              7416,
+              9943
+            ]
+          },
+          "Corporation": {
+            "doc_2253": [
+              3687,
+              28744,
+              39048,
+              39661,
+              40097,
+              67122
+            ],
+            "doc_2254": [
+              43,
+              507,
+              540,
+              557,
+              2251,
+              3480
+            ],
+            "doc_2255": [
+              9959
+            ]
+          },
+          "Mondragon": {
+            "doc_2253": [
+              3677,
+              4626,
+              4942,
+              4980,
+              13418,
+              13575
+            ],
+            "doc_2254": [
+              33,
+              497,
+              530,
+              1278,
+              2241,
+              3419
+            ],
+            "doc_2255": [
+              7622,
+              13014
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "667",
+      "answer": "Lake Merritt",
+      "catalog": [
+        {
+          "document_id": "doc_2051",
+          "title": "Old Mission Dam",
+          "characters": 3858
+        },
+        {
+          "document_id": "doc_2052",
+          "title": "Pecos National Historical Park",
+          "characters": 14082
+        },
+        {
+          "document_id": "doc_2053",
+          "title": "Walden Pond",
+          "characters": 17379
+        },
+        {
+          "document_id": "doc_2054",
+          "title": "Seal Island Historic District",
+          "characters": 4681
+        },
+        {
+          "document_id": "doc_2055",
+          "title": "Russian Bishop's House",
+          "characters": 5439
+        },
+        {
+          "document_id": "doc_2056",
+          "title": "Luther Burbank Home and Gardens",
+          "characters": 3723
+        }
+      ],
+      "catalog_size": 6,
+      "literals_searched": [
+        "Lake Merritt",
+        "Merritt",
+        "Lake"
+      ],
+      "hits": [],
+      "classification": "not_found",
+      "answer_bearing_document": null,
+      "evidence": null
+    },
+    {
+      "question_id": "720",
+      "answer": "Kramer vs. Kramer",
+      "catalog": [
+        {
+          "document_id": "doc_2206",
+          "title": "Meryl Streep",
+          "characters": 118299
+        },
+        {
+          "document_id": "doc_2207",
+          "title": "Kramer vs. Kramer",
+          "characters": 28104
+        },
+        {
+          "document_id": "doc_2208",
+          "title": "Pioneer 11",
+          "characters": 29504
+        },
+        {
+          "document_id": "doc_2209",
+          "title": "The Seduction of Joe Tynan",
+          "characters": 6088
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "Kramer vs. Kramer",
+        "Kramer"
+      ],
+      "hits": [
+        {
+          "literal": "Kramer vs. Kramer",
+          "documents": {
+            "doc_2206": [
+              1815,
+              12476,
+              14129,
+              65439,
+              66636
+            ],
+            "doc_2207": [
+              29,
+              803,
+              1179,
+              1376,
+              1869,
+              11505
+            ],
+            "doc_2209": [
+              4396,
+              4530,
+              4654
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 14,
+          "specific": true
+        },
+        {
+          "literal": "Kramer",
+          "documents": {
+            "doc_2206": [
+              1815,
+              1826,
+              12476,
+              12487,
+              14129,
+              14140
+            ],
+            "doc_2207": [
+              29,
+              40,
+              178,
+              192,
+              803,
+              814
+            ],
+            "doc_2209": [
+              4396,
+              4407,
+              4530,
+              4541,
+              4654,
+              4665
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 18,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Kramer vs. Kramer": {
+            "doc_2206": [
+              1815,
+              12476,
+              14129,
+              65439,
+              66636
+            ],
+            "doc_2207": [
+              29,
+              803,
+              1179,
+              1376,
+              1869,
+              11505
+            ],
+            "doc_2209": [
+              4396,
+              4530,
+              4654
+            ]
+          },
+          "Kramer": {
+            "doc_2206": [
+              1815,
+              1826,
+              12476,
+              12487,
+              14129,
+              14140
+            ],
+            "doc_2207": [
+              29,
+              40,
+              178,
+              192,
+              803,
+              814
+            ],
+            "doc_2209": [
+              4396,
+              4407,
+              4530,
+              4541,
+              4654,
+              4665
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "430",
+      "answer": "Edith Windsor",
+      "catalog": [
+        {
+          "document_id": "doc_1396",
+          "title": "Edith Windsor",
+          "characters": 23053
+        },
+        {
+          "document_id": "doc_1397",
+          "title": "Joshua Lyon",
+          "characters": 3203
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Edith Windsor",
+        "Windsor",
+        "Edith"
+      ],
+      "hits": [
+        {
+          "literal": "Edith Windsor",
+          "documents": {
+            "doc_1396": [
+              68,
+              667,
+              16009,
+              16117,
+              16908,
+              17618
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": true
+        },
+        {
+          "literal": "Windsor",
+          "documents": {
+            "doc_1396": [
+              74,
+              103,
+              315,
+              443,
+              497,
+              652
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Edith",
+          "documents": {
+            "doc_1396": [
+              68,
+              142,
+              667,
+              15736,
+              16009,
+              16117
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_1396",
+      "evidence": {
+        "literal": "Edith Windsor",
+        "document_id": "doc_1396",
+        "offsets": [
+          68,
+          667,
+          16009,
+          16117,
+          16908,
+          17618
+        ],
+        "title": "Edith Windsor",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "226",
+      "answer": "Marie Curie and Grazia Deledda",
+      "catalog": [
+        {
+          "document_id": "doc_0733",
+          "title": "Marie Curie",
+          "characters": 70304
+        },
+        {
+          "document_id": "doc_0734",
+          "title": "Grazia Deledda",
+          "characters": 14897
+        },
+        {
+          "document_id": "doc_0735",
+          "title": "List of women Nobel laureates",
+          "characters": 27796
+        },
+        {
+          "document_id": "doc_0736",
+          "title": "Ir\u00e8ne Joliot-Curie",
+          "characters": 39310
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "Marie Curie and Grazia Deledda",
+        "Deledda",
+        "Grazia",
+        "Marie"
+      ],
+      "hits": [
+        {
+          "literal": "Deledda",
+          "documents": {
+            "doc_0734": [
+              298,
+              335,
+              351,
+              366,
+              424,
+              853
+            ],
+            "doc_0735": [
+              12445
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        },
+        {
+          "literal": "Grazia",
+          "documents": {
+            "doc_0734": [
+              291,
+              396,
+              825,
+              6960,
+              7106,
+              10064
+            ],
+            "doc_0735": [
+              12438
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        },
+        {
+          "literal": "Marie",
+          "documents": {
+            "doc_0733": [
+              121,
+              155,
+              267,
+              311,
+              1881,
+              4309
+            ],
+            "doc_0735": [
+              3712,
+              4485,
+              9036,
+              10453,
+              22871
+            ],
+            "doc_0736": [
+              1436,
+              3065,
+              3208,
+              3701,
+              4002,
+              4699
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 17,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Deledda": {
+            "doc_0734": [
+              298,
+              335,
+              351,
+              366,
+              424,
+              853
+            ],
+            "doc_0735": [
+              12445
+            ]
+          },
+          "Grazia": {
+            "doc_0734": [
+              291,
+              396,
+              825,
+              6960,
+              7106,
+              10064
+            ],
+            "doc_0735": [
+              12438
+            ]
+          },
+          "Marie": {
+            "doc_0733": [
+              121,
+              155,
+              267,
+              311,
+              1881,
+              4309
+            ],
+            "doc_0735": [
+              3712,
+              4485,
+              9036,
+              10453,
+              22871
+            ],
+            "doc_0736": [
+              1436,
+              3065,
+              3208,
+              3701,
+              4002,
+              4699
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "460",
+      "answer": "The Northumberland Plate horse race was established 81 years before the assassination of Archduke Franz Ferdinand",
+      "catalog": [
+        {
+          "document_id": "doc_1500",
+          "title": "Assassination of Archduke Franz Ferdinand",
+          "characters": 81102
+        },
+        {
+          "document_id": "doc_1501",
+          "title": "Franz Ferdinand (band)",
+          "characters": 34709
+        },
+        {
+          "document_id": "doc_1502",
+          "title": "Northumberland Plate",
+          "characters": 17191
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "The Northumberland Plate horse race was established 81 years before the assassination of Archduke Franz Ferdinand",
+        "The Northumberland Plate",
+        "Archduke Franz Ferdinand",
+        "81",
+        "Northumberland",
+        "assassination",
+        "established"
+      ],
+      "hits": [
+        {
+          "literal": "The Northumberland Plate",
+          "documents": {
+            "doc_1501": [
+              3958
+            ],
+            "doc_1502": [
+              3443,
+              3965,
+              4247
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 4,
+          "specific": false
+        },
+        {
+          "literal": "Archduke Franz Ferdinand",
+          "documents": {
+            "doc_1500": [
+              582,
+              2116,
+              5011,
+              10069,
+              15778,
+              23454
+            ],
+            "doc_1501": [
+              673,
+              3182,
+              4018
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 9,
+          "specific": false
+        },
+        {
+          "literal": "81",
+          "documents": {
+            "doc_1500": [
+              1225,
+              64848,
+              64874,
+              69383,
+              70533,
+              74311
+            ],
+            "doc_1502": [
+              11403,
+              16197,
+              17165
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 9,
+          "specific": false
+        },
+        {
+          "literal": "Northumberland",
+          "documents": {
+            "doc_1501": [
+              3962
+            ],
+            "doc_1502": [
+              3447,
+              3969,
+              4251,
+              16608,
+              17050,
+              17092
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        },
+        {
+          "literal": "assassination",
+          "documents": {
+            "doc_1500": [
+              28,
+              812,
+              957,
+              2049,
+              2868,
+              3000
+            ],
+            "doc_1501": [
+              4174
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        },
+        {
+          "literal": "established",
+          "documents": {
+            "doc_1500": [
+              9323
+            ],
+            "doc_1502": [
+              3730
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 2,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "The Northumberland Plate": {
+            "doc_1501": [
+              3958
+            ],
+            "doc_1502": [
+              3443,
+              3965,
+              4247
+            ]
+          },
+          "Archduke Franz Ferdinand": {
+            "doc_1500": [
+              582,
+              2116,
+              5011,
+              10069,
+              15778,
+              23454
+            ],
+            "doc_1501": [
+              673,
+              3182,
+              4018
+            ]
+          },
+          "81": {
+            "doc_1500": [
+              1225,
+              64848,
+              64874,
+              69383,
+              70533,
+              74311
+            ],
+            "doc_1502": [
+              11403,
+              16197,
+              17165
+            ]
+          },
+          "Northumberland": {
+            "doc_1501": [
+              3962
+            ],
+            "doc_1502": [
+              3447,
+              3969,
+              4251,
+              16608,
+              17050,
+              17092
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "605",
+      "answer": "49 years.",
+      "catalog": [
+        {
+          "document_id": "doc_1881",
+          "title": "Nineteen Eighty-Four",
+          "characters": 87217
+        },
+        {
+          "document_id": "doc_1882",
+          "title": "Google",
+          "characters": 145502
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "49 years",
+        "49"
+      ],
+      "hits": [
+        {
+          "literal": "49",
+          "documents": {
+            "doc_1881": [
+              2,
+              427,
+              434,
+              1625,
+              8965,
+              18241
+            ],
+            "doc_1882": [
+              33096,
+              60940,
+              62617
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 9,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "49": {
+            "doc_1881": [
+              2,
+              427,
+              434,
+              1625,
+              8965,
+              18241
+            ],
+            "doc_1882": [
+              33096,
+              60940,
+              62617
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "285",
+      "answer": "11 (Layne Staley)",
+      "catalog": [
+        {
+          "document_id": "doc_0490",
+          "title": "1992",
+          "characters": 38996
+        },
+        {
+          "document_id": "doc_0974",
+          "title": "Layne Staley",
+          "characters": 62465
+        },
+        {
+          "document_id": "doc_0975",
+          "title": "Man in the Box",
+          "characters": 15768
+        },
+        {
+          "document_id": "doc_0976",
+          "title": "Grammy Award for Best Hard Rock Performance",
+          "characters": 12835
+        }
+      ],
+      "catalog_size": 4,
+      "literals_searched": [
+        "11 (Layne Staley)",
+        "Layne Staley",
+        "11",
+        "Staley",
+        "Layne"
+      ],
+      "hits": [
+        {
+          "literal": "Layne Staley",
+          "documents": {
+            "doc_0974": [
+              37,
+              3060,
+              15710,
+              15760,
+              15798,
+              27042
+            ],
+            "doc_0975": [
+              521,
+              2000,
+              2399,
+              2831,
+              5556,
+              6364
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": true
+        },
+        {
+          "literal": "11",
+          "documents": {
+            "doc_0490": [
+              2883,
+              3312,
+              3376,
+              5690,
+              5691,
+              20835
+            ],
+            "doc_0974": [
+              25641,
+              31341,
+              31971,
+              32261,
+              34997,
+              37630
+            ],
+            "doc_0975": [
+              9556,
+              9560,
+              10086,
+              14385,
+              14478,
+              14620
+            ],
+            "doc_0976": [
+              335,
+              493,
+              6932,
+              7979,
+              9145,
+              10730
+            ]
+          },
+          "document_count": 4,
+          "total_occurrences": 24,
+          "specific": false
+        },
+        {
+          "literal": "Staley",
+          "documents": {
+            "doc_0974": [
+              43,
+              71,
+              211,
+              650,
+              692,
+              739
+            ],
+            "doc_0975": [
+              527,
+              2006,
+              2405,
+              2721,
+              2837,
+              3633
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        },
+        {
+          "literal": "Layne",
+          "documents": {
+            "doc_0974": [
+              37,
+              171,
+              194,
+              644,
+              679,
+              722
+            ],
+            "doc_0975": [
+              521,
+              2000,
+              2399,
+              2831,
+              5556,
+              6364
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Layne Staley": {
+            "doc_0974": [
+              37,
+              3060,
+              15710,
+              15760,
+              15798,
+              27042
+            ],
+            "doc_0975": [
+              521,
+              2000,
+              2399,
+              2831,
+              5556,
+              6364
+            ]
+          },
+          "11": {
+            "doc_0490": [
+              2883,
+              3312,
+              3376,
+              5690,
+              5691,
+              20835
+            ],
+            "doc_0974": [
+              25641,
+              31341,
+              31971,
+              32261,
+              34997,
+              37630
+            ],
+            "doc_0975": [
+              9556,
+              9560,
+              10086,
+              14385,
+              14478,
+              14620
+            ],
+            "doc_0976": [
+              335,
+              493,
+              6932,
+              7979,
+              9145,
+              10730
+            ]
+          },
+          "Staley": {
+            "doc_0974": [
+              43,
+              71,
+              211,
+              650,
+              692,
+              739
+            ],
+            "doc_0975": [
+              527,
+              2006,
+              2405,
+              2721,
+              2837,
+              3633
+            ]
+          },
+          "Layne": {
+            "doc_0974": [
+              37,
+              171,
+              194,
+              644,
+              679,
+              722
+            ],
+            "doc_0975": [
+              521,
+              2000,
+              2399,
+              2831,
+              5556,
+              6364
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "6",
+      "answer": "Mendelevium is named after Dmitri Mendeleev.",
+      "catalog": [
+        {
+          "document_id": "doc_0021",
+          "title": "Zirconium",
+          "characters": 42814
+        },
+        {
+          "document_id": "doc_0022",
+          "title": "Martin Heinrich Klaproth",
+          "characters": 15578
+        },
+        {
+          "document_id": "doc_0023",
+          "title": "Uranium",
+          "characters": 90385
+        },
+        {
+          "document_id": "doc_0024",
+          "title": "Mendelevium",
+          "characters": 30840
+        },
+        {
+          "document_id": "doc_0025",
+          "title": "Periodic table",
+          "characters": 200472
+        }
+      ],
+      "catalog_size": 5,
+      "literals_searched": [
+        "Mendelevium is named after Dmitri Mendeleev",
+        "Mendelevium",
+        "Dmitri Mendeleev",
+        "Mendeleev",
+        "Dmitri"
+      ],
+      "hits": [
+        {
+          "literal": "Mendelevium",
+          "documents": {
+            "doc_0021": [
+              2274
+            ],
+            "doc_0023": [
+              2308
+            ],
+            "doc_0024": [
+              47,
+              240,
+              2113,
+              2380,
+              3294,
+              3793
+            ],
+            "doc_0025": [
+              19717,
+              21561,
+              49435,
+              51300,
+              71507,
+              113242
+            ]
+          },
+          "document_count": 4,
+          "total_occurrences": 14,
+          "specific": false
+        },
+        {
+          "literal": "Dmitri Mendeleev",
+          "documents": {
+            "doc_0024": [
+              3200,
+              4259,
+              9320,
+              11271,
+              11815
+            ],
+            "doc_0025": [
+              3169,
+              97869,
+              179172
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 8,
+          "specific": false
+        },
+        {
+          "literal": "Mendeleev",
+          "documents": {
+            "doc_0024": [
+              3207,
+              4266,
+              9327,
+              11278,
+              11822
+            ],
+            "doc_0025": [
+              627,
+              3176,
+              3361,
+              14853,
+              17870,
+              17912
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 11,
+          "specific": false
+        },
+        {
+          "literal": "Dmitri",
+          "documents": {
+            "doc_0024": [
+              3200,
+              4259,
+              9320,
+              11271,
+              11815
+            ],
+            "doc_0025": [
+              3169,
+              97869,
+              154583,
+              179172,
+              186116,
+              187605
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 11,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Mendelevium": {
+            "doc_0021": [
+              2274
+            ],
+            "doc_0023": [
+              2308
+            ],
+            "doc_0024": [
+              47,
+              240,
+              2113,
+              2380,
+              3294,
+              3793
+            ],
+            "doc_0025": [
+              19717,
+              21561,
+              49435,
+              51300,
+              71507,
+              113242
+            ]
+          },
+          "Dmitri Mendeleev": {
+            "doc_0024": [
+              3200,
+              4259,
+              9320,
+              11271,
+              11815
+            ],
+            "doc_0025": [
+              3169,
+              97869,
+              179172
+            ]
+          },
+          "Mendeleev": {
+            "doc_0024": [
+              3207,
+              4266,
+              9327,
+              11278,
+              11822
+            ],
+            "doc_0025": [
+              627,
+              3176,
+              3361,
+              14853,
+              17870,
+              17912
+            ]
+          },
+          "Dmitri": {
+            "doc_0024": [
+              3200,
+              4259,
+              9320,
+              11271,
+              11815
+            ],
+            "doc_0025": [
+              3169,
+              97869,
+              154583,
+              179172,
+              186116,
+              187605
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "779",
+      "answer": "35",
+      "catalog": [
+        {
+          "document_id": "doc_0113",
+          "title": "Dwight D. Eisenhower",
+          "characters": 167225
+        },
+        {
+          "document_id": "doc_0608",
+          "title": "List of presidents of the United States",
+          "characters": 31208
+        },
+        {
+          "document_id": "doc_2378",
+          "title": "National Football League",
+          "characters": 85306
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "35"
+      ],
+      "hits": [
+        {
+          "literal": "35",
+          "documents": {
+            "doc_0113": [
+              13871,
+              22847,
+              22861,
+              42665,
+              126920,
+              127618
+            ],
+            "doc_0608": [
+              3086,
+              8174,
+              16520,
+              18252,
+              18813
+            ],
+            "doc_2378": [
+              3863,
+              12888,
+              59896,
+              67545
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 15,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "35": {
+            "doc_0113": [
+              13871,
+              22847,
+              22861,
+              42665,
+              126920,
+              127618
+            ],
+            "doc_0608": [
+              3086,
+              8174,
+              16520,
+              18252,
+              18813
+            ],
+            "doc_2378": [
+              3863,
+              12888,
+              59896,
+              67545
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "164",
+      "answer": "Gladys Knight",
+      "catalog": [
+        {
+          "document_id": "doc_0534",
+          "title": "That's What Friends Are For",
+          "characters": 14643
+        },
+        {
+          "document_id": "doc_0535",
+          "title": "Dionne Warwick",
+          "characters": 81905
+        },
+        {
+          "document_id": "doc_0536",
+          "title": "Elton John",
+          "characters": 143987
+        },
+        {
+          "document_id": "doc_0537",
+          "title": "Stevie Wonder",
+          "characters": 92640
+        },
+        {
+          "document_id": "doc_0538",
+          "title": "Gladys Knight",
+          "characters": 40200
+        },
+        {
+          "document_id": "doc_0539",
+          "title": "Georgia (U.S. state)",
+          "characters": 111962
+        }
+      ],
+      "catalog_size": 6,
+      "literals_searched": [
+        "Gladys Knight",
+        "Gladys",
+        "Knight"
+      ],
+      "hits": [
+        {
+          "literal": "Gladys Knight",
+          "documents": {
+            "doc_0534": [
+              588,
+              1110,
+              1783,
+              2873,
+              5100,
+              13602
+            ],
+            "doc_0535": [
+              25927,
+              37225,
+              51073,
+              51809,
+              59385,
+              67514
+            ],
+            "doc_0536": [
+              24292,
+              72417
+            ],
+            "doc_0537": [
+              47325,
+              74022
+            ],
+            "doc_0538": [
+              30,
+              426,
+              838,
+              1930,
+              3536,
+              3576
+            ],
+            "doc_0539": [
+              47862
+            ]
+          },
+          "document_count": 6,
+          "total_occurrences": 23,
+          "specific": true
+        },
+        {
+          "literal": "Gladys",
+          "documents": {
+            "doc_0534": [
+              588,
+              1110,
+              1783,
+              2873,
+              5100,
+              13602
+            ],
+            "doc_0535": [
+              25927,
+              37225,
+              51073,
+              51809,
+              59385,
+              67514
+            ],
+            "doc_0536": [
+              24292,
+              72417
+            ],
+            "doc_0537": [
+              47325,
+              74022
+            ],
+            "doc_0538": [
+              30,
+              164,
+              426,
+              649,
+              684,
+              838
+            ],
+            "doc_0539": [
+              47862
+            ]
+          },
+          "document_count": 6,
+          "total_occurrences": 23,
+          "specific": false
+        },
+        {
+          "literal": "Knight",
+          "documents": {
+            "doc_0534": [
+              595,
+              1117,
+              1790,
+              2880,
+              4842,
+              5107
+            ],
+            "doc_0535": [
+              25934,
+              37232,
+              51080,
+              51816,
+              59392,
+              67521
+            ],
+            "doc_0536": [
+              3990,
+              24299,
+              72065,
+              72424,
+              79345,
+              79678
+            ],
+            "doc_0537": [
+              47332,
+              74029
+            ],
+            "doc_0538": [
+              37,
+              65,
+              177,
+              433,
+              655,
+              697
+            ],
+            "doc_0539": [
+              47869
+            ]
+          },
+          "document_count": 6,
+          "total_occurrences": 27,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Gladys Knight": {
+            "doc_0534": [
+              588,
+              1110,
+              1783,
+              2873,
+              5100,
+              13602
+            ],
+            "doc_0535": [
+              25927,
+              37225,
+              51073,
+              51809,
+              59385,
+              67514
+            ],
+            "doc_0536": [
+              24292,
+              72417
+            ],
+            "doc_0537": [
+              47325,
+              74022
+            ],
+            "doc_0538": [
+              30,
+              426,
+              838,
+              1930,
+              3536,
+              3576
+            ],
+            "doc_0539": [
+              47862
+            ]
+          },
+          "Gladys": {
+            "doc_0534": [
+              588,
+              1110,
+              1783,
+              2873,
+              5100,
+              13602
+            ],
+            "doc_0535": [
+              25927,
+              37225,
+              51073,
+              51809,
+              59385,
+              67514
+            ],
+            "doc_0536": [
+              24292,
+              72417
+            ],
+            "doc_0537": [
+              47325,
+              74022
+            ],
+            "doc_0538": [
+              30,
+              164,
+              426,
+              649,
+              684,
+              838
+            ],
+            "doc_0539": [
+              47862
+            ]
+          },
+          "Knight": {
+            "doc_0534": [
+              595,
+              1117,
+              1790,
+              2880,
+              4842,
+              5107
+            ],
+            "doc_0535": [
+              25934,
+              37232,
+              51080,
+              51816,
+              59392,
+              67521
+            ],
+            "doc_0536": [
+              3990,
+              24299,
+              72065,
+              72424,
+              79345,
+              79678
+            ],
+            "doc_0537": [
+              47332,
+              74029
+            ],
+            "doc_0538": [
+              37,
+              65,
+              177,
+              433,
+              655,
+              697
+            ],
+            "doc_0539": [
+              47869
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "716",
+      "answer": "Bowens, Thomas, & Madison",
+      "catalog": [
+        {
+          "document_id": "doc_2191",
+          "title": "Ace Ventura: Pet Detective",
+          "characters": 27849
+        },
+        {
+          "document_id": "doc_2192",
+          "title": "Miami Dolphins",
+          "characters": 72618
+        },
+        {
+          "document_id": "doc_2193",
+          "title": "1995 Miami Dolphins season",
+          "characters": 8079
+        },
+        {
+          "document_id": "doc_2194",
+          "title": "1997 Miami Dolphins season",
+          "characters": 8235
+        },
+        {
+          "document_id": "doc_2195",
+          "title": "1998 Miami Dolphins season",
+          "characters": 7930
+        },
+        {
+          "document_id": "doc_2196",
+          "title": "1999 Miami Dolphins season",
+          "characters": 40354
+        },
+        {
+          "document_id": "doc_2197",
+          "title": "2000 Miami Dolphins season",
+          "characters": 45622
+        },
+        {
+          "document_id": "doc_2198",
+          "title": "2001 Miami Dolphins season",
+          "characters": 12152
+        },
+        {
+          "document_id": "doc_2199",
+          "title": "2008 Miami Dolphins season",
+          "characters": 90842
+        }
+      ],
+      "catalog_size": 9,
+      "literals_searched": [
+        "Bowens, Thomas, & Madison",
+        "Bowens",
+        "Thomas",
+        "Madison"
+      ],
+      "hits": [
+        {
+          "literal": "Bowens",
+          "documents": {
+            "doc_2192": [
+              41597,
+              47255,
+              51191,
+              52249
+            ],
+            "doc_2193": [
+              3553
+            ],
+            "doc_2194": [
+              439,
+              4576
+            ],
+            "doc_2195": [
+              402,
+              3972
+            ],
+            "doc_2196": [
+              2881
+            ],
+            "doc_2197": [
+              6430
+            ],
+            "doc_2198": [
+              4987,
+              5004
+            ]
+          },
+          "document_count": 7,
+          "total_occurrences": 13,
+          "specific": false
+        },
+        {
+          "literal": "Thomas",
+          "documents": {
+            "doc_2191": [
+              6577,
+              20467
+            ],
+            "doc_2192": [
+              2547,
+              5050,
+              5092,
+              21780,
+              37850,
+              38033
+            ],
+            "doc_2194": [
+              4298,
+              4822
+            ],
+            "doc_2195": [
+              417,
+              3659,
+              4280
+            ],
+            "doc_2196": [
+              396,
+              3170,
+              3737
+            ],
+            "doc_2197": [
+              534,
+              3405,
+              6710,
+              7393,
+              7421,
+              12495
+            ],
+            "doc_2198": [
+              405,
+              5291
+            ],
+            "doc_2199": [
+              2504,
+              11728,
+              13227,
+              17858,
+              20676,
+              23060
+            ]
+          },
+          "document_count": 8,
+          "total_occurrences": 30,
+          "specific": false
+        },
+        {
+          "literal": "Madison",
+          "documents": {
+            "doc_2192": [
+              45697,
+              47480,
+              52425
+            ],
+            "doc_2194": [
+              2217,
+              2870,
+              4946
+            ],
+            "doc_2195": [
+              431,
+              4380
+            ],
+            "doc_2196": [
+              410,
+              3290,
+              26810
+            ],
+            "doc_2197": [
+              548,
+              6791,
+              11143,
+              22829,
+              41059
+            ],
+            "doc_2198": [
+              419,
+              5406
+            ]
+          },
+          "document_count": 6,
+          "total_occurrences": 18,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Bowens": {
+            "doc_2192": [
+              41597,
+              47255,
+              51191,
+              52249
+            ],
+            "doc_2193": [
+              3553
+            ],
+            "doc_2194": [
+              439,
+              4576
+            ],
+            "doc_2195": [
+              402,
+              3972
+            ],
+            "doc_2196": [
+              2881
+            ],
+            "doc_2197": [
+              6430
+            ],
+            "doc_2198": [
+              4987,
+              5004
+            ]
+          },
+          "Thomas": {
+            "doc_2191": [
+              6577,
+              20467
+            ],
+            "doc_2192": [
+              2547,
+              5050,
+              5092,
+              21780,
+              37850,
+              38033
+            ],
+            "doc_2194": [
+              4298,
+              4822
+            ],
+            "doc_2195": [
+              417,
+              3659,
+              4280
+            ],
+            "doc_2196": [
+              396,
+              3170,
+              3737
+            ],
+            "doc_2197": [
+              534,
+              3405,
+              6710,
+              7393,
+              7421,
+              12495
+            ],
+            "doc_2198": [
+              405,
+              5291
+            ],
+            "doc_2199": [
+              2504,
+              11728,
+              13227,
+              17858,
+              20676,
+              23060
+            ]
+          },
+          "Madison": {
+            "doc_2192": [
+              45697,
+              47480,
+              52425
+            ],
+            "doc_2194": [
+              2217,
+              2870,
+              4946
+            ],
+            "doc_2195": [
+              431,
+              4380
+            ],
+            "doc_2196": [
+              410,
+              3290,
+              26810
+            ],
+            "doc_2197": [
+              548,
+              6791,
+              11143,
+              22829,
+              41059
+            ],
+            "doc_2198": [
+              419,
+              5406
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "349",
+      "answer": "Joplin, Missouri metropolitan area",
+      "catalog": [
+        {
+          "document_id": "doc_0244",
+          "title": "Joplin tornado",
+          "characters": 56929
+        },
+        {
+          "document_id": "doc_1179",
+          "title": "Eastern Shawnee Tribe of Oklahoma",
+          "characters": 7571
+        },
+        {
+          "document_id": "doc_1180",
+          "title": "Wyandotte, Oklahoma",
+          "characters": 8683
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Joplin, Missouri metropolitan area",
+        "Joplin",
+        "Missouri",
+        "metropolitan"
+      ],
+      "hits": [
+        {
+          "literal": "Joplin, Missouri metropolitan area",
+          "documents": {
+            "doc_1180": [
+              2937
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": true
+        },
+        {
+          "literal": "Joplin",
+          "documents": {
+            "doc_0244": [
+              80,
+              129,
+              246,
+              304,
+              438,
+              1193
+            ],
+            "doc_1180": [
+              2937
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        },
+        {
+          "literal": "Missouri",
+          "documents": {
+            "doc_0244": [
+              16,
+              88,
+              1458,
+              2465,
+              3010,
+              3271
+            ],
+            "doc_1179": [
+              488,
+              965,
+              1037,
+              1074,
+              1986,
+              2693
+            ],
+            "doc_1180": [
+              2945,
+              7141
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 14,
+          "specific": false
+        },
+        {
+          "literal": "metropolitan",
+          "documents": {
+            "doc_1180": [
+              2954
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_1180",
+      "evidence": {
+        "literal": "Joplin, Missouri metropolitan area",
+        "document_id": "doc_1180",
+        "offsets": [
+          2937
+        ],
+        "title": "Wyandotte, Oklahoma",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "160",
+      "answer": "35",
+      "catalog": [
+        {
+          "document_id": "doc_0524",
+          "title": "Alexander Graham Bell",
+          "characters": 112219
+        },
+        {
+          "document_id": "doc_0525",
+          "title": "Charles Dickens",
+          "characters": 131077
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "35"
+      ],
+      "hits": [
+        {
+          "literal": "35",
+          "documents": {
+            "doc_0524": [
+              46777,
+              53023,
+              60746,
+              63950,
+              86899,
+              91281
+            ],
+            "doc_0525": [
+              15291,
+              36810,
+              88735,
+              93137,
+              97175,
+              100327
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "35": {
+            "doc_0524": [
+              46777,
+              53023,
+              60746,
+              63950,
+              86899,
+              91281
+            ],
+            "doc_0525": [
+              15291,
+              36810,
+              88735,
+              93137,
+              97175,
+              100327
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "221",
+      "answer": "6.2 circuits.",
+      "catalog": [
+        {
+          "document_id": "doc_0717",
+          "title": "York city walls",
+          "characters": 26961
+        },
+        {
+          "document_id": "doc_0718",
+          "title": "Great North Run",
+          "characters": 23274
+        },
+        {
+          "document_id": "doc_0719",
+          "title": "Half marathon",
+          "characters": 23785
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "6.2 circuits",
+        "6.2",
+        "circuits"
+      ],
+      "hits": [],
+      "classification": "not_found",
+      "answer_bearing_document": null,
+      "evidence": null
+    },
+    {
+      "question_id": "783",
+      "answer": "Of the 6 states within New England, Maine, New Hampshire, and Rhode Island had populations between 400,000 and 800,000 in 1920.",
+      "catalog": [
+        {
+          "document_id": "doc_0748",
+          "title": "Maine",
+          "characters": 97719
+        },
+        {
+          "document_id": "doc_2389",
+          "title": "New England",
+          "characters": 111756
+        },
+        {
+          "document_id": "doc_2390",
+          "title": "Connecticut",
+          "characters": 135898
+        },
+        {
+          "document_id": "doc_2391",
+          "title": "Massachusetts",
+          "characters": 163390
+        },
+        {
+          "document_id": "doc_2392",
+          "title": "New Hampshire",
+          "characters": 91912
+        },
+        {
+          "document_id": "doc_2393",
+          "title": "Rhode Island",
+          "characters": 122045
+        },
+        {
+          "document_id": "doc_2394",
+          "title": "Vermont",
+          "characters": 148873
+        }
+      ],
+      "catalog_size": 7,
+      "literals_searched": [
+        "Of the 6 states within New England, Maine, New Hampshire, and Rhode Island had populations between 400,000 and 800,000 in 1920",
+        "New England",
+        "Maine",
+        "New Hampshire",
+        "Rhode Island",
+        "400,000",
+        "800,000",
+        "1920",
+        "populations",
+        "Hampshire",
+        "England"
+      ],
+      "hits": [
+        {
+          "literal": "New England",
+          "documents": {
+            "doc_0748": [
+              3123,
+              3535,
+              10037,
+              15276,
+              15590,
+              16205
+            ],
+            "doc_2389": [
+              112,
+              554,
+              1038,
+              1514,
+              1635,
+              1657
+            ],
+            "doc_2390": [
+              2281,
+              3053,
+              8183,
+              8226,
+              10211,
+              11211
+            ],
+            "doc_2391": [
+              3443,
+              3874,
+              4243,
+              4280,
+              5888,
+              9403
+            ],
+            "doc_2392": [
+              3134,
+              8400,
+              12078,
+              16471,
+              19858,
+              20473
+            ],
+            "doc_2393": [
+              2170,
+              7267,
+              7534,
+              12647,
+              13523,
+              20843
+            ],
+            "doc_2394": [
+              181,
+              3241,
+              10643,
+              10783,
+              11585,
+              22538
+            ]
+          },
+          "document_count": 7,
+          "total_occurrences": 42,
+          "specific": false
+        },
+        {
+          "literal": "Maine",
+          "documents": {
+            "doc_0748": [
+              69,
+              152,
+              354,
+              379,
+              500,
+              952
+            ],
+            "doc_2389": [
+              1169,
+              1775,
+              1992,
+              4546,
+              6114,
+              6170
+            ],
+            "doc_2390": [
+              47095,
+              52875
+            ],
+            "doc_2391": [
+              3974,
+              10091,
+              12861,
+              13919,
+              18727,
+              65743
+            ],
+            "doc_2392": [
+              3248,
+              3270,
+              7293,
+              12193,
+              12215,
+              15055
+            ],
+            "doc_2393": [
+              12544,
+              17689
+            ],
+            "doc_2394": [
+              9577,
+              10379,
+              36405,
+              39666,
+              40124,
+              40485
+            ]
+          },
+          "document_count": 7,
+          "total_occurrences": 34,
+          "specific": false
+        },
+        {
+          "literal": "New Hampshire",
+          "documents": {
+            "doc_0748": [
+              3239,
+              3489,
+              9305,
+              15410,
+              18526
+            ],
+            "doc_2389": [
+              660,
+              1189,
+              1797,
+              2415,
+              2450,
+              4553
+            ],
+            "doc_2390": [
+              57165
+            ],
+            "doc_2391": [
+              4036,
+              70559,
+              70771
+            ],
+            "doc_2392": [
+              69,
+              130,
+              299,
+              334,
+              439,
+              905
+            ],
+            "doc_2394": [
+              3334,
+              4455,
+              4690,
+              4780,
+              4852,
+              10821
+            ]
+          },
+          "document_count": 6,
+          "total_occurrences": 27,
+          "specific": false
+        },
+        {
+          "literal": "Rhode Island",
+          "documents": {
+            "doc_2389": [
+              1203,
+              1812,
+              2481,
+              2530,
+              3193,
+              6304
+            ],
+            "doc_2390": [
+              2346,
+              2823,
+              24234,
+              33367,
+              34496,
+              67506
+            ],
+            "doc_2391": [
+              4009,
+              4437,
+              11444,
+              35752,
+              38491,
+              67906
+            ],
+            "doc_2393": [
+              35,
+              80,
+              231,
+              373,
+              419,
+              521
+            ],
+            "doc_2394": [
+              27857,
+              51378,
+              148657
+            ]
+          },
+          "document_count": 5,
+          "total_occurrences": 27,
+          "specific": false
+        },
+        {
+          "literal": "400,000",
+          "documents": {
+            "doc_0748": [
+              3824
+            ],
+            "doc_2390": [
+              47594
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 2,
+          "specific": false
+        },
+        {
+          "literal": "800,000",
+          "documents": {
+            "doc_0748": [
+              42892
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        },
+        {
+          "literal": "1920",
+          "documents": {
+            "doc_0748": [
+              25506
+            ],
+            "doc_2389": [
+              20131,
+              46887
+            ],
+            "doc_2390": [
+              43917
+            ],
+            "doc_2391": [
+              21591,
+              35092,
+              43439,
+              46962
+            ],
+            "doc_2392": [
+              22568
+            ],
+            "doc_2393": [
+              19834,
+              30200,
+              39690,
+              76889,
+              96351
+            ],
+            "doc_2394": [
+              33765,
+              141995
+            ]
+          },
+          "document_count": 7,
+          "total_occurrences": 16,
+          "specific": false
+        },
+        {
+          "literal": "populations",
+          "documents": {
+            "doc_0748": [
+              4005,
+              24256,
+              24800,
+              27376,
+              58647,
+              77340
+            ],
+            "doc_2389": [
+              32773,
+              96218
+            ],
+            "doc_2390": [
+              117657
+            ],
+            "doc_2391": [
+              33183,
+              41298,
+              42301,
+              42840
+            ],
+            "doc_2393": [
+              34234,
+              103853
+            ],
+            "doc_2394": [
+              80354
+            ]
+          },
+          "document_count": 6,
+          "total_occurrences": 16,
+          "specific": false
+        },
+        {
+          "literal": "Hampshire",
+          "documents": {
+            "doc_0748": [
+              3243,
+              3493,
+              9309,
+              15414,
+              18530
+            ],
+            "doc_2389": [
+              664,
+              1193,
+              1801,
+              2419,
+              2454,
+              4557
+            ],
+            "doc_2390": [
+              57169
+            ],
+            "doc_2391": [
+              4040,
+              70563,
+              70775,
+              83681
+            ],
+            "doc_2392": [
+              73,
+              134,
+              303,
+              338,
+              443,
+              909
+            ],
+            "doc_2394": [
+              3338,
+              4459,
+              4694,
+              4784,
+              4856,
+              10825
+            ]
+          },
+          "document_count": 6,
+          "total_occurrences": 28,
+          "specific": false
+        },
+        {
+          "literal": "England",
+          "documents": {
+            "doc_0748": [
+              3127,
+              3539,
+              9184,
+              9791,
+              10041,
+              15280
+            ],
+            "doc_2389": [
+              116,
+              558,
+              1042,
+              1518,
+              1639,
+              1661
+            ],
+            "doc_2390": [
+              2285,
+              3057,
+              8187,
+              8230,
+              9755,
+              10215
+            ],
+            "doc_2391": [
+              3447,
+              3878,
+              4247,
+              4284,
+              5892,
+              9407
+            ],
+            "doc_2392": [
+              3138,
+              8404,
+              12082,
+              16475,
+              19862,
+              20477
+            ],
+            "doc_2393": [
+              2174,
+              7271,
+              7538,
+              12651,
+              13527,
+              15734
+            ],
+            "doc_2394": [
+              185,
+              3245,
+              10647,
+              10787,
+              11589,
+              22542
+            ]
+          },
+          "document_count": 7,
+          "total_occurrences": 42,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "800,000",
+        "document_id": "doc_0748",
+        "offsets": [
+          42892
+        ],
+        "title": "Maine",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "345",
+      "answer": "Ty Van Burkleo",
+      "catalog": [
+        {
+          "document_id": "doc_1168",
+          "title": "Moana (2016 film)",
+          "characters": 70818
+        },
+        {
+          "document_id": "doc_1169",
+          "title": "2016 World Series",
+          "characters": 74519
+        },
+        {
+          "document_id": "doc_1170",
+          "title": "2016 Cleveland Indians season",
+          "characters": 42799
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Ty Van Burkleo",
+        "Burkleo"
+      ],
+      "hits": [
+        {
+          "literal": "Ty Van Burkleo",
+          "documents": {
+            "doc_1170": [
+              7961
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": true
+        },
+        {
+          "literal": "Burkleo",
+          "documents": {
+            "doc_1170": [
+              7968
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_1170",
+      "evidence": {
+        "literal": "Ty Van Burkleo",
+        "document_id": "doc_1170",
+        "offsets": [
+          7961
+        ],
+        "title": "2016 Cleveland Indians season",
+        "specific": true
+      }
+    },
+    {
+      "question_id": "94",
+      "answer": "The Theory of Vision",
+      "catalog": [
+        {
+          "document_id": "doc_0323",
+          "title": "Photography",
+          "characters": 67846
+        },
+        {
+          "document_id": "doc_0324",
+          "title": "Ibn al-Haytham",
+          "characters": 95155
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "The Theory of Vision",
+        "Theory",
+        "Vision"
+      ],
+      "hits": [
+        {
+          "literal": "Theory",
+          "documents": {
+            "doc_0324": [
+              603,
+              6287,
+              6647,
+              6668,
+              6807,
+              6832
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 6,
+          "specific": false
+        },
+        {
+          "literal": "Vision",
+          "documents": {
+            "doc_0323": [
+              24124,
+              28491,
+              29684,
+              52377,
+              59922,
+              60294
+            ],
+            "doc_0324": [
+              1442,
+              1509,
+              4999,
+              5097,
+              6596,
+              10994
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "Theory",
+        "document_id": "doc_0324",
+        "offsets": [
+          603,
+          6287,
+          6647,
+          6668,
+          6807,
+          6832
+        ],
+        "title": "Ibn al-Haytham",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "390",
+      "answer": "Monster Mash' by Bobby 'Boris' Pickett & the Crypt-Kickers",
+      "catalog": [
+        {
+          "document_id": "doc_1286",
+          "title": "Cuban Missile Crisis",
+          "characters": 162083
+        },
+        {
+          "document_id": "doc_1287",
+          "title": "List of Billboard Hot 100 number ones of 1962",
+          "characters": 14931
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Monster Mash' by Bobby 'Boris' Pickett & the Crypt-Kickers",
+        "Monster Mash'",
+        "Bobby",
+        "Boris' Pickett",
+        "Crypt-Kickers",
+        "Monster",
+        "'Boris'"
+      ],
+      "hits": [
+        {
+          "literal": "Bobby",
+          "documents": {
+            "doc_1286": [
+              62327
+            ],
+            "doc_1287": [
+              2122,
+              2885,
+              5091,
+              5617,
+              6151,
+              6370
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": false
+        },
+        {
+          "literal": "Crypt-Kickers",
+          "documents": {
+            "doc_1287": [
+              2915,
+              5647,
+              6399
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 3,
+          "specific": false
+        },
+        {
+          "literal": "Monster",
+          "documents": {
+            "doc_1287": [
+              3000,
+              5600
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 2,
+          "specific": false
+        }
+      ],
+      "classification": "weak_match",
+      "answer_bearing_document": null,
+      "evidence": {
+        "literal": "Crypt-Kickers",
+        "document_id": "doc_1287",
+        "offsets": [
+          2915,
+          5647,
+          6399
+        ],
+        "title": "List of Billboard Hot 100 number ones of 1962",
+        "specific": false,
+        "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target."
+      }
+    },
+    {
+      "question_id": "99",
+      "answer": "14 years younger",
+      "catalog": [
+        {
+          "document_id": "doc_0337",
+          "title": "List of current United States representatives",
+          "characters": 119599
+        },
+        {
+          "document_id": "doc_0338",
+          "title": "Battle of the Alamo",
+          "characters": 66003
+        },
+        {
+          "document_id": "doc_0339",
+          "title": "Davy Crockett",
+          "characters": 53260
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "14 years younger",
+        "14",
+        "younger"
+      ],
+      "hits": [
+        {
+          "literal": "14",
+          "documents": {
+            "doc_0337": [
+              2434,
+              3715,
+              4927,
+              5007,
+              6373,
+              7207
+            ],
+            "doc_0338": [
+              11290,
+              20949,
+              47093,
+              48766,
+              51096,
+              55184
+            ],
+            "doc_0339": [
+              11135,
+              11422,
+              19432,
+              37396,
+              37734,
+              37935
+            ]
+          },
+          "document_count": 3,
+          "total_occurrences": 18,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "14": {
+            "doc_0337": [
+              2434,
+              3715,
+              4927,
+              5007,
+              6373,
+              7207
+            ],
+            "doc_0338": [
+              11290,
+              20949,
+              47093,
+              48766,
+              51096,
+              55184
+            ],
+            "doc_0339": [
+              11135,
+              11422,
+              19432,
+              37396,
+              37734,
+              37935
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "368",
+      "answer": "Don Magnuson",
+      "catalog": [
+        {
+          "document_id": "doc_1225",
+          "title": "Clyfford Still",
+          "characters": 18411
+        },
+        {
+          "document_id": "doc_1226",
+          "title": "Spokane University",
+          "characters": 2719
+        },
+        {
+          "document_id": "doc_1227",
+          "title": "Don Magnuson",
+          "characters": 9025
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Don Magnuson",
+        "Magnuson"
+      ],
+      "hits": [
+        {
+          "literal": "Don Magnuson",
+          "documents": {
+            "doc_1226": [
+              1880
+            ],
+            "doc_1227": [
+              34,
+              5591,
+              6565,
+              7362,
+              7648,
+              7796
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": true
+        },
+        {
+          "literal": "Magnuson",
+          "documents": {
+            "doc_1226": [
+              1884
+            ],
+            "doc_1227": [
+              38,
+              397,
+              791,
+              877,
+              1157,
+              1179
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 7,
+          "specific": true
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Don Magnuson": {
+            "doc_1226": [
+              1880
+            ],
+            "doc_1227": [
+              34,
+              5591,
+              6565,
+              7362,
+              7648,
+              7796
+            ]
+          },
+          "Magnuson": {
+            "doc_1226": [
+              1884
+            ],
+            "doc_1227": [
+              38,
+              397,
+              791,
+              877,
+              1157,
+              1179
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "353",
+      "answer": "Columbine",
+      "catalog": [
+        {
+          "document_id": "doc_1189",
+          "title": "Adolf Hitler",
+          "characters": 130162
+        },
+        {
+          "document_id": "doc_1190",
+          "title": "Mass shootings in the United States",
+          "characters": 95551
+        },
+        {
+          "document_id": "doc_1191",
+          "title": "Columbine High School massacre",
+          "characters": 136355
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Columbine"
+      ],
+      "hits": [
+        {
+          "literal": "Columbine",
+          "documents": {
+            "doc_1190": [
+              47305,
+              47345,
+              89125
+            ],
+            "doc_1191": [
+              38,
+              63,
+              131,
+              158,
+              380,
+              542
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 9,
+          "specific": true
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "Columbine": {
+            "doc_1190": [
+              47305,
+              47345,
+              89125
+            ],
+            "doc_1191": [
+              38,
+              63,
+              131,
+              158,
+              380,
+              542
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "620",
+      "answer": "Duchess Anastasia Romanov would have been 96 years old.",
+      "catalog": [
+        {
+          "document_id": "doc_1931",
+          "title": "Grand Duchess Anastasia Nikolaevna of Russia",
+          "characters": 43004
+        },
+        {
+          "document_id": "doc_1932",
+          "title": "Anastasia (1997 film)",
+          "characters": 47855
+        }
+      ],
+      "catalog_size": 2,
+      "literals_searched": [
+        "Duchess Anastasia Romanov would have been 96 years old",
+        "Duchess Anastasia Romanov",
+        "96",
+        "Anastasia",
+        "Duchess",
+        "Romanov"
+      ],
+      "hits": [
+        {
+          "literal": "96",
+          "documents": {
+            "doc_1931": [
+              24583,
+              34905,
+              35340,
+              35705,
+              35730,
+              35844
+            ],
+            "doc_1932": [
+              46752,
+              47030
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 8,
+          "specific": false
+        },
+        {
+          "literal": "Anastasia",
+          "documents": {
+            "doc_1931": [
+              61,
+              83,
+              108,
+              165,
+              218,
+              673
+            ],
+            "doc_1932": [
+              42,
+              271,
+              300,
+              935,
+              1575,
+              1640
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        },
+        {
+          "literal": "Duchess",
+          "documents": {
+            "doc_1931": [
+              210,
+              665,
+              1004,
+              2262,
+              2724,
+              3407
+            ],
+            "doc_1932": [
+              2170,
+              2842,
+              6928,
+              8917,
+              23598,
+              39573
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        },
+        {
+          "literal": "Romanov",
+          "documents": {
+            "doc_1931": [
+              71,
+              93,
+              175,
+              557,
+              2218,
+              6034
+            ],
+            "doc_1932": [
+              1585,
+              2665,
+              2919,
+              3056,
+              4992,
+              7308
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        }
+      ],
+      "classification": "ambiguous",
+      "answer_bearing_document": null,
+      "evidence": {
+        "note": "every matching literal occurs in more than one catalog document",
+        "spread": {
+          "96": {
+            "doc_1931": [
+              24583,
+              34905,
+              35340,
+              35705,
+              35730,
+              35844
+            ],
+            "doc_1932": [
+              46752,
+              47030
+            ]
+          },
+          "Anastasia": {
+            "doc_1931": [
+              61,
+              83,
+              108,
+              165,
+              218,
+              673
+            ],
+            "doc_1932": [
+              42,
+              271,
+              300,
+              935,
+              1575,
+              1640
+            ]
+          },
+          "Duchess": {
+            "doc_1931": [
+              210,
+              665,
+              1004,
+              2262,
+              2724,
+              3407
+            ],
+            "doc_1932": [
+              2170,
+              2842,
+              6928,
+              8917,
+              23598,
+              39573
+            ]
+          },
+          "Romanov": {
+            "doc_1931": [
+              71,
+              93,
+              175,
+              557,
+              2218,
+              6034
+            ],
+            "doc_1932": [
+              1585,
+              2665,
+              2919,
+              3056,
+              4992,
+              7308
+            ]
+          }
+        }
+      }
+    },
+    {
+      "question_id": "271",
+      "answer": "Miley Cyrus and Billy Ray Cyrus",
+      "catalog": [
+        {
+          "document_id": "doc_0927",
+          "title": "2017 Billboard Music Awards",
+          "characters": 14055
+        },
+        {
+          "document_id": "doc_0928",
+          "title": "List of programs broadcast by Disney Channel",
+          "characters": 70606
+        },
+        {
+          "document_id": "doc_0929",
+          "title": "Hannah Montana",
+          "characters": 62029
+        }
+      ],
+      "catalog_size": 3,
+      "literals_searched": [
+        "Miley Cyrus and Billy Ray Cyrus",
+        "Miley",
+        "Cyrus",
+        "Billy"
+      ],
+      "hits": [
+        {
+          "literal": "Miley Cyrus and Billy Ray Cyrus",
+          "documents": {
+            "doc_0929": [
+              14251
+            ]
+          },
+          "document_count": 1,
+          "total_occurrences": 1,
+          "specific": true
+        },
+        {
+          "literal": "Miley",
+          "documents": {
+            "doc_0927": [
+              1216,
+              2472,
+              13740
+            ],
+            "doc_0929": [
+              107,
+              369,
+              501,
+              1143,
+              1168,
+              1381
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 9,
+          "specific": false
+        },
+        {
+          "literal": "Cyrus",
+          "documents": {
+            "doc_0927": [
+              1222,
+              1253,
+              1264,
+              2440,
+              2455,
+              2478
+            ],
+            "doc_0929": [
+              375,
+              431,
+              507,
+              1174,
+              1679,
+              2317
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 12,
+          "specific": false
+        },
+        {
+          "literal": "Billy",
+          "documents": {
+            "doc_0927": [
+              1243,
+              2430
+            ],
+            "doc_0929": [
+              421,
+              1669,
+              12650,
+              12841,
+              14267,
+              15936
+            ]
+          },
+          "document_count": 2,
+          "total_occurrences": 8,
+          "specific": false
+        }
+      ],
+      "classification": "localized",
+      "answer_bearing_document": "doc_0929",
+      "evidence": {
+        "literal": "Miley Cyrus and Billy Ray Cyrus",
+        "document_id": "doc_0929",
+        "offsets": [
+          14251
+        ],
+        "title": "Hannah Montana",
+        "specific": true
+      }
+    }
+  ]
+}
