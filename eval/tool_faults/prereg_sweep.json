@@ -1,0 +1,23 @@
+{
+  "recorded_at": "2026-11-05T00:34:21.392182+00:00",
+  "git_head": "0babceb71d7d290da7b1cf179e7976bf587066f1",
+  "recorded_before": "any run of the 28-pair dependency sweep (section 5)",
+  "prediction": "NOT_EXERCISED",
+  "pairs": [
+    {
+      "question_id": "95",
+      "document_id": "doc_0325"
+    },
+    {
+      "question_id": "95",
+      "document_id": "doc_0326"
+    },
+    {
+      "question_id": "224",
+      "document_id": "doc_0726"
+    }
+  ],
+  "basis": "In all three config-matched control reps (runs/v2-base1..3) the union of worker_results[*].document_ids was identical per question, and these three catalog documents were never read in any rep: Q95 read only doc_0181 and doc_0327 of four, Q224 read doc_0725, doc_0727 and doc_0728 of four. A fault targeting a document the Lead never delegates cannot fire.",
+  "falsification": "If a predicted-unexercised pair records any tool.failure_injected event, delegation is nondeterministic across reps, which weakens every single-rep conclusion in this study and must be reported as such.",
+  "also_predicted": "The remaining 25 pairs each fire at least once."
+}

@@ -1,0 +1,36 @@
+{
+  "reps": [
+    "runs/v2-base1",
+    "runs/v2-base2",
+    "runs/v2-base3"
+  ],
+  "baseline": "configs/baseline.yaml",
+  "runs_with_a_recorded_config": 150,
+  "run_dirs_without_a_config_record": 6,
+  "config_is_recorded": true,
+  "config_location": "events.sqlite `records` table, key 'config'",
+  "not_in": "run.started payload, which carries no config",
+  "minimum_worker_recorded": {
+    "2": 150
+  },
+  "always_verify_recorded": {
+    "False": 150
+  },
+  "keys_differing_from_baseline": {
+    "verifier": 150
+  },
+  "ignored_keys": [
+    "full_restart",
+    "lead_prompt",
+    "output_dir",
+    "worker_prompt"
+  ],
+  "workers_per_batch_distribution": {
+    "1": 9,
+    "2": 85,
+    "3": 63,
+    "4": 20
+  },
+  "workers_per_batch_mode": 2,
+  "delegation_batches_observed": 177
+}

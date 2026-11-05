@@ -1,0 +1,2251 @@
+{
+  "tier": "1",
+  "title": "timeout x baseline, strictly serial (10 cells)",
+  "fault_class": "accidental",
+  "fault_effect": "denial",
+  "generated_at": "2026-11-04T22:05:47-08:00",
+  "clean_control_reference": {
+    "source": "runs/v2-base1..3 (config-matched baseline, pre-ceb5538 layout)",
+    "questions": 10,
+    "reps_per_question": 3,
+    "clean_success_rate": 1.0,
+    "clean_grade_distribution": {
+      "correct": 30,
+      "incorrect": 0,
+      "execution_failed": 0,
+      "ungradeable": 0
+    },
+    "clean_mean_tokens_per_question": {
+      "27": 43197.333333333336,
+      "32": 67459.33333333333,
+      "89": 51627.333333333336,
+      "94": 57757,
+      "95": 48853.333333333336,
+      "104": 47720.666666666664,
+      "114": 28340.333333333332,
+      "224": 42895.666666666664,
+      "251": 54907.333333333336,
+      "271": 116040.33333333333
+    },
+    "clean_mean_tokens_overall": 55879.86666666666,
+    "clean_mean_latency_per_question": {
+      "27": 20.5329106390321,
+      "32": 37.483027486363426,
+      "89": 26.215017250312183,
+      "94": 32.82017562460775,
+      "95": 26.778463402957033,
+      "104": 12.759892944324141,
+      "114": 16.502430250363734,
+      "224": 19.257954860959824,
+      "251": 19.1896259446706,
+      "271": 45.51682169436632
+    },
+    "clean_mean_latency_overall": 25.70563200979571,
+    "config_mismatches": [],
+    "config_audit": {
+      "reps": [
+        "runs/v2-base1",
+        "runs/v2-base2",
+        "runs/v2-base3"
+      ],
+      "baseline": "configs/baseline.yaml",
+      "runs_with_a_recorded_config": 150,
+      "run_dirs_without_a_config_record": 6,
+      "config_is_recorded": true,
+      "config_location": "events.sqlite `records` table, key 'config'",
+      "not_in": "run.started payload, which carries no config",
+      "minimum_worker_recorded": {
+        "2": 150
+      },
+      "always_verify_recorded": {
+        "False": 150
+      },
+      "keys_differing_from_baseline": {
+        "verifier": 150
+      },
+      "ignored_keys": [
+        "full_restart",
+        "lead_prompt",
+        "output_dir",
+        "worker_prompt"
+      ],
+      "workers_per_batch_distribution": {
+        "1": 9,
+        "2": 85,
+        "3": 63,
+        "4": 20
+      },
+      "workers_per_batch_mode": 2,
+      "delegation_batches_observed": 177
+    }
+  },
+  "spend": {
+    "total_cost": 0.15054026999999998,
+    "total_tokens": 1036138,
+    "per_million": 0.1452897876537681,
+    "projection": "~$0.25 on the section-5 token profile; actual $0.1505 = -40%, because 8 of 10 runs were killed before spending their token budget",
+    "deviation": "see \u00a7I",
+    "prose": "Tier 1 is the decisive contrast of this section. Holding the denied document, persistence and targeting identical to section 5 and changing only the manifestation from an immediate tool error to a timeout, the system goes from 68 of 68 cells correct across section 5 and Tiers 2-3 to 2 of 10 here, and it fails by not finishing rather than by answering wrong: 8 of 10 cells produced no answer at all (7 run_timeout at 900s, 1 Lead model-call timeout at 424.7s) and were then stamped correct:false by runner.py despite never submitting an answer, which is exactly why the four grade buckets must not be collapsed. The mechanism is dead time, measured rather than derived: each denied worker absorbs a median 178s against worker_timeout_seconds: 180 -- typically two full 60s tool timeouts plus one cancellation when it is killed mid-read -- a delegation batch costs a flat 180s, and critical-path dead time is 70-110% of wall clock, so essentially all elapsed time in these runs is spent waiting on reads that will never return. Latency rises 19x to 70x over the clean control while token spend actually FALLS relative to the immediate manifestation (median 1.81x vs 3.07x of clean) because the runs are killed before they can spend, and the two cells that did complete are the two that absorbed the fewest injections (6 and 9 against 18-27 elsewhere)."
+  },
+  "notes": [
+    "STRICTLY SERIAL, one cell at a time, no overlap with any other tier. Wall clock is the primary readout and these are boundary cells against worker_timeout_seconds: 180 and run_timeout_seconds: 900, so contention from a parallel run would shift wall clock and thereby change the dependent variable itself. The mechanism by which dead time accrues is reported as MEASURED from the traces in section 9, not derived from predicted arithmetic.",
+    "Targeting is IDENTICAL to section 5 (one document, persistent: true, max_failures: null, offsets: []); mode: timeout is the only change, timeout_margin left at 1.5, call_timeout_seconds NOT changed. The agreement table in 1a therefore compares MANIFESTATION (timeout here vs immediate in rep 1) at identical targeting -- it is NOT a variance estimate. Tier 3 is the variance control.",
+    "PREDICTION PARTLY HELD, AND NOT IN THE PREDICTED SHAPE. The prediction was a mix of successful completions and run timeouts. A mix did appear (2 completions, 8 failures) but it contains a THIRD mechanism nobody predicted: a Lead model-call timeout (Q27, 424.7s, 2 batches, stop_reason=ModelCallTimeout). Q27's own successful Lead calls in that run took 1.3-1.8s, so the 60s stall is a ~30x outlier against its own run and sits above the 43.32s maximum observed across 1,191 baseline calls; it is consistent with an endpoint stall being fatal because SDK retries are disabled, and should NOT be attributed to the fault. Terminating at exactly 900.0s is run_timeout_seconds firing by definition and is not itself a confirmed prediction.",
+    "Dead time is MEASURED from tool.error(TimeoutError) durations and tool.cancelled timestamps, never as 60s x tool.failure_injected: that formula would give Q32 1,620s of dead time inside a 900s run. See the mechanism subsection under section 9.",
+    "ADOPTION GATE: adoption is read from Lead model.response text plus worker terminal status, never from complete_task.uncertainties (structurally always empty under persistent denial). The gate was corrected twice during this section, both times for FALSE NEGATIVES: first it required the literal document ID or the substring 'read', which scored SILENT turns like 'The Snoopy worker has failed three times on budget' that name the document by catalog title and by worker; then it lacked any pattern for the timeout manifestation, which scored SILENT turns like 'The Cowboys article workers have timed out six times'. All tiers in this section were regenerated under the final gate.",
+    "Single-rep magnitudes; Tier 3 bounds token deviation between identical runs at a median 9.7% (max 51.6%) and wall clock at a median 39.8% (max 83.0%). The categorical split reported here (8 execution-failed / 2 correct) is the kind of quantity Tier 3 found stable at n=1; the per-cell second counts are not."
+  ],
+  "cells": [
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "27",
+      "document_id": "doc_0102",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Squad number (association football)",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_020205_cbfa28d53c894a2dbc2d0360e1fd58c0",
+      "status": "failed",
+      "stop_reason": "ModelCallTimeout: lead: model call timed out (limit: 60s)",
+      "termination_mechanism": "model_call_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 2,
+      "workers_spawned": 3,
+      "workers_assigned_target": 2,
+      "failures_injected": 5,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0101"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0101"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 2
+      },
+      "denied_worker_results": 2,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "Worker 1 confirmed Lawton was a centre-forward at Chelsea (1945\u20131947), well before squad numbering. Worker 2 timed out, so I'll re-delegate the squad-number article."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 4
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [],
+        "total": 0
+      },
+      "total_tokens": 46107,
+      "total_cost": 0.0077004,
+      "reported_total_cost": null,
+      "cost_is_estimated": true,
+      "usage_complete": false,
+      "unreported_calls": 2,
+      "control_mean_tokens": 43197.333333333336,
+      "token_ratio_vs_control": 1.0673575529353663,
+      "signed_delta_tokens": 2909.6666666666642,
+      "tokens_per_attempt": {
+        "1": 46107
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 2,
+      "empty_finding_worker_tokens": 9884,
+      "empty_finding_worker_calls": 5,
+      "empty_finding_token_fraction": 0.21437091981694753,
+      "wall_clock_seconds": 424.680079374928,
+      "control_mean_duration_seconds": 20.5329106390321,
+      "latency_ratio_vs_control": 20.68289717131633,
+      "denied_read_outcomes": {
+        "injected": 5,
+        "full_timeout_burns": 4,
+        "cancelled_mid_read": 1,
+        "injected_to_cancelled_ratio": 5.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 298.2412639579998,
+      "dead_time_critical_path_seconds": 298.2412639579998,
+      "dead_time_critical_path_fraction_of_wall": 0.702272789430036,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker2": 178.2,
+        "1:batch2-worker1": 120.0
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0
+      },
+      "aggregate_model_seconds": 34.73179658304434,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 10387,
+          "output_tokens": 877,
+          "model_calls": 4,
+          "unreported_calls": 1,
+          "duration_seconds": 64.55827445816249,
+          "cached_input_tokens": null,
+          "estimated_cost_usd": null,
+          "total_tokens": 11264,
+          "usage_complete": false
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 33479,
+          "output_tokens": 1364,
+          "model_calls": 9,
+          "unreported_calls": 1,
+          "duration_seconds": 88.95160329283681,
+          "cached_input_tokens": null,
+          "estimated_cost_usd": null,
+          "total_tokens": 34843,
+          "usage_complete": false
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 5
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 71,
+        "dangling_payload_refs": 0,
+        "artifact_files": 66,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0101",
+          "doc_0102"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 123188,
+      "matched_baseline_cost": 0.018837769999999997,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 2.85175010803136
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "32",
+      "document_id": "doc_0115",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Dallas Cowboys",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_020911_6052081ef71e4206839c6600312601c1",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 11,
+      "workers_assigned_target": 9,
+      "failures_injected": 27,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0011",
+        "doc_0114"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0011,doc_0114"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 7
+      },
+      "denied_worker_results": 7,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "Two workers succeeded: Brazil = 5 World Cup wins (1958, 1962, 1970, 1994, 2002 \u2014 all before 2010), Bulls = 6 NBA championships (1991\u201393, 1996\u201398, none after 1998). The Dallas Cowboys worker timed out, so I'll re-delegate that task with a backup worker.",
+        "Both workers timed out again \u2014 the Dallas Cowboys article is large (143k characters). I'll retry with narrower scope: instruct workers to read only the beginning of the article (infobox and lead section), which contains the championship counts.",
+        "The Cowboys article workers keep timing out despite narrowed scope. I'll try one more batch with minimal prompts to reduce processing overhead.",
+        "The Cowboys article workers have timed out six times \u2014 likely a systemic issue with that large document. I'll make one final attempt with a single minimal-scope worker, and if it fails, I'll assess whether the remaining fact can be established from other evidence."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 18
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 117434,
+      "total_cost": 0.016618499999999994,
+      "reported_total_cost": 0.016618499999999994,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 67459.33333333333,
+      "token_ratio_vs_control": 1.7408117483125638,
+      "signed_delta_tokens": 49974.66666666667,
+      "tokens_per_attempt": {
+        "1": 117434
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 7,
+      "empty_finding_worker_tokens": 41272,
+      "empty_finding_worker_calls": 21,
+      "empty_finding_token_fraction": 0.35144847318493794,
+      "wall_clock_seconds": 900.0330849169986,
+      "control_mean_duration_seconds": 37.483027486363426,
+      "latency_ratio_vs_control": 24.011749991231007,
+      "denied_read_outcomes": {
+        "injected": 27,
+        "full_timeout_burns": 18,
+        "cancelled_mid_read": 9,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1493.948888625784,
+      "dead_time_critical_path_seconds": 836.0820045829839,
+      "dead_time_critical_path_fraction_of_wall": 0.9289458560960431,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker3": 178.2,
+        "1:batch2-worker1": 178.0,
+        "1:batch2-worker2": 178.0,
+        "1:batch3-worker1": 178.0,
+        "1:batch3-worker2": 178.0,
+        "1:batch4-worker1": 178.0,
+        "1:batch4-worker2": 178.0,
+        "1:batch5-worker1": 123.9,
+        "1:batch5-worker2": 123.9
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 104.96806149673648,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 26825,
+          "output_tokens": 2322,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 35.859204249922186,
+          "cached_input_tokens": 16128,
+          "estimated_cost_usd": 0.00324939,
+          "total_tokens": 29147,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 85557,
+          "output_tokens": 2730,
+          "model_calls": 32,
+          "unreported_calls": 0,
+          "duration_seconds": 69.16143937048037,
+          "cached_input_tokens": 6912,
+          "estimated_cost_usd": 0.013369109999999998,
+          "total_tokens": 88287,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 27
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 223,
+        "dangling_payload_refs": 0,
+        "artifact_files": 185,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0011",
+          "doc_0114",
+          "doc_0115"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 195950,
+      "matched_baseline_cost": 0.03012885,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 2.9047129628714585
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "89",
+      "document_id": "doc_0304",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Snoopy",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_022412_307e9895f9af44ef819b19443850a861",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 10,
+      "workers_assigned_target": 8,
+      "failures_injected": 24,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0305",
+        "doc_0306"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0305,doc_0306"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 6
+      },
+      "denied_worker_results": 6,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "The mayors list confirms John Lindsay was mayor from Jan 1, 1966 \u2013 Dec 31, 1973. The Snoopy worker timed out, so I'll retry it, and in parallel get John Lindsay's birthday (since 1968 falls within Lindsay's term, he's the likely answer).",
+        "Lindsay's birthday (November 24, 1921) is confirmed, but the Snoopy debut year is still unverified after two timeouts. I'll retry with two focused workers on the Snoopy article, splitting the scan scope to improve the chance of success.",
+        "The Snoopy article workers keep timing out, likely from reading the full document. I'll split the article into halves with strict page limits so each worker reads only a portion.",
+        "All doc_0304 workers have timed out repeatedly \u2014 the document appears problematic to read. I'll make one final attempt with two minimal-scope workers; notably, even if the debut year were any year from 1966\u20131973, Lindsay would still be the mayor, so the answer is robust."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 16
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 97183,
+      "total_cost": 0.014603819999999997,
+      "reported_total_cost": 0.014603819999999997,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 51627.333333333336,
+      "token_ratio_vs_control": 1.882394338916078,
+      "signed_delta_tokens": 45555.666666666664,
+      "tokens_per_attempt": {
+        "1": 97183
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 6,
+      "empty_finding_worker_tokens": 35444,
+      "empty_finding_worker_calls": 18,
+      "empty_finding_token_fraction": 0.36471399318810904,
+      "wall_clock_seconds": 900.0419980410952,
+      "control_mean_duration_seconds": 26.215017250312183,
+      "latency_ratio_vs_control": 34.333069074382436,
+      "denied_read_outcomes": {
+        "injected": 24,
+        "full_timeout_burns": 16,
+        "cancelled_mid_read": 8,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1389.358297249294,
+      "dead_time_critical_path_seconds": 872.9611872492593,
+      "dead_time_critical_path_fraction_of_wall": 0.9699116142904707,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker1": 177.9,
+        "1:batch2-worker1": 178.2,
+        "1:batch3-worker1": 178.0,
+        "1:batch3-worker2": 178.1,
+        "1:batch4-worker1": 178.3,
+        "1:batch4-worker2": 177.9,
+        "1:batch5-worker1": 160.5,
+        "1:batch5-worker2": 160.5
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 45.968766335980035,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 23900,
+          "output_tokens": 2721,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 17.719307958032005,
+          "cached_input_tokens": 13824,
+          "estimated_cost_usd": 0.0032866199999999996,
+          "total_tokens": 26621,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 68468,
+          "output_tokens": 2094,
+          "model_calls": 28,
+          "unreported_calls": 0,
+          "duration_seconds": 28.30324379191734,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.011317199999999994,
+          "total_tokens": 70562,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 24
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 199,
+        "dangling_payload_refs": 0,
+        "artifact_files": 167,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0304",
+          "doc_0305",
+          "doc_0306"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 182436,
+      "matched_baseline_cost": 0.027663120000000013,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 3.5337095337095334
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "94",
+      "document_id": "doc_0324",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Ibn al-Haytham",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_023913_493302a74b554d01befc2d426558e4a4",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 8,
+      "workers_assigned_target": 7,
+      "failures_injected": 23,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0323"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0323",
+        "parametric knowledge or catalog metadata (Lead text)"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 6
+      },
+      "denied_worker_results": 6,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "Worker 2 confirmed Ibn al-Haytham invented the first true pinhole camera and gave the first correct analysis of the camera obscura. Worker 1 (Ibn al-Haytham article) timed out \u2014 I need to retry it to check whether the article names a specific theory (e.g., intromission theory of vision) he was first to correctly explain.",
+        "The Ibn al-Haytham article worker timed out twice, likely due to the article's size (95k characters). I'll split the work: two workers on the same document, each instructed to focus on different portions/sections.",
+        "All doc_0324 workers timed out. I'll try one more batch with extremely narrow scope to minimize processing time.",
+        "doc_0324 workers keep timing out. I'll make one final attempt with a single minimal-scope worker; if it fails, I'll synthesize from doc_0323 plus well-established knowledge."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 16
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 80889,
+      "total_cost": 0.01198054,
+      "reported_total_cost": 0.01198054,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 57757,
+      "token_ratio_vs_control": 1.400505566424849,
+      "signed_delta_tokens": 23132,
+      "tokens_per_attempt": {
+        "1": 80889
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 6,
+      "empty_finding_worker_tokens": 36712,
+      "empty_finding_worker_calls": 18,
+      "empty_finding_token_fraction": 0.45385651942785793,
+      "wall_clock_seconds": 900.0566930830246,
+      "control_mean_duration_seconds": 32.82017562460775,
+      "latency_ratio_vs_control": 27.423884118651227,
+      "denied_read_outcomes": {
+        "injected": 23,
+        "full_timeout_burns": 16,
+        "cancelled_mid_read": 7,
+        "injected_to_cancelled_ratio": 3.29,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1343.931885458519,
+      "dead_time_critical_path_seconds": 988.6768855826065,
+      "dead_time_critical_path_fraction_of_wall": 1.0984606782890811,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker1": 175.4,
+        "1:batch2-worker1": 237.3,
+        "1:batch3-worker1": 177.5,
+        "1:batch3-worker2": 237.5,
+        "1:batch4-worker1": 177.8,
+        "1:batch4-worker2": 178.1,
+        "1:batch5-worker1": 160.3
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 40.48308003984857,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 24970,
+          "output_tokens": 3255,
+          "model_calls": 6,
+          "unreported_calls": 0,
+          "duration_seconds": 17.868066582945175,
+          "cached_input_tokens": 16128,
+          "estimated_cost_usd": 0.0034376399999999996,
+          "total_tokens": 28225,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 50826,
+          "output_tokens": 1838,
+          "model_calls": 23,
+          "unreported_calls": 0,
+          "duration_seconds": 22.666239458019845,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0085429,
+          "total_tokens": 52664,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 23
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 177,
+        "dangling_payload_refs": 0,
+        "artifact_files": 147,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0323",
+          "doc_0324"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 122552,
+      "matched_baseline_cost": 0.02027957,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 2.121855359523521
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "95",
+      "document_id": "doc_0327",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Jackie Robinson",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_025414_fdbaff66439c4d78aff3fbdfd964c99d",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 8,
+      "workers_assigned_target": 6,
+      "failures_injected": 18,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0181",
+        "doc_0325"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0181,doc_0325"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 4
+      },
+      "denied_worker_results": 4,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "The Braves\u2013Astros World Series year is confirmed as 2021. The Jackie Robinson worker timed out, so I'll retry it and add a verification worker on the 2021 Braves season article.",
+        "The 2021 World Series fact is verified by two articles. The Jackie Robinson worker timed out twice; I'll retry with a tighter, more focused prompt.",
+        "The Robinson article keeps timing out, likely due to its size. I'll try once more with instructions to read only the first page.",
+        "The Robinson article has timed out four times. I'll make one final attempt with two parallel workers using different reading strategies."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 12
+      },
+      "induced_malformed_errors": {
+        "ValidationError: 1 validation error for complete_task\nuncertainties\n  Input should be a valid list [type=list_type, input_value='[\"The article snapshot i...nchise records table.\"]', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.14/v/list_type": 1
+      },
+      "induced_malformed_total": 1,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 136105,
+      "total_cost": 0.019521760000000003,
+      "reported_total_cost": 0.019521760000000003,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 48853.333333333336,
+      "token_ratio_vs_control": 2.7859920851528384,
+      "signed_delta_tokens": 87251.66666666666,
+      "tokens_per_attempt": {
+        "1": 136105
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 4,
+      "empty_finding_worker_tokens": 23376,
+      "empty_finding_worker_calls": 12,
+      "empty_finding_token_fraction": 0.17174975202968296,
+      "wall_clock_seconds": 900.0391107500764,
+      "control_mean_duration_seconds": 26.778463402957033,
+      "latency_ratio_vs_control": 33.610558500182236,
+      "denied_read_outcomes": {
+        "injected": 18,
+        "full_timeout_burns": 12,
+        "cancelled_mid_read": 6,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1044.485597458005,
+      "dead_time_critical_path_seconds": 877.0294815410069,
+      "dead_time_critical_path_fraction_of_wall": 0.9744348562920854,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker2": 177.1,
+        "1:batch2-worker1": 176.8,
+        "1:batch3-worker1": 178.3,
+        "1:batch4-worker1": 177.4,
+        "1:batch5-worker1": 167.5,
+        "1:batch5-worker2": 167.5
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 50.207482415949926,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 26562,
+          "output_tokens": 1707,
+          "model_calls": 6,
+          "unreported_calls": 0,
+          "duration_seconds": 10.411277708015405,
+          "cached_input_tokens": 16128,
+          "estimated_cost_usd": 0.00290244,
+          "total_tokens": 28269,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 101828,
+          "output_tokens": 6008,
+          "model_calls": 24,
+          "unreported_calls": 0,
+          "duration_seconds": 39.84644983196631,
+          "cached_input_tokens": 13824,
+          "estimated_cost_usd": 0.016619320000000003,
+          "total_tokens": 107836,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 18
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 169,
+        "dangling_payload_refs": 0,
+        "artifact_files": 147,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0181",
+          "doc_0325",
+          "doc_0326",
+          "doc_0327"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 161666,
+      "matched_baseline_cost": 0.022379059999999996,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 3.3092112445414847
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "104",
+      "document_id": "doc_0352",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "The Terminator",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_030915_615fd483755645d581c9c01055338507",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 8,
+      "workers_assigned_target": 7,
+      "failures_injected": 21,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0351"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0351"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 5
+      },
+      "denied_worker_results": 5,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "The worker timed out again. Let me retry with a more focused prompt.",
+        "Three timeouts on doc_0352. Let me try once more with explicit offset guidance, and also spawn a second worker as a backup attempt in the same batch.",
+        "All doc_0352 workers have timed out repeatedly. I'll make one final attempt; if it fails, I'll rely on the confirmed gunfight date (Oct 26, 1881) plus the question's own statement that The Terminator was released on October 26th (well-documented as October 26, 1984)."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 14
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 104510,
+      "total_cost": 0.01454546,
+      "reported_total_cost": 0.01454546,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 47720.666666666664,
+      "token_ratio_vs_control": 2.1900364621896875,
+      "signed_delta_tokens": 56789.333333333336,
+      "tokens_per_attempt": {
+        "1": 104510
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 5,
+      "empty_finding_worker_tokens": 28811,
+      "empty_finding_worker_calls": 15,
+      "empty_finding_token_fraction": 0.2756769687111281,
+      "wall_clock_seconds": 900.0444987920346,
+      "control_mean_duration_seconds": 12.759892944324141,
+      "latency_ratio_vs_control": 70.53699452802952,
+      "denied_read_outcomes": {
+        "injected": 21,
+        "full_timeout_burns": 14,
+        "cancelled_mid_read": 7,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1230.7744091689394,
+      "dead_time_critical_path_seconds": 883.1491097108886,
+      "dead_time_critical_path_fraction_of_wall": 0.9812282735977815,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker2": 178.3,
+        "1:batch2-worker1": 178.5,
+        "1:batch3-worker1": 178.5,
+        "1:batch4-worker1": 178.4,
+        "1:batch4-worker2": 178.3,
+        "1:batch5-worker1": 169.4,
+        "1:batch5-worker2": 169.4
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 29.98766099906061,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 20199,
+          "output_tokens": 1347,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 8.329802417079918,
+          "cached_input_tokens": 11520,
+          "estimated_cost_usd": 0.00232095,
+          "total_tokens": 21546,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 81223,
+          "output_tokens": 1741,
+          "model_calls": 25,
+          "unreported_calls": 0,
+          "duration_seconds": 21.705502918339334,
+          "cached_input_tokens": 6912,
+          "estimated_cost_usd": 0.012224510000000001,
+          "total_tokens": 82964,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 21
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 174,
+        "dangling_payload_refs": 0,
+        "artifact_files": 149,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0351",
+          "doc_0352"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 153915,
+      "matched_baseline_cost": 0.023076559999999992,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 3.225332141210657
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "114",
+      "document_id": "doc_0380",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Serj Tankian",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_032416_e5b1e2b5154940ffb463ccb828405732",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 8,
+      "workers_assigned_target": 6,
+      "failures_injected": 18,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0379"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0379"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 4
+      },
+      "denied_worker_results": 4,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "The Mona Lisa theft date is confirmed: 21 August 1911. The Serj Tankian worker timed out, so I'll retry that assignment to verify his birth date.",
+        "The doc_0380 worker timed out twice. Let me retry with a more focused prompt.",
+        "Three timeouts on doc_0380. I'll try one more batch with two workers: a retry on doc_0380 and a verification task on doc_0379 to rule out other Louvre thefts.",
+        "The Mona Lisa theft (21 August 1911) is fully verified. The doc_0380 worker has timed out 4 times; I'll try a final batch with two parallel attempts on that document using different reading strategies."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 12
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 92305,
+      "total_cost": 0.013836399999999997,
+      "reported_total_cost": 0.013836399999999997,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 28340.333333333332,
+      "token_ratio_vs_control": 3.2570188541654415,
+      "signed_delta_tokens": 63964.66666666667,
+      "tokens_per_attempt": {
+        "1": 92305
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 4,
+      "empty_finding_worker_tokens": 23007,
+      "empty_finding_worker_calls": 12,
+      "empty_finding_token_fraction": 0.24924976978495206,
+      "wall_clock_seconds": 900.0507249579532,
+      "control_mean_duration_seconds": 16.502430250363734,
+      "latency_ratio_vs_control": 54.540495630218764,
+      "denied_read_outcomes": {
+        "injected": 18,
+        "full_timeout_burns": 12,
+        "cancelled_mid_read": 6,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1051.1981529589125,
+      "dead_time_critical_path_seconds": 882.2744514168962,
+      "dead_time_critical_path_fraction_of_wall": 0.9802496981024181,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker1": 178.3,
+        "1:batch2-worker1": 178.5,
+        "1:batch3-worker1": 178.4,
+        "1:batch4-worker1": 178.1,
+        "1:batch5-worker1": 168.9,
+        "1:batch5-worker2": 168.9
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 30.717261502868496,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 20184,
+          "output_tokens": 1654,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 8.730575418216176,
+          "cached_input_tokens": 11520,
+          "estimated_cost_usd": 0.0024722,
+          "total_tokens": 21838,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 68198,
+          "output_tokens": 2269,
+          "model_calls": 22,
+          "unreported_calls": 0,
+          "duration_seconds": 22.02870320889633,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.011364199999999998,
+          "total_tokens": 70467,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 18
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 163,
+        "dangling_payload_refs": 0,
+        "artifact_files": 136,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0379",
+          "doc_0380"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 133718,
+      "matched_baseline_cost": 0.019557010000000003,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 4.718293127580245
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "224",
+      "document_id": "doc_0727",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Pop Disaster Tour",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_033917_0741dc6e7b35469aa7380835bdc5567a",
+      "status": "completed",
+      "stop_reason": "submit_answer",
+      "termination_mechanism": "normal_finish",
+      "grade_bucket": "correct",
+      "graded_correct": true,
+      "correct_field": true,
+      "answer": "\\boxed{Verizon Center}",
+      "extracted_answer": "Verizon Center",
+      "grade_method": "exact_match",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 3,
+      "workers_spawned": 6,
+      "workers_assigned_target": 3,
+      "failures_injected": 9,
+      "dependency_verdict": "ROUTED_AROUND",
+      "substitute_documents_read": [
+        "doc_0725",
+        "doc_0726",
+        "doc_0728"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0725,doc_0726,doc_0728",
+        "parametric knowledge or catalog metadata (Lead text)"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 3
+      },
+      "denied_worker_results": 3,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "answered_from_parametric_or_catalog",
+      "lead_quotes": [
+        "Brazil's fifth World Cup was 2002, and the arena was Verizon Center in 2010. The Pop Disaster Tour worker timed out, so I'll retry to confirm the 2002 D.C. venue.",
+        "The Pop Disaster Tour article worker timed out twice. I'll make one more focused attempt since that article is the key evidence for the D.C. venue.",
+        "The Pop Disaster Tour article worker timed out three times, but I have sufficient evidence from the other three documents to answer confidently:\n\n1. **Brazil's fifth World Cup**: 2002 (titles in 1958, 1962, 1970, 1994, 2002 \u2014 doc_0725 explicitly states \"2002 was Brazil's fifth world championship\").\n2. **Blink-182's 2002 tour**: The Pop Disaster Tour, co-headlined with Green Day (doc_0726: \"Pop Disaster Tour (with Green Day) (2002)\").\n3. **The D.C. venue**: The catalog's venue article is Capital One Arena (doc_0728), which confirms Blink-182 performed there. Its naming history: MCI Center (1997\u20132006), Verizon Center (2006\u20132017), Capital One Arena (2017\u2013present). In 2010, it was **Verizon Center**.\n\nThe chain connects: Blink-182 played the D.C. arena (then MCI Center) on the 2002 Pop Disaster Tour; by 2010 the arena had been renamed Verizon Center."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 6
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "5_lead_synthesis_turn",
+      "deepest_stage_evidence": "Lead re-delegated the denied document or named the gap in its own text.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [],
+        "total": 0
+      },
+      "total_tokens": 137540,
+      "total_cost": 0.01676602,
+      "reported_total_cost": 0.01676602,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 42895.666666666664,
+      "token_ratio_vs_control": 3.20638448328114,
+      "signed_delta_tokens": 94644.33333333334,
+      "tokens_per_attempt": {
+        "1": 137540
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 3,
+      "empty_finding_worker_tokens": 17626,
+      "empty_finding_worker_calls": 9,
+      "empty_finding_token_fraction": 0.1281518103824342,
+      "wall_clock_seconds": 550.1593640419887,
+      "control_mean_duration_seconds": 19.257954860959824,
+      "latency_ratio_vs_control": 28.567901836621534,
+      "denied_read_outcomes": {
+        "injected": 9,
+        "full_timeout_burns": 6,
+        "cancelled_mid_read": 3,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 534.6278492080935,
+      "dead_time_critical_path_seconds": 534.6278492080935,
+      "dead_time_critical_path_fraction_of_wall": 0.9717690621135917,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker2": 177.9,
+        "1:batch2-worker1": 178.3,
+        "1:batch3-worker1": 178.4
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0
+      },
+      "aggregate_model_seconds": 39.48386628937442,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 24002,
+          "output_tokens": 1980,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 10.010058084037155,
+          "cached_input_tokens": 13824,
+          "estimated_cost_usd": 0.0029314199999999997,
+          "total_tokens": 25982,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 107992,
+          "output_tokens": 3566,
+          "model_calls": 18,
+          "unreported_calls": 0,
+          "duration_seconds": 29.514462666236795,
+          "cached_input_tokens": 34560,
+          "estimated_cost_usd": 0.013834599999999999,
+          "total_tokens": 111558,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 9
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 136,
+        "dangling_payload_refs": 0,
+        "artifact_files": 123,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0725",
+          "doc_0726",
+          "doc_0727",
+          "doc_0728"
+        ],
+        "run_json": true,
+        "answer_txt": true,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 174305,
+      "matched_baseline_cost": 0.023336329999999995,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 4.063464063969166
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "251",
+      "document_id": "doc_0858",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "Caldecott Medal",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_034828_76eff0a852224b2cb22af10a5f0c341b",
+      "status": "completed",
+      "stop_reason": "submit_answer",
+      "termination_mechanism": "normal_finish",
+      "grade_bucket": "correct",
+      "graded_correct": true,
+      "correct_field": true,
+      "answer": "\\boxed{Snowflake Bentley}",
+      "extracted_answer": "Snowflake Bentley",
+      "grade_method": "exact_match",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 2,
+      "workers_spawned": 4,
+      "workers_assigned_target": 2,
+      "failures_injected": 6,
+      "dependency_verdict": "ROUTED_AROUND",
+      "substitute_documents_read": [
+        "doc_0859",
+        "doc_0860"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0859,doc_0860"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 2
+      },
+      "denied_worker_results": 2,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "answered_from_remaining_evidence",
+      "lead_quotes": [
+        "Two workers succeeded; the Caldecott Medal list worker timed out. I need to verify the 1999 and 2000 Caldecott winners to confirm \"recently won\" fits the timeline. Let me re-delegate that task.",
+        "The Caldecott article worker timed out again, but I already have sufficient evidence from the successful workers to complete the chain:\n\n1. **Timeline (doc_0859)**: The Sydney Summer Olympics were held September 15 \u2013 October 1, 2000, so the book was read around 2000.\n2. **\"Recently won\" the Caldecott (doc_0860)**: *Snowflake Bentley* won the 1999 Caldecott Medal (the article's awards table shows \"Caldecott Medal recipient 1999 | Preceded by Rapunzel | Succeeded by Joseph Had a Little Overcoat\") \u2014 so in 2000 it was indeed the book that had *recently* won the medal.\n3. **Plot clues (doc_0860)**: It is based on the true story of Wilson Bentley, the first known photographer of snowflakes, and is entirely centered on winter/snow (Vermont farm with ~120 inches of annual snowfall, blizzard, snowflake photography).\n\nAll constraints match: read around the Sydney Olympics (2000), had recently won the Caldecott (1999 winner), based on a true story, winter setting. The 2000 winner (*Joseph Had a Little Overcoat*) is a folktale without a winter setting, so it doesn't fit the plot clues. The answer is *Snowflake Bentley*."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 4
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "5_lead_synthesis_turn",
+      "deepest_stage_evidence": "Lead re-delegated the denied document or named the gap in its own text.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [],
+        "total": 0
+      },
+      "total_tokens": 44935,
+      "total_cost": 0.006331550000000002,
+      "reported_total_cost": 0.006331550000000002,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 54907.333333333336,
+      "token_ratio_vs_control": 0.8183788443559451,
+      "signed_delta_tokens": -9972.333333333336,
+      "tokens_per_attempt": {
+        "1": 44935
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 2,
+      "empty_finding_worker_tokens": 11673,
+      "empty_finding_worker_calls": 6,
+      "empty_finding_token_fraction": 0.25977523088906196,
+      "wall_clock_seconds": 369.7932926249923,
+      "control_mean_duration_seconds": 19.1896259446706,
+      "latency_ratio_vs_control": 19.270479460684456,
+      "denied_read_outcomes": {
+        "injected": 6,
+        "full_timeout_burns": 4,
+        "cancelled_mid_read": 2,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 354.8145639979501,
+      "dead_time_critical_path_seconds": 354.8145639979501,
+      "dead_time_critical_path_fraction_of_wall": 0.9594943204060973,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker2": 177.6,
+        "1:batch2-worker1": 177.2
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0
+      },
+      "aggregate_model_seconds": 22.937177541898564,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 15839,
+          "output_tokens": 1574,
+          "model_calls": 4,
+          "unreported_calls": 0,
+          "duration_seconds": 9.698665708885528,
+          "cached_input_tokens": 11520,
+          "estimated_cost_usd": 0.00178045,
+          "total_tokens": 17413,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 26314,
+          "output_tokens": 1208,
+          "model_calls": 10,
+          "unreported_calls": 0,
+          "duration_seconds": 13.259259541984648,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0045511,
+          "total_tokens": 27522,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 6
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 87,
+        "dangling_payload_refs": 0,
+        "artifact_files": 80,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0858",
+          "doc_0859",
+          "doc_0860"
+        ],
+        "run_json": true,
+        "answer_txt": true,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 89535,
+      "matched_baseline_cost": 0.013704069999999999,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 1.6306565000424957
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "271",
+      "document_id": "doc_0927",
+      "mode": "timeout",
+      "scenario": "baseline",
+      "title": "2017 Billboard Music Awards",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier1/261105_035439_0124f731b635426ca4377cedd6ebe3ba",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 11,
+      "workers_assigned_target": 8,
+      "failures_injected": 24,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0928",
+        "doc_0929"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0928,doc_0929"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 6
+      },
+      "denied_worker_results": 6,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "Worker 1 (2017 BBMAs article) timed out \u2014 that's the critical missing piece. I'll retry it, and also add a focused check on the Hannah Montana article for any other Cyrus family members (e.g., Noah Cyrus) appearing on the show, in case the duo is Miley + Noah rather than Miley + Billy Ray.",
+        "The doc_0927 worker timed out twice. The article is small (14k chars), so I'll retry with two narrowly-scoped workers on the same document to maximize the chance one succeeds \u2014 one focused on performers/host, one on presenters/attendees.",
+        "All five attempts on doc_0927 have timed out. I'll try two more workers with minimal, differently-framed prompts (one asking only for the performers list, one asking to scan for any Cyrus family names anywhere in the article).",
+        "All seven attempts on doc_0927 have timed out. I'll make one final attempt with two workers using minimal prompts, instructing them to read just the first page of the document."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 16
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 179130,
+      "total_cost": 0.02863582,
+      "reported_total_cost": 0.02863582,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 116040.33333333333,
+      "token_ratio_vs_control": 1.543687396049075,
+      "signed_delta_tokens": 63089.66666666667,
+      "tokens_per_attempt": {
+        "1": 179130
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 6,
+      "empty_finding_worker_tokens": 35510,
+      "empty_finding_worker_calls": 18,
+      "empty_finding_token_fraction": 0.19823591804834478,
+      "wall_clock_seconds": 900.0394427919528,
+      "control_mean_duration_seconds": 45.51682169436632,
+      "latency_ratio_vs_control": 19.77377614007157,
+      "denied_read_outcomes": {
+        "injected": 24,
+        "full_timeout_burns": 16,
+        "cancelled_mid_read": 8,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1349.191392667126,
+      "dead_time_critical_path_seconds": 852.2914075020166,
+      "dead_time_critical_path_fraction_of_wall": 0.9469489524349953,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker1": 177.8,
+        "1:batch2-worker1": 177.1,
+        "1:batch3-worker1": 177.7,
+        "1:batch3-worker2": 177.7,
+        "1:batch4-worker1": 177.6,
+        "1:batch4-worker2": 177.8,
+        "1:batch5-worker1": 141.9,
+        "1:batch5-worker2": 141.6
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 108.4854183329735,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 31746,
+          "output_tokens": 8011,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 36.18846991797909,
+          "cached_input_tokens": 18432,
+          "estimated_cost_usd": 0.006555560000000001,
+          "total_tokens": 39757,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 133648,
+          "output_tokens": 5725,
+          "model_calls": 33,
+          "unreported_calls": 0,
+          "duration_seconds": 72.35582883423194,
+          "cached_input_tokens": 6912,
+          "estimated_cost_usd": 0.02208026,
+          "total_tokens": 139373,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "model_calls": 0,
+        "unreported_calls": 0,
+        "duration_seconds": 0.0,
+        "cached_input_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "total_tokens": 0,
+        "usage_complete": true
+      },
+      "verifications": [],
+      "detection": {
+        "denied_flagged": 0,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 0,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 0,
+        "plan_null": 0,
+        "cell_detected": false
+      },
+      "injections_per_attempt": {
+        "1": 24
+      },
+      "verification_by_boundary": {},
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 224,
+        "dangling_payload_refs": 0,
+        "artifact_files": 188,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0927",
+          "doc_0928",
+          "doc_0929"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 305854,
+      "matched_baseline_cost": 0.04724026,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 2.6357559584167576
+    }
+  ]
+}

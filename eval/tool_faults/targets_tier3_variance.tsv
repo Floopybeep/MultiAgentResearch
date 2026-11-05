@@ -1,0 +1,15 @@
+# Tier 3 variance control: the section-5 pick per question that fired with the
+# highest token ratio. This is rep 2 of immediate x baseline; section 5 is rep 1.
+# NOTE: these are the SECTION-5 picks, not the section-6 targets. Q224 (doc_0728,
+# soft leak) and Q251 (doc_0860, direct leak) differ, because section 6 additionally
+# excluded title-leaking documents; the other eight questions coincide.
+27	doc_0102	# rep1 ratio 2.85, 34 injections, leak=none
+32	doc_0115	# rep1 ratio 2.90, 45 injections, leak=none
+89	doc_0304	# rep1 ratio 3.53, 48 injections, leak=none
+94	doc_0324	# rep1 ratio 2.12, 26 injections, leak=none
+95	doc_0327	# rep1 ratio 3.31, 30 injections, leak=none
+104	doc_0352	# rep1 ratio 3.23, 51 injections, leak=none
+114	doc_0380	# rep1 ratio 4.72, 30 injections, leak=none
+224	doc_0728	# rep1 ratio 4.17, 23 injections, leak=soft
+251	doc_0860	# rep1 ratio 2.45, 13 injections, leak=direct
+271	doc_0927	# rep1 ratio 2.64, 32 injections, leak=none

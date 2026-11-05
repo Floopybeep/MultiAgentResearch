@@ -1,0 +1,6 @@
+# Tier 4: timeout x always-verify, deliberately under-powered at n=4.
+# The 4 section-6 targets with the highest section-5 token ratios.
+114	doc_0380	# section-5 ratio 4.72
+224	doc_0727	# section-5 ratio 4.06
+89	doc_0304	# section-5 ratio 3.53
+95	doc_0327	# section-5 ratio 3.31

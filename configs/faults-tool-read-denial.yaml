@@ -1,8 +1,25 @@
-# Worker-stage ACCIDENTAL tool failure at the read_document boundary.
-# Starting configuration is the current configs/baseline-pinned.yaml, unmodified
-# except for the tool_failure section at the end. Both modes share identical
-# targeting and trigger conditions; only the manifestation differs.
-# Per-role Chat Completions models and USD-per-million token rates.
+# Worker-stage ACCIDENTAL tool fault at the read_document boundary: evidence
+# DENIAL, not corruption. Adversarial evidence corruption is a separate fault
+# class and is configured elsewhere.
+#
+# PROVENANCE. The settings in this file are configs/baseline.yaml unmodified,
+# with only the tool_failure section appended at the end. `diff
+# configs/baseline.yaml configs/faults-tool-read-denial.yaml` shows only
+# pure-addition hunks -- comment blocks and the trailing tool_failure section --
+# with no changed line and nothing removed. The authoritative check is stronger:
+# loading both files through RunConfig differs on no key but tool_failure. Every
+# behaviour-affecting
+# setting -- all four role models,
+# minimum_worker: 2, the verifier block, max_batches, max_run_tokens and the
+# three timeouts -- is therefore identical to the clean control the fault runs
+# are compared against.
+#
+# BOTH MODES SHARE IDENTICAL TARGETING AND TRIGGER CONDITIONS; ONLY THE
+# MANIFESTATION DIFFERS. `immediate` raises ToolUnavailableError at once;
+# `timeout` sleeps past call_timeout_seconds so call_tool's wait_for cancels the
+# read. Targeting, persistence and the fault's reach into the worker are the
+# same in both, which is what makes an immediate-vs-timeout comparison at a
+# fixed target a comparison of manifestation alone, with nothing else varying.
 lead:
   model: api-glm-5.3-flash
   input_cost_per_million: 0.15
@@ -28,10 +45,14 @@ judge:
   options:
     temperature: 0
     seed: 42
+always_verify: false
+verifier:
+  model: api-glm-5.3-flash
+  input_cost_per_million: 0.15
+  cached_input_cost_per_million: 0.03
+  output_cost_per_million: 0.50
+  max_output_tokens: 1024
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
-# Optional prompt files, relative to the working directory; null uses bundled defaults.
-# lead_prompt: src/multi_agent_research/prompts/lead_old.md
-# worker_prompt: src/multi_agent_research/prompts/worker_old.md
 lead_prompt: src/multi_agent_research/prompts/lead.md
 worker_prompt: src/multi_agent_research/prompts/worker.md
 # Inject into at most num_docs successful read_document calls per question run.
@@ -39,20 +60,40 @@ document_injection:
   enabled: false
   num_docs: 1
   prompt: ""
+# Drop Lead-to-Worker assignments in one delegation batch; num_delivered reach Workers.
+connection_drop:
+  enabled: false
+  batch: 1
+  num_delivered: 1
+  select: last
+  seed: 0
+  persistent: false
+# Withhold Worker-to-Lead results in one batch; num_delivered results arrive.
+result_timeout:
+  enabled: false
+  batch: 1
+  num_delivered: 1
+  timeout_seconds: 180  # Deadline from dispatch; same as worker_timeout_seconds.
+  select: last
+  seed: 0
+  persistent: false
 max_lead_turns: 10
 max_worker_turns: 5
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
 max_worker_tool_calls: 15
 max_batches: 6
 max_workers_per_batch: 4
-# Lead instruction: minimum workers to spawn in each delegation batch.
-minimum_worker: 3
+minimum_worker: 2
+# lead + workers budget - document-heavy tasks eat up a large amount
 # Raised from baseline.yaml's 200000. That budget is cumulative across the Lead
 # AND every worker, so document-heavy questions exhausted it inside the worker
 # stage and returned no answer: measured on Q25 (workers burned 207508 of 208356
 # input tokens, leaving the Lead a single model call) and Q783 (two batch-2
 # workers died on run_token_budget). Both were then recorded as correct=False by
-# runner.py:88, i.e. scored as wrong answers rather than execution failures.
+# runner.py:134-139, i.e. scored as wrong answers rather than execution failures.
+# That measurement is why grading in this section is reported in FOUR buckets
+# (correct / incorrect / execution-failed / ungradeable) and never collapsed to a
+# single accuracy number: collapsing would re-commit exactly this error.
 # 600000 is headroom, not a target; completed questions stay far below it.
 max_run_tokens: 600000
 run_timeout_seconds: 900
@@ -61,6 +102,17 @@ call_timeout_seconds: 60
 max_document_chars: 24000
 output_dir: runs
 
+# The only SETTING this file adds to configs/baseline.yaml; see the provenance
+# note at the top of the file. Everything between there and here is either
+# baseline.yaml verbatim or a comment.
+#
+# Both modes share identical targeting and trigger conditions; only the
+# manifestation differs. A document that is load-bearing under `immediate` is
+# therefore load-bearing under `timeout` as well.
+#
+# Per-condition copies of this file are generated by eval/make_fault_configs.py
+# into a scratch directory; edit the generator, not 70 copies of this file.
+#
 # Accidental read_document failure. See configs/README.md#tool-failure-injection.
 #
 # THE TWO SMOKE-TEST CONDITIONS DIFFER ONLY IN `enabled`:
@@ -73,33 +125,36 @@ output_dir: runs
 # one-field delta is verifiable from the traces afterwards.
 tool_failure:
   enabled: false
-  # immediate: the tool errors at once. timeout: the read outlasts
-  # call_timeout_seconds and call_tool's asyncio.wait_for raises TimeoutError.
+  # immediate: the tool errors at once with ToolUnavailableError. timeout: the
+  # read sleeps call_timeout_seconds * timeout_margin, so call_tool's
+  # asyncio.wait_for always cancels it first and the worker loses exactly
+  # call_timeout_seconds (60s) of wall clock per denied read.
   mode: immediate
-  # Empty list means any document; empty offsets means any page of a target.
-  # Targets absent from a question simply never match.
-  #
-  # PROVISIONAL target for the Q143 smoke test, supplied here and never in code.
-  # Confirm from the 3a trace that this document and offset are actually
-  # requested under this configuration before running 3b; earlier Q143 traces
-  # used different prompts and turn limits and are advisory only.
-  document_ids: ["doc_0478"]
-  offsets: [0]
-  # Maximum tool calls SELECTED for failure per question run, shared across all
-  # workers. Counts triggered attempts, including ones later cancelled.
-  # null is uncapped and additionally requires allow_total_denial when
-  # document_ids is empty.
-  max_failures: 1
+  # tool_failures.targeted(): an empty document_ids means ANY document; an empty
+  # offsets means ANY page of a targeted document. Targets absent from the
+  # question under test simply never match, which is a normal sweep outcome.
+  document_ids: []
+  offsets: []
+  # true keeps denying the page for the whole question run; false denies only
+  # the first attempt per (document_id, offset), so a retry or a re-delegated
+  # worker reads it successfully.
+  persistent: true
+  # Maximum reads SELECTED for failure per question run, shared across every
+  # worker; counts triggered attempts, including ones later cancelled. null is
+  # uncapped, and additionally requires allow_total_denial ONLY when
+  # document_ids is empty (config.py require_total_denial_optin).
+  max_failures: null
   # 1.0 is deterministic targeting and ignores seed. Below 1.0 draws a SHA-256
   # verdict per eligible call.
   failure_probability: 1.0
-  # true keeps failing the page; false denies only the first attempt per
-  # (document_id, offset) in the run, so a retry or a re-delegated worker reads it.
-  persistent: false
-  # delay = call_timeout_seconds * timeout_margin. Must exceed 1.0 so raising
-  # the tool timeout cannot silently disarm the timeout mode.
+  # delay = call_timeout_seconds * timeout_margin, validated gt 1.0 so raising
+  # the tool timeout cannot silently disarm the timeout mode. Not a cost lever:
+  # the injected delay always exceeds the timeout, so dead time per denied read
+  # is call_timeout_seconds regardless of this value.
   timeout_margin: 1.5
-  # Dedicated to fault selection; independent of the CLI --seed that samples questions.
+  # Dedicated to fault selection; independent of the CLI --seed that samples
+  # questions. Unused while failure_probability is 1.0.
   seed: 20261104
-  # Opt-in for uncapped denial of every document, which deadlocks the Lead.
+  # Opt-in for uncapped denial of EVERY document, which starves the Lead of any
+  # successful worker. Not needed for single-document persistent denial.
   allow_total_denial: false

@@ -1,0 +1,14 @@
+# Section 6 fault targets: highest token ratio among section-5 fired pairs that
+# carry no verified gold literal and no catalog-title leak.
+# Q251 stays on doc_0858 although doc_0860 has the higher ratio (2.45 vs 1.63):
+# doc_0860's title "Snowflake Bentley (book)" is a direct leak of that gold answer.
+27	doc_0102
+32	doc_0115
+89	doc_0304
+94	doc_0324
+95	doc_0327
+104	doc_0352
+114	doc_0380
+224	doc_0727
+251	doc_0858
+271	doc_0927
