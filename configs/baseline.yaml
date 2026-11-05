@@ -29,7 +29,7 @@ verifier:
   input_cost_per_million: 0.15
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
-  max_output_tokens: 1024
+  max_output_tokens: 4096
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
 lead_prompt: src/multi_agent_research/prompts/lead.md
 worker_prompt: src/multi_agent_research/prompts/worker.md

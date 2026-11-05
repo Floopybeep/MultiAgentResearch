@@ -105,7 +105,8 @@ class RunConfig(BaseModel):
     )
     worker: ModelConfig = Field(default_factory=ModelConfig)
     judge: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=1024))
-    verifier: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=1024))
+    # Reasoning tokens share the output budget with the verifier's JSON verdict.
+    verifier: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=4096))
     lead_prompt: Path | None = None
     worker_prompt: Path | None = None
     full_restart: bool = False

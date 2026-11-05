@@ -182,6 +182,13 @@ Open **`runs/index.html`** in a browser:
 - **QA Results**: answer and reference, grading, token usage and timing, with
   expandable Worker findings and per-role statistics.
 - **Agent Output Graph**: agent activity, model messages, tool payloads and handoffs.
+- **Run Summary**: cumulative input/output tokens, cached input tokens, model calls,
+  estimated cost, question outcomes, and total/average/median question time, plus
+  solve, grading, and wall-clock time. Verifier and re-try rows break out check
+  outcomes and extra full-restart attempts, including their tokens, cost, and time.
+  These costs are already included in the overall totals. Batch totals cover finalized questions and
+  include restart attempts. Unknown costs remain unavailable. Refresh the run to
+  update; rebuild older exports to populate the additional timing statistics.
 
 Each invocation creates one `runs/<timestamp_run-id>/` directory. Its `batch.json`
 stores the selected questions and aggregate results, updated as questions finish.
@@ -195,6 +202,17 @@ incorrect; ungraded results and preparation failures are neutral. The strip scro
 horizontally when needed. Refresh the selected run to update its question states and
 results; list refresh remains separate. Older flat run directories and archived
 exports remain supported without moving their files.
+
+Run folders may be renamed (including names with spaces). When using `mar-view`,
+refresh the runs list to discover renamed folders and rebuild their export paths.
+For direct-file viewing, rebuild the index after a rename, then reload `runs/index.html`:
+
+```bash
+uv run mar-view --runs-dir runs --export-only
+```
+
+This rebuilds derived viewer files from the saved traces; it does not rerun questions.
+
 
 
 ### Baseline decisions and limits
@@ -296,7 +314,7 @@ English `# TODO:` comments mark the extension points below. Paths are relative t
 | Area and entry point | Current interface | Design work |
 |---|---|---|
 | Grading — `grading.py:grade_answer` | Extract the contents of one nonempty, unnested `\boxed{...}` answer; normalize Unicode, case and whitespace; exact match followed by an LLM judge. Missing, multiple or malformed boxes go to the judge. Store correctness and format validity separately. | Answer aliases, numbers/units, multi-part answers, partial credit, judge rubric/model and error handling. |
-| Tool → Worker injection — `runtime.py:read_document` | Optional `document_injection` config prepends a literal prompt to at most `num_docs` successful reads per question run; events retain original/injected artifact references. See [config documentation](configs/README.md#document-prompt-injection). | TODO: Target text or table fields; select timing and additional fault types. |
+| Tool → Worker injection — `runtime.py:read_document` | Optional `document_injection` config selects the first `num_docs` catalog document IDs (capped at catalog size) per question run and prepends a literal prompt on every successful read of those IDs; events retain original/injected artifact references. See [config documentation](configs/README.md#document-prompt-injection). | TODO: Target text or table fields; select timing and additional fault types. |
 | Worker → Lead injection — `graphs/research.py:build_research` | Structured findings, document IDs and uncertainties at the delivery boundary. | Target Worker/fact; corruption, malicious content, timeouts and stale results; fault scheduling and paired clean/fault runs. |
 | Propagation metrics — `runner.py:run_qa` result construction | Event IDs, parent dependencies, handoff payloads, task outcome, usage and timing. | Exposure, adoption and answer impact; affected stages, wasted work and attribution method. |
 | Recovery — `runner.py:run_qa` | One attempt per question, with graph checkpoints. | Oracle-triggered full restart, attempt state and memory reset, inter-agent verification, and combined latency/token/cost accounting. |

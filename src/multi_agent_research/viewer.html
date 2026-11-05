@@ -37,7 +37,7 @@ details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summ
 .view-tabs button[aria-selected="true"]{background:#263b54;color:#f0f6ff;border-bottom:3px solid #8bc8ff}
 .view-tabs button:focus-visible{outline:2px solid #8bc8ff;outline-offset:2px}
 .graph-note{padding:0 24px;color:#a8b9ce}
-#report-panel{max-width:1100px;margin:0 auto;padding:24px 32px 60px}
+#report-panel,#run-summary-panel{max-width:1100px;margin:0 auto;padding:24px 32px 60px}
 .report-note{color:#a8b9ce;font-size:13px}
 .report-document{padding:24px 28px;margin:24px 0;border:1px solid #42546c;border-radius:12px;background:#1b293b}
 .report-document>h3{margin-top:0;font-size:18px}
@@ -70,13 +70,15 @@ details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summ
 <div class="view-tabs" role="tablist" aria-label="Run views">
 <button id="tab-graph" role="tab" aria-controls="graph-panel" aria-selected="true" tabindex="0">Agent Output Graph</button>
 <button id="tab-report" role="tab" aria-controls="report-panel" aria-selected="false" tabindex="-1">QA Results</button>
+<button id="tab-run-summary" role="tab" aria-controls="run-summary-panel" aria-selected="false" tabindex="-1">Run Summary</button>
 </div>
 <div id="question-selector" class="question-selector" role="group" aria-label="Questions" hidden></div></header>
 <div id="summary"><p>Select a run. Expand blocks to inspect model inputs, recorded reasoning, outputs, and tools.</p></div><p id="error" role="alert"></p>
 <section id="graph-panel" role="tabpanel" aria-labelledby="tab-graph">
 <p class="graph-note">Top to bottom: execution order. Parallel worker columns share a batch. Arrows show orchestration and per-agent sequence, not elapsed time. Expand blocks for full payloads.</p>
 <div id="flow-wrap"><svg id="arrows" aria-hidden="true"></svg><div id="flow"></div></div></section>
-<section id="report-panel" role="tabpanel" aria-labelledby="tab-report" hidden><p class="empty">Select a run to view its answer, grade, and worker findings.</p></section></main>
+<section id="report-panel" role="tabpanel" aria-labelledby="tab-report" hidden><p class="empty">Select a run to view its answer, grade, and worker findings.</p></section>
+<section id="run-summary-panel" role="tabpanel" aria-labelledby="tab-run-summary" hidden><p class="empty">Select a run to view its cumulative statistics.</p></section></main>
 <script src="viewer-assets/markdown-it.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
@@ -350,14 +352,85 @@ function renderReport(data){
   documentBlock(id,worker.findings,'report-worker',note);
  }
 }
+function renderRunSummary(entry,data){
+ const panel=$('#run-summary-panel');panel.replaceChildren(el('h2','','Run Summary'));
+ const grouped=Array.isArray(entry.questions),qa=collectQA(data);
+ const final=qa.final||(data.events||[]).findLast(e=>e.event_type==='run.finished')?.payload;
+ const usage=final?.usage||data.usage||{},duration=final?.elapsed_seconds??final?.duration_seconds;
+ const correct=final?.correct??final?.grade?.correct;
+ const s=grouped?(entry.summary||{}):{
+  ...usage,verifier_statistics:data.verifier_statistics,retry_statistics:data.retry_statistics,
+  questions:final?1:0,completed:final?.status==='completed'?1:0,
+  correct:correct===true?1:0,incorrect:correct===false?1:0,ungraded:final&&correct==null?1:0,
+  elapsed_seconds:duration,average_duration_seconds:duration,median_duration_seconds:duration,
+  min_duration_seconds:duration,max_duration_seconds:duration,timed_questions:duration==null?0:1,
+  solve_duration_seconds:final?.solve_duration_seconds,wall_duration_seconds:final?.wall_duration_seconds,
+  grading_duration_seconds:final?(final.attempts||[final]).reduce((sum,a)=>sum+(a.grade?.duration_seconds||0),0):null,
+ };
+ const count=value=>value==null?'Not recorded':Number(value).toLocaleString();
+ const seconds=value=>value==null?'Not recorded':Number(value).toLocaleString(undefined,{maximumFractionDigits:2})+' s';
+ const money=value=>value==null?'Not available':'$'+Number(value).toFixed(6);
+ const metrics=(title,items)=>{
+  panel.append(el('h3','',title));const list=el('dl','qa-metrics');
+  for(const [label,value] of items){const item=el('div','qa-metric');item.append(el('dt','',label),el('dd','',value));list.append(item)}
+  panel.append(list);
+ };
+ panel.append(el('p','report-note',grouped?
+  'All questions in this run. Totals cover finalized question results so far, including restart attempts, grading, and verification. Refresh the run to update.':
+  'Statistics for this run, including restart attempts when recorded. Usage for an unfinished run covers recorded responses so far.'));
+ const graded=(s.correct||0)+(s.incorrect||0);
+ metrics('Questions',[
+  ['Selected',count(grouped?entry.questions.length:1)],['Finalized',count(s.questions)],
+  ['Completed',count(s.completed)],['Correct',count(s.correct)],['Incorrect',count(s.incorrect)],
+  ['Ungraded',count(s.ungraded)],['Accuracy (graded)',graded?((s.correct||0)/graded*100).toFixed(1)+'%':'Not available'],
+  ['Pending / running',count(grouped?Math.max(0,entry.questions.length-(s.questions||0)):final?0:1)],
+  ...(grouped?[['Preparation failures',count(s.preparation_failed)]]:[]),
+ ]);
+ metrics('Cumulative usage and cost',[
+  ['Input tokens',count(s.input_tokens)],['Cached input tokens',count(s.cached_input_tokens)],
+  ['Output tokens',count(s.output_tokens)],['Total tokens',count(s.total_tokens??(s.input_tokens!=null&&s.output_tokens!=null?s.input_tokens+s.output_tokens:null))],
+  ['Model calls',count(s.model_calls)],['Estimated cost (USD)',money(s.estimated_cost_usd)],
+ ]);
+ if(s.usage_complete===false||s.unreported_calls>0)panel.append(el('p','notice','Some calls have missing usage reports. Token totals are incomplete; estimated cost may be unavailable.'));
+ const verifier=s.verifier_statistics||{},retry=s.retry_statistics||{};
+ const usageItems=stats=>[
+  ['Model calls',count(stats.model_calls)],['Input tokens',count(stats.input_tokens)],
+  ['Output tokens',count(stats.output_tokens)],['Estimated cost (USD)',money(stats.estimated_cost_usd)],
+  ['Total time',seconds(stats.elapsed_seconds)],
+ ];
+ metrics('Verifier agents',[
+  ['Checks',count(verifier.checks)],['Passed',count(verifier.passed)],
+  ['Failed',count(verifier.failed)],['Unresolved / errors',count(verifier.unresolved)],
+  ...usageItems(verifier),
+ ]);
+ metrics('Re-try statistics',[
+  ['Questions retried',count(retry.questions)],['Extra attempts',count(retry.attempts)],
+  ['Correct after retry',count(retry.correct)],['Incorrect after retry',count(retry.incorrect)],
+  ['Ungraded after retry',count(retry.ungraded)],...usageItems(retry),
+ ]);
+ panel.append(el('p','report-note','Re-try means full-restart attempts after the initial attempt; usage and time cover only those extra attempts. Verifier statistics cover all attempts. These are breakdowns of the overall totals, not additional charges. Verifier time sums check durations, which can overlap across parallel workers.'));
+ if(!s.verifier_statistics||!s.retry_statistics)panel.append(el('p','report-note','For older runs, rebuild viewer exports to populate recorded verifier and retry statistics.'));
+ metrics('Timing',[
+  ['Total question time',seconds(s.elapsed_seconds)],['Average per question',seconds(s.average_duration_seconds)],
+  ['Median per question',seconds(s.median_duration_seconds)],['Fastest question',seconds(s.min_duration_seconds)],
+  ['Slowest question',seconds(s.max_duration_seconds)],['Questions with recorded time',count(s.timed_questions)],
+  ['Total solve time',seconds(s.solve_duration_seconds)],['Total grading time',seconds(s.grading_duration_seconds)],
+  ['Run wall-clock time',seconds(s.wall_duration_seconds)],
+ ]);
+ panel.append(el('p','report-note','Question times include all attempts and grading, excluding document preparation and batch overhead. Wall-clock time is recorded when the run finishes. Input tokens include cached tokens. Costs are estimates, not provider bills. Unknown values are not treated as zero.'));
+ if(grouped&&s.timed_questions==null)panel.append(el('p','notice','Rebuild older viewer exports with: uv run mar-view --runs-dir runs --export-only'));
+}
 let activeTab='report';
 function selectTab(name){
  activeTab=name;
- for(const id of ['graph','report']){
+ for(const id of ['graph','report','run-summary']){
   const tab=$('#tab-'+id),active=id===name;
   tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;
   $('#'+id+'-panel').hidden=!active;
  }
+ if(selected)$('#title').textContent=name==='run-summary'?selected:($('#title').dataset.questionTitle||selected);
+ $('#summary').hidden=name==='run-summary';
+ $('#question-selector').hidden=name==='run-summary'||$('#question-selector').children.length<2;
  if(name==='graph')requestAnimationFrame(drawArrows);
 }
 // End report helpers.
@@ -479,7 +552,7 @@ function sortedQuestions(group){
 }
 function drawQuestions(group){
  const strip=$('#question-selector'),scroll=strip.scrollLeft;
- strip.replaceChildren();strip.hidden=!group||group.questions.length<2;
+ strip.replaceChildren();strip.hidden=activeTab==='run-summary'||!group||group.questions.length<2;
  for(const question of sortedQuestions(group)){
   const state=question.correct===true?'correct':question.correct===false?'incorrect':
    ['pending','unfinished','running','interrupted'].includes(question.status)?'pending':'ungraded';
@@ -498,7 +571,8 @@ async function selectRun(name, questionId=null){
   if(changed){selectedQuestion=null;drawQuestions(null)}
   $('#flow').replaceChildren();stageElements=[];$('#arrows').replaceChildren();
   $('#report-panel').replaceChildren(el('p','empty','Loading this run’s results…'));
-  $('#summary').replaceChildren(el('p','','Loading run…'));$('#title').textContent=name;
+  $('#run-summary-panel').replaceChildren(el('p','empty','Loading run summary…'));
+  $('#summary').replaceChildren(el('p','','Loading run…'));$('#title').textContent=name;$('#title').dataset.questionTitle=name;
  }
  selected=name;drawList();const version=++requestVersion;$('#refresh-run').disabled=true;$('#error').textContent='';
  const openIds=new Set([...document.querySelectorAll('.card details[open]')].map(d=>d.parentElement.dataset.event+'|'+d.querySelector('summary').textContent));
@@ -514,7 +588,7 @@ async function selectRun(name, questionId=null){
    };
   }else{selectedQuestion=null;drawQuestions(null);data=await loadRun(name,entry)}
   if(version!==requestVersion)return;
-  $('#title').textContent=(data.attempt_runs?'Full Restart · ':'')+name+(selectedQuestion?' · Question '+selectedQuestion:'');const summary=$('#summary');summary.replaceChildren();
+  $('#title').textContent=(data.attempt_runs?'Full Restart · ':'')+name+(selectedQuestion?' · Question '+selectedQuestion:'');$('#title').dataset.questionTitle=$('#title').textContent;const summary=$('#summary');summary.replaceChildren();
   summary.append(el('h2','',data.query||'No query recorded'));
   const u=data.usage;summary.append(el('p','stats',`Status: ${data.status} · ${u.model_calls||0} model calls · ${(u.input_tokens||0).toLocaleString()} input / ${(u.output_tokens||0).toLocaleString()} output tokens`));
   if(data.attempt_runs)summary.append(el('p','stats',data.attempt_runs.length+' attempts · selected result: Attempt '+data.selected_attempt+' · usage totals include both attempts'));
@@ -524,17 +598,18 @@ async function selectRun(name, questionId=null){
   if(data.warnings.length)summary.append(el('p','notice',data.warnings.join('\n')));
   const baseConfig=data.attempt_runs?collectQA(data).final?.base_config:null;
   const config=el('details');config.append(el('summary','',baseConfig?'Experiment baseline configuration':data.attempt_runs?'Selected attempt configuration':'Run configuration'),el('pre','',pretty(baseConfig||data.config)));summary.append(config);
-  renderFlow(data);renderReport(data);selectTab(activeTab);
+  renderFlow(data);renderReport(data);renderRunSummary(entry,data);selectTab(activeTab);
   for(const d of document.querySelectorAll('.card details'))if(openIds.has(d.parentElement.dataset.event+'|'+d.querySelector('summary').textContent))d.open=true;
  }catch(e){if(version===requestVersion)showError(e)}finally{if(version===requestVersion)$('#refresh-run').disabled=false}
 }
-for(const id of ['graph','report']){
+for(const id of ['graph','report','run-summary']){
  const tab=$('#tab-'+id);
  tab.onclick=()=>selectTab(id);
  tab.onkeydown=event=>{
   if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
    event.preventDefault();
-   const next=event.key==='Home'?'graph':event.key==='End'?'report':id==='graph'?'report':'graph';
+   const tabs=['graph','report','run-summary'];
+   const next=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):tabs[(tabs.indexOf(id)+(event.key==='ArrowRight'?1:tabs.length-1))%tabs.length];
    selectTab(next);$('#tab-'+next).focus();
   }
  };

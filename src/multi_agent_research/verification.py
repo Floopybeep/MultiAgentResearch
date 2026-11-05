@@ -34,6 +34,12 @@ async def verify_boundary(
                 "actual_output": actual_output,
             })),
         ], [])
+        if response.response_metadata.get("finish_reason") == "length":
+            raise ValueError(
+                "Verifier response truncated at the output token limit "
+                f"(verifier.max_output_tokens={runtime.config.verifier.max_output_tokens}); "
+                "increase verifier.max_output_tokens to allow reasoning and a complete JSON verdict"
+            )
         if not isinstance(response.content, str):
             raise ValueError("Verifier response must be a JSON string")
         diagnostic.update(VerificationDecision.model_validate_json(response.content).model_dump())

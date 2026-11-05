@@ -8,6 +8,9 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 from importlib.resources import files
 from pathlib import Path
+from statistics import mean, median
+
+from .observability.usage import sum_usage
 
 
 def atomic_write(path, content):
@@ -45,6 +48,46 @@ def install_html(root):
         atomic_write(path, html)
 
 
+def intervention_summary(results):
+    """Break out verifier work and extra full-restart attempts without double counting."""
+    executed = [r for r in results if r.get("status") != "preparation_failed"]
+    attempts = [a for r in executed for a in r.get("attempts", [r])]
+    verifier_known = all("verifications" in a for a in attempts)
+    checks = [v for a in attempts for v in a.get("verifications", [])]
+    verifier_usages = [(r.get("usage_by_role") or r.get("usage", {}).get("by_role", {}))
+                       .get("verifier") for r in executed]
+    verifier_usage = (sum_usage(verifier_usages)
+                      if all(u is not None for u in verifier_usages) else {})
+    retry_known = all("attempts" in r for r in executed)
+    retries = [a for r in executed for a in r.get("attempts", [])[1:]]
+    retried = [r for r in executed if len(r.get("attempts", [])) > 1]
+    retry_usage = (sum_usage(a.get("usage", {}) for a in retries) if retry_known else {})
+    durations = [a.get("elapsed_seconds", a.get("duration_seconds")) for a in retries]
+    return {
+        "verifier_statistics": {
+            **verifier_usage,
+            "checks": len(checks) if verifier_known else None,
+            "passed": sum(v.get("verified") is True for v in checks) if verifier_known else None,
+            "failed": sum(v.get("verified") is False for v in checks) if verifier_known else None,
+            "unresolved": sum(v.get("verified") is None for v in checks)
+                          if verifier_known else None,
+            "elapsed_seconds": sum(v["duration_seconds"] for v in checks)
+                if verifier_known and all(v.get("duration_seconds") is not None for v in checks)
+                else None,
+        },
+        "retry_statistics": {
+            **retry_usage,
+            "questions": len(retried) if retry_known else None,
+            "attempts": len(retries) if retry_known else None,
+            "correct": sum(r.get("correct") is True for r in retried) if retry_known else None,
+            "incorrect": sum(r.get("correct") is False for r in retried) if retry_known else None,
+            "ungraded": sum(r.get("correct") is None for r in retried) if retry_known else None,
+            "elapsed_seconds": sum(durations)
+                if retry_known and all(d is not None for d in durations) else None,
+        },
+    }
+
+
 def group_summary(path, traces):
     """Combine the saved selection with the latest per-attempt trace summaries."""
     manifest = json.loads((path / "batch.json").read_text())
@@ -63,11 +106,26 @@ def group_summary(path, traces):
             "correct": result.get("correct", trace.get("correct")),
             "error": result.get("error"),
         })
+    durations = [r.get("elapsed_seconds", r.get("duration_seconds"))
+                 for r in manifest["results"]]
+    durations = [value for value in durations if isinstance(value, (int, float))]
+    summary = {
+        **manifest.get("summary", {}),
+        **intervention_summary(manifest["results"]),
+        "timed_questions": len(durations),
+        "average_duration_seconds": mean(durations) if durations else None,
+        "median_duration_seconds": median(durations) if durations else None,
+        "min_duration_seconds": min(durations) if durations else None,
+        "max_duration_seconds": max(durations) if durations else None,
+        "wall_duration_seconds": manifest.get("duration_seconds"),
+        "preparation_failed": sum(r.get("status") == "preparation_failed"
+                                  for r in manifest["results"]),
+    }
     return {
         "directory": path.name, "started_at": manifest.get("started_at"),
         "status": manifest["status"], "query": f"{len(questions)} questions",
         "questions": questions, "config": manifest["config"],
-        "summary": manifest.get("summary", {}),
+        "summary": summary,
     }
 
 
@@ -104,6 +162,7 @@ def _attempt_metadata(result, directory, run_directories=None):
         for key in ("strategy", "selected_attempt", "restarted", "clean_slate_reset")
         if key in result
     }
+    metadata.update(intervention_summary([result]))
     metadata["attempts"] = []
     for attempt in result.get("attempts", []):
         if not attempt.get("output_dir"):
