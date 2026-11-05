@@ -1,0 +1,6297 @@
+{
+  "provenance": {
+    "dataset": {
+      "dataset": "google/frames-benchmark",
+      "split": "test",
+      "path": "corpus/frames.tsv",
+      "index_path": "corpus/index.json",
+      "total_questions": 822
+    },
+    "reps": [
+      {
+        "label": "v2-rep1",
+        "target": "runs/v2-base1",
+        "status": "finished",
+        "wall_seconds": 1549.0647787909256,
+        "summary": {
+          "questions": 50,
+          "completed": 49,
+          "correct": 45,
+          "incorrect": 4,
+          "ungraded": 1,
+          "input_tokens": 3504667,
+          "cached_input_tokens": 870912,
+          "output_tokens": 220181,
+          "total_tokens": 3724848,
+          "model_calls": 530,
+          "unreported_calls": 0,
+          "usage_complete": true,
+          "estimated_cost_usd": 0.53128111,
+          "solve_duration_seconds": 1520.6290172497975,
+          "grading_duration_seconds": 26.074059668695554,
+          "elapsed_seconds": 1546.7756990040652,
+          "verifier_usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "model_calls": 0,
+            "unreported_calls": 0,
+            "duration_seconds": 0.0,
+            "cached_input_tokens": 0,
+            "estimated_cost_usd": 0.0,
+            "total_tokens": 0,
+            "usage_complete": true
+          }
+        }
+      },
+      {
+        "label": "v2-rep2",
+        "target": "runs/v2-base2",
+        "status": "finished",
+        "wall_seconds": 1466.9277525419602,
+        "summary": {
+          "questions": 50,
+          "completed": 48,
+          "correct": 44,
+          "incorrect": 6,
+          "ungraded": 0,
+          "input_tokens": 3329554,
+          "cached_input_tokens": null,
+          "output_tokens": 201558,
+          "total_tokens": 3531112,
+          "model_calls": 532,
+          "unreported_calls": 2,
+          "usage_complete": false,
+          "estimated_cost_usd": null,
+          "solve_duration_seconds": 1439.9400490404805,
+          "grading_duration_seconds": 24.700774333672598,
+          "elapsed_seconds": 1464.720971705974,
+          "verifier_usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "model_calls": 0,
+            "unreported_calls": 0,
+            "duration_seconds": 0.0,
+            "cached_input_tokens": 0,
+            "estimated_cost_usd": 0.0,
+            "total_tokens": 0,
+            "usage_complete": true
+          }
+        }
+      },
+      {
+        "label": "v2-rep3",
+        "target": "runs/v2-base3",
+        "status": "finished",
+        "wall_seconds": 1465.8884914999362,
+        "summary": {
+          "questions": 50,
+          "completed": 48,
+          "correct": 46,
+          "incorrect": 4,
+          "ungraded": 0,
+          "input_tokens": 3487187,
+          "cached_input_tokens": 840960,
+          "output_tokens": 215115,
+          "total_tokens": 3702302,
+          "model_calls": 538,
+          "unreported_calls": 0,
+          "usage_complete": true,
+          "estimated_cost_usd": 0.52972035,
+          "solve_duration_seconds": 1428.6073148349533,
+          "grading_duration_seconds": 34.835221709217876,
+          "elapsed_seconds": 1463.522117832792,
+          "verifier_usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "model_calls": 0,
+            "unreported_calls": 0,
+            "duration_seconds": 0.0,
+            "cached_input_tokens": 0,
+            "estimated_cost_usd": 0.0,
+            "total_tokens": 0,
+            "usage_complete": true
+          }
+        }
+      }
+    ],
+    "question_ids": [
+      "656",
+      "114",
+      "25",
+      "761",
+      "282",
+      "251",
+      "229",
+      "143",
+      "756",
+      "104",
+      "694",
+      "760",
+      "560",
+      "89",
+      "606",
+      "433",
+      "32",
+      "30",
+      "95",
+      "224",
+      "239",
+      "518",
+      "618",
+      "27",
+      "576",
+      "204",
+      "735",
+      "667",
+      "720",
+      "430",
+      "226",
+      "460",
+      "605",
+      "285",
+      "6",
+      "779",
+      "164",
+      "716",
+      "349",
+      "160",
+      "221",
+      "783",
+      "345",
+      "94",
+      "390",
+      "99",
+      "368",
+      "353",
+      "620",
+      "271"
+    ],
+    "minimum_worker": 2,
+    "note": "Screening is performed at minimum_worker: 2, which the team has agreed to use on all branches; upstream main still carries 3."
+  },
+  "questions": {
+    "656": {
+      "question_id": "656",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_2023",
+        "doc_2024"
+      ],
+      "reference_answer": "Charles Muhanji in a Subaru Impreza WRX",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Charles Muhanji, driving a Subaru Impreza WRX",
+        "Charles Muhanji, driving a Subaru Impreza WRX",
+        "Charles Muhanji, driving a Subaru Impreza WRX"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        20839,
+        25107,
+        23618
+      ],
+      "total_cost": [
+        0.0039193,
+        0.00394111,
+        0.0034489600000000005
+      ],
+      "duration_seconds": [
+        29.301145417033695,
+        22.365447583026253,
+        14.283518624957651
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 25107,
+      "projected_tokens_under_fault": 75321,
+      "token_headroom_at_risk": false
+    },
+    "114": {
+      "question_id": "114",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_0379",
+        "doc_0380"
+      ],
+      "reference_answer": "The Mona Lisa",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Mona Lisa",
+        "Mona Lisa",
+        "Mona Lisa"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        28520,
+        28574,
+        27927
+      ],
+      "total_cost": [
+        0.00467317,
+        0.00441914,
+        0.0042135900000000006
+      ],
+      "duration_seconds": [
+        24.09463216701988,
+        14.85053258400876,
+        10.562126000062563
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 28574,
+      "projected_tokens_under_fault": 85722,
+      "token_headroom_at_risk": false
+    },
+    "25": {
+      "question_id": "25",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_0094",
+        "doc_0095",
+        "doc_0096",
+        "doc_0097"
+      ],
+      "reference_answer": "12 years.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "12 years",
+        "12 years",
+        "12 years"
+      ],
+      "workers_spawned": [
+        7,
+        6,
+        7
+      ],
+      "distinct_documents_read": [
+        4,
+        4,
+        3
+      ],
+      "redundant_document_assignments": [
+        {
+          "doc_0094": 4
+        },
+        {
+          "doc_0094": 3
+        },
+        {
+          "doc_0094": 4,
+          "doc_0097": 2
+        }
+      ],
+      "total_tokens": [
+        407178,
+        226664,
+        328085
+      ],
+      "total_cost": [
+        0.049246729999999996,
+        0.02851319,
+        0.040975599999999994
+      ],
+      "duration_seconds": [
+        89.75245625001844,
+        50.67011104198173,
+        108.88970825006254
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 407178,
+      "projected_tokens_under_fault": 1221534,
+      "token_headroom_at_risk": true
+    },
+    "761": {
+      "question_id": "761",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_2323",
+        "doc_2324"
+      ],
+      "reference_answer": "8",
+      "correct": [
+        false,
+        false,
+        false
+      ],
+      "pattern": "FFF",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "7",
+        "7",
+        "7"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        41333,
+        27547,
+        27633
+      ],
+      "total_cost": [
+        0.006630200000000001,
+        0.0047484400000000005,
+        0.00481174
+      ],
+      "duration_seconds": [
+        24.3817926250631,
+        15.123134874971583,
+        19.14426500000991
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 41333,
+      "projected_tokens_under_fault": 123999,
+      "token_headroom_at_risk": false
+    },
+    "282": {
+      "question_id": "282",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0965",
+        "doc_0966",
+        "doc_0967"
+      ],
+      "reference_answer": "Almroth Edward Wright",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Almroth Edward Wright",
+        "Almroth Edward Wright",
+        "Almroth Edward Wright"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        3
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        47565,
+        47157,
+        49445
+      ],
+      "total_cost": [
+        0.00726186,
+        0.00719576,
+        0.007052149999999998
+      ],
+      "duration_seconds": [
+        20.24756991607137,
+        18.497027624980547,
+        14.647670332924463
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 49445,
+      "projected_tokens_under_fault": 148335,
+      "token_headroom_at_risk": false
+    },
+    "251": {
+      "question_id": "251",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0858",
+        "doc_0859",
+        "doc_0860"
+      ],
+      "reference_answer": "Snowflake Bentley",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Snowflake Bentley",
+        "Snowflake Bentley",
+        "Snowflake Bentley"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        55927,
+        55506,
+        53289
+      ],
+      "total_cost": [
+        0.00791107,
+        0.007744319999999999,
+        0.00789895
+      ],
+      "duration_seconds": [
+        19.514242584002204,
+        17.650856958003715,
+        20.40377829200588
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 55927,
+      "projected_tokens_under_fault": 167781,
+      "token_headroom_at_risk": false
+    },
+    "229": {
+      "question_id": "229",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_0750",
+        "doc_0751",
+        "doc_0752",
+        "doc_0753"
+      ],
+      "reference_answer": "Willie Mays",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Willie Mays",
+        "Willie Mays",
+        "Willie Mays"
+      ],
+      "workers_spawned": [
+        4,
+        4,
+        4
+      ],
+      "distinct_documents_read": [
+        4,
+        4,
+        4
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        102523,
+        83622,
+        99038
+      ],
+      "total_cost": [
+        0.01669039,
+        0.013845109999999999,
+        0.01333243
+      ],
+      "duration_seconds": [
+        28.55857241700869,
+        39.30838774994481,
+        22.26502787496429
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 102523,
+      "projected_tokens_under_fault": 307569,
+      "token_headroom_at_risk": false
+    },
+    "143": {
+      "question_id": "143",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_0478",
+        "doc_0479"
+      ],
+      "reference_answer": "16,086",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "16,086",
+        "16,086",
+        "16,086"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        58887,
+        58792,
+        53281
+      ],
+      "total_cost": [
+        0.00907916,
+        0.00819347,
+        0.0075019200000000005
+      ],
+      "duration_seconds": [
+        15.228672333993018,
+        16.55281812499743,
+        30.306972999940626
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 58887,
+      "projected_tokens_under_fault": 176661,
+      "token_headroom_at_risk": false
+    },
+    "756": {
+      "question_id": "756",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1254",
+        "doc_2313"
+      ],
+      "reference_answer": "Bill Clinton was president beginning in 1993, the same year that Mary Elizabeth Butt passed away.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Bill Clinton",
+        "Bill Clinton",
+        "Bill Clinton"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        24269,
+        28386,
+        24427
+      ],
+      "total_cost": [
+        0.0037656900000000004,
+        0.00439131,
+        0.0037998899999999998
+      ],
+      "duration_seconds": [
+        8.570328083005734,
+        12.124487125081941,
+        13.269927166984417
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 28386,
+      "projected_tokens_under_fault": 85158,
+      "token_headroom_at_risk": false
+    },
+    "104": {
+      "question_id": "104",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_0351",
+        "doc_0352"
+      ],
+      "reference_answer": "103",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "103 years",
+        "103 years",
+        "103 years"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        42163,
+        41697,
+        59302
+      ],
+      "total_cost": [
+        0.005726050000000001,
+        0.0055578,
+        0.007393959999999999
+      ],
+      "duration_seconds": [
+        10.859164291992784,
+        12.89984441595152,
+        14.520670125028118
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 59302,
+      "projected_tokens_under_fault": 177906,
+      "token_headroom_at_risk": false
+    },
+    "694": {
+      "question_id": "694",
+      "catalog_document_count": 7,
+      "catalog_document_ids": [
+        "doc_2126",
+        "doc_2127",
+        "doc_2128",
+        "doc_2129",
+        "doc_2130",
+        "doc_2131",
+        "doc_2132"
+      ],
+      "reference_answer": "No one, he was the youngest.",
+      "correct": [
+        false,
+        false,
+        false
+      ],
+      "pattern": "FFF",
+      "status": [
+        "budget_exhausted",
+        "failed",
+        "budget_exhausted"
+      ],
+      "stop_reason": [
+        "lead_turn_limit",
+        "ModelCallTimeout: lead: model call timed out (limit: 60s)",
+        "lead_turn_limit"
+      ],
+      "grade_method": [
+        "not_answered",
+        "not_answered",
+        "not_answered"
+      ],
+      "extracted_answer": [
+        null,
+        null,
+        null
+      ],
+      "workers_spawned": [
+        7,
+        8,
+        7
+      ],
+      "distinct_documents_read": [
+        7,
+        7,
+        7
+      ],
+      "redundant_document_assignments": [
+        {},
+        {
+          "doc_2127": 2
+        },
+        {}
+      ],
+      "total_tokens": [
+        156873,
+        107571,
+        144046
+      ],
+      "total_cost": [
+        0.02883819,
+        null,
+        0.028091769999999995
+      ],
+      "duration_seconds": [
+        171.51879174995702,
+        250.53445591696072,
+        247.5138801250141
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 156873,
+      "projected_tokens_under_fault": 470619,
+      "token_headroom_at_risk": false
+    },
+    "760": {
+      "question_id": "760",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_2321",
+        "doc_2322"
+      ],
+      "reference_answer": "37 years old.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "37",
+        "37",
+        "37"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        26694,
+        26416,
+        25900
+      ],
+      "total_cost": [
+        0.00432159,
+        0.00423894,
+        0.004085940000000001
+      ],
+      "duration_seconds": [
+        13.34224491706118,
+        37.85837170796003,
+        13.025121208978817
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 26694,
+      "projected_tokens_under_fault": 80082,
+      "token_headroom_at_risk": false
+    },
+    "560": {
+      "question_id": "560",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_1768",
+        "doc_1769",
+        "doc_1770"
+      ],
+      "reference_answer": "Recovering the Satellites",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Recovering the Satellites",
+        "Recovering the Satellites",
+        "Recovering the Satellites"
+      ],
+      "workers_spawned": [
+        2,
+        3,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        3,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        55587,
+        64286,
+        41597
+      ],
+      "total_cost": [
+        0.00770745,
+        0.009243300000000001,
+        0.0065479399999999995
+      ],
+      "duration_seconds": [
+        14.624409999931231,
+        27.154338332940824,
+        24.861188833019696
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 64286,
+      "projected_tokens_under_fault": 192858,
+      "token_headroom_at_risk": false
+    },
+    "89": {
+      "question_id": "89",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0304",
+        "doc_0305",
+        "doc_0306"
+      ],
+      "reference_answer": "November 24, 1921",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "November 24, 1921",
+        "November 24, 1921",
+        "November 24, 1921"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        41873,
+        50123,
+        62886
+      ],
+      "total_cost": [
+        0.00665129,
+        0.007445029999999998,
+        0.00955898
+      ],
+      "duration_seconds": [
+        10.058071166975424,
+        40.28402466699481,
+        28.30295591696631
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 62886,
+      "projected_tokens_under_fault": 188658,
+      "token_headroom_at_risk": false
+    },
+    "606": {
+      "question_id": "606",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1883",
+        "doc_1884"
+      ],
+      "reference_answer": "15",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "15",
+        "15",
+        "15"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        3
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {
+          "doc_1883": 2
+        }
+      ],
+      "total_tokens": [
+        49326,
+        27716,
+        155334
+      ],
+      "total_cost": [
+        0.007409110000000001,
+        0.00419244,
+        0.019094879999999998
+      ],
+      "duration_seconds": [
+        13.428799625020474,
+        18.90050183306448,
+        35.216276542050764
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 155334,
+      "projected_tokens_under_fault": 466002,
+      "token_headroom_at_risk": false
+    },
+    "433": {
+      "question_id": "433",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1404",
+        "doc_1405"
+      ],
+      "reference_answer": "Malcolm Fraser",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Malcolm Fraser",
+        "Malcolm Fraser",
+        "Malcolm Fraser"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        43111,
+        41939,
+        41753
+      ],
+      "total_cost": [
+        0.007022489999999999,
+        0.006618839999999999,
+        0.00574855
+      ],
+      "duration_seconds": [
+        15.3929092080798,
+        23.68397383298725,
+        14.621614167001098
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 43111,
+      "projected_tokens_under_fault": 129333,
+      "token_headroom_at_risk": false
+    },
+    "32": {
+      "question_id": "32",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0011",
+        "doc_0114",
+        "doc_0115"
+      ],
+      "reference_answer": "55",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "55",
+        "55",
+        "55"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        75349,
+        59336,
+        67693
+      ],
+      "total_cost": [
+        0.010277030000000001,
+        0.00941111,
+        0.00993147
+      ],
+      "duration_seconds": [
+        66.41537141706795,
+        31.822243167087436,
+        14.211467874934897
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 75349,
+      "projected_tokens_under_fault": 226047,
+      "token_headroom_at_risk": false
+    },
+    "30": {
+      "question_id": "30",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0108",
+        "doc_0109",
+        "doc_0110"
+      ],
+      "reference_answer": "Two million.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "2 million",
+        "2000000",
+        "2,000,000"
+      ],
+      "workers_spawned": [
+        5,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {
+          "doc_0109": 2,
+          "doc_0110": 2
+        },
+        {},
+        {}
+      ],
+      "total_tokens": [
+        85504,
+        53981,
+        57169
+      ],
+      "total_cost": [
+        0.013782929999999999,
+        0.00862534,
+        0.00892716
+      ],
+      "duration_seconds": [
+        45.40476483409293,
+        25.13145120802801,
+        19.44070183299482
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 85504,
+      "projected_tokens_under_fault": 256512,
+      "token_headroom_at_risk": false
+    },
+    "95": {
+      "question_id": "95",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_0181",
+        "doc_0325",
+        "doc_0326",
+        "doc_0327"
+      ],
+      "reference_answer": "74 years",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "74 years",
+        "74 years",
+        "74 years"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        50115,
+        50089,
+        46356
+      ],
+      "total_cost": [
+        0.007713309999999999,
+        0.00766706,
+        0.00646595
+      ],
+      "duration_seconds": [
+        37.55618199997116,
+        17.964439333998598,
+        24.814768874901347
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 50115,
+      "projected_tokens_under_fault": 150345,
+      "token_headroom_at_risk": false
+    },
+    "224": {
+      "question_id": "224",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_0725",
+        "doc_0726",
+        "doc_0727",
+        "doc_0728"
+      ],
+      "reference_answer": "Verizon Center",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Verizon Center",
+        "Verizon Center",
+        "Verizon Center"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        41756,
+        41425,
+        45506
+      ],
+      "total_cost": [
+        0.0068020899999999985,
+        0.00669224,
+        0.00720011
+      ],
+      "duration_seconds": [
+        26.256592124933377,
+        16.140466124983504,
+        15.376806332962587
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 45506,
+      "projected_tokens_under_fault": 136518,
+      "token_headroom_at_risk": false
+    },
+    "239": {
+      "question_id": "239",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_0810",
+        "doc_0811",
+        "doc_0812",
+        "doc_0813"
+      ],
+      "reference_answer": "Wheatland, also known as the James Buchanan House, is the same name as the town in Wyoming where Charles Hoskinson resides.  Charles Hoskinson cofounded Ethereum and founded Cardano.  Cardano was released in 2017; Ethereum was released in 2015.  Two years elapsed between the two platforms' releases.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "About 2 years and 2 months (from Ethereum's release on 30 July 2015 to Cardano's release on 27 September 2017, i.e., 2 years and 59 days)",
+        "2 years, 1 month, and 28 days (from Ethereum's launch on 30 July 2015 to Cardano's release on 27 September 2017)",
+        "About 2 years and 2 months (790 days, from Ethereum's release on 30 July 2015 to Cardano's release on 27 September 2017)"
+      ],
+      "workers_spawned": [
+        3,
+        4,
+        4
+      ],
+      "distinct_documents_read": [
+        3,
+        4,
+        4
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        41754,
+        50551,
+        49634
+      ],
+      "total_cost": [
+        0.007067090000000001,
+        0.00835514,
+        0.00809754
+      ],
+      "duration_seconds": [
+        23.969145042006858,
+        19.64897100010421,
+        42.89077625004575
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 50551,
+      "projected_tokens_under_fault": 151653,
+      "token_headroom_at_risk": false
+    },
+    "518": {
+      "question_id": "518",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1644",
+        "doc_1645"
+      ],
+      "reference_answer": "The Swine Flu.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "H1N1 (swine flu)",
+        "H1N1 (swine flu) \u2014 the novel H1N1/09 influenza A strain, declared a pandemic by the WHO in June 2009, the same year the Magic lost the NBA Finals to the Lakers",
+        "H1N1 (the 2009 swine flu pandemic, caused by the Pandemic H1N1/09 influenza A virus)"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        75441,
+        76087,
+        42665
+      ],
+      "total_cost": [
+        0.01010811,
+        0.010321909999999998,
+        0.00588885
+      ],
+      "duration_seconds": [
+        27.688899291912094,
+        25.686601332970895,
+        14.980963542009704
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 76087,
+      "projected_tokens_under_fault": 228261,
+      "token_headroom_at_risk": false
+    },
+    "618": {
+      "question_id": "618",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_1263",
+        "doc_1926",
+        "doc_1927"
+      ],
+      "reference_answer": "16,351",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "16,351",
+        "16,351",
+        "16,351"
+      ],
+      "workers_spawned": [
+        2,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        2,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        69805,
+        76229,
+        78245
+      ],
+      "total_cost": [
+        0.00892045,
+        0.01240249,
+        0.01139842
+      ],
+      "duration_seconds": [
+        31.344578583026305,
+        33.96950841601938,
+        25.28174849995412
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 78245,
+      "projected_tokens_under_fault": 234735,
+      "token_headroom_at_risk": false
+    },
+    "27": {
+      "question_id": "27",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_0101",
+        "doc_0102"
+      ],
+      "reference_answer": "9",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "9",
+        "9",
+        "9"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        49452,
+        34450,
+        45690
+      ],
+      "total_cost": [
+        0.007225769999999999,
+        0.00552246,
+        0.007581890000000001
+      ],
+      "duration_seconds": [
+        22.630879375035875,
+        22.545264833024703,
+        16.422587709035724
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 49452,
+      "projected_tokens_under_fault": 148356,
+      "token_headroom_at_risk": false
+    },
+    "576": {
+      "question_id": "576",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1808",
+        "doc_1809"
+      ],
+      "reference_answer": "Jake Pavelka",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Jake Pavelka",
+        "Jake Pavelka",
+        "Jake Pavelka"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        30217,
+        30865,
+        30339
+      ],
+      "total_cost": [
+        0.004704460000000001,
+        0.00494901,
+        0.00474656
+      ],
+      "duration_seconds": [
+        16.328026333008893,
+        14.985967041924596,
+        12.785670249955729
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 30865,
+      "projected_tokens_under_fault": 92595,
+      "token_headroom_at_risk": false
+    },
+    "204": {
+      "question_id": "204",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_0095",
+        "doc_0668"
+      ],
+      "reference_answer": "Mike Tyson and Margaret Thatcher",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Mike Tyson and Margaret Thatcher",
+        "Mike Tyson; Margaret Thatcher",
+        "Mike Tyson; Margaret Thatcher"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        31849,
+        31950,
+        32054
+      ],
+      "total_cost": [
+        0.00469376,
+        0.00467181,
+        0.004725559999999999
+      ],
+      "duration_seconds": [
+        12.673944583977573,
+        8.545216791913845,
+        16.92567108303774
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 32054,
+      "projected_tokens_under_fault": 96162,
+      "token_headroom_at_risk": false
+    },
+    "735": {
+      "question_id": "735",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_2253",
+        "doc_2254",
+        "doc_2255"
+      ],
+      "reference_answer": "Mondragon Corporation",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Mondragon Corporation",
+        "Mondragon Corporation",
+        "Mondragon Corporation"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        74710,
+        56027,
+        74708
+      ],
+      "total_cost": [
+        0.00951027,
+        0.00822285,
+        0.010927719999999998
+      ],
+      "duration_seconds": [
+        15.832805791986175,
+        20.093048291979358,
+        56.26133350003511
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 74710,
+      "projected_tokens_under_fault": 224130,
+      "token_headroom_at_risk": false
+    },
+    "667": {
+      "question_id": "667",
+      "catalog_document_count": 6,
+      "catalog_document_ids": [
+        "doc_2051",
+        "doc_2052",
+        "doc_2053",
+        "doc_2054",
+        "doc_2055",
+        "doc_2056"
+      ],
+      "reference_answer": "Lake Merritt",
+      "correct": [
+        false,
+        false,
+        false
+      ],
+      "pattern": "FFF",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Old Mission Dam",
+        "Old Mission Dam",
+        "Old Mission Dam"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        30527,
+        30424,
+        31242
+      ],
+      "total_cost": [
+        0.00521854,
+        0.005164940000000001,
+        0.00550289
+      ],
+      "duration_seconds": [
+        15.603581084054895,
+        12.664149499963969,
+        19.46413733297959
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 31242,
+      "projected_tokens_under_fault": 93726,
+      "token_headroom_at_risk": false
+    },
+    "720": {
+      "question_id": "720",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_2206",
+        "doc_2207",
+        "doc_2208",
+        "doc_2209"
+      ],
+      "reference_answer": "Kramer vs. Kramer",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Kramer vs. Kramer",
+        "Kramer vs. Kramer",
+        "Kramer vs. Kramer"
+      ],
+      "workers_spawned": [
+        3,
+        6,
+        2
+      ],
+      "distinct_documents_read": [
+        3,
+        4,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {
+          "doc_2206": 3
+        },
+        {}
+      ],
+      "total_tokens": [
+        62183,
+        222092,
+        34944
+      ],
+      "total_cost": [
+        0.00919422,
+        0.027760909999999996,
+        0.00534596
+      ],
+      "duration_seconds": [
+        22.242779874941334,
+        45.915638584061526,
+        14.160959333996288
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 222092,
+      "projected_tokens_under_fault": 666276,
+      "token_headroom_at_risk": true
+    },
+    "430": {
+      "question_id": "430",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1396",
+        "doc_1397"
+      ],
+      "reference_answer": "Edith Windsor",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Edith Windsor",
+        "Edith Windsor",
+        "Edith Windsor"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        28531,
+        28874,
+        28763
+      ],
+      "total_cost": [
+        0.00433326,
+        0.00442216,
+        0.0045434099999999995
+      ],
+      "duration_seconds": [
+        13.66793749993667,
+        15.68759229092393,
+        21.895610708044842
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 28874,
+      "projected_tokens_under_fault": 86622,
+      "token_headroom_at_risk": false
+    },
+    "226": {
+      "question_id": "226",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_0733",
+        "doc_0734",
+        "doc_0735",
+        "doc_0736"
+      ],
+      "reference_answer": "Marie Curie and Grazia Deledda",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "exact_match",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Marie Curie (Nobel Prize in Physics, 1903, mother of Ir\u00e8ne and \u00c8ve); Grazia Deledda (Nobel Prize in Literature, 1926, mother of Sardus and Francesco)",
+        "Marie Curie and Grazia Deledda",
+        "Marie Curie (Physics 1903, Chemistry 1911; mother of Ir\u00e8ne and \u00c8ve) and Grazia Deledda (Literature 1926; mother of Sardus and Francesco)"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        71146,
+        71750,
+        55031
+      ],
+      "total_cost": [
+        0.01084912,
+        0.01021248,
+        0.00883225
+      ],
+      "duration_seconds": [
+        27.630316333961673,
+        48.98335387499537,
+        25.707566750003025
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 71750,
+      "projected_tokens_under_fault": 215250,
+      "token_headroom_at_risk": false
+    },
+    "460": {
+      "question_id": "460",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_1500",
+        "doc_1501",
+        "doc_1502"
+      ],
+      "reference_answer": "The Northumberland Plate horse race was established 81 years before the assassination of Archduke Franz Ferdinand",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "81 years",
+        "81 years",
+        "81 years"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        45276,
+        55165,
+        43341
+      ],
+      "total_cost": [
+        0.00684886,
+        0.00919354,
+        0.00705454
+      ],
+      "duration_seconds": [
+        19.103999958955683,
+        18.176837499951944,
+        20.420460458029993
+      ],
+      "tool_errors": [
+        0,
+        2,
+        0
+      ],
+      "max_total_tokens": 55165,
+      "projected_tokens_under_fault": 165495,
+      "token_headroom_at_risk": false
+    },
+    "605": {
+      "question_id": "605",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1881",
+        "doc_1882"
+      ],
+      "reference_answer": "49 years.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "49 years",
+        "49 years",
+        "49 years"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        27165,
+        30779,
+        30449
+      ],
+      "total_cost": [
+        0.004105589999999999,
+        0.00448391,
+        0.00437351
+      ],
+      "duration_seconds": [
+        9.790065333014354,
+        11.524963667034172,
+        13.76424816600047
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 30779,
+      "projected_tokens_under_fault": 92337,
+      "token_headroom_at_risk": false
+    },
+    "285": {
+      "question_id": "285",
+      "catalog_document_count": 4,
+      "catalog_document_ids": [
+        "doc_0490",
+        "doc_0974",
+        "doc_0975",
+        "doc_0976"
+      ],
+      "reference_answer": "11 (Layne Staley)",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "11",
+        "11",
+        "11"
+      ],
+      "workers_spawned": [
+        4,
+        4,
+        4
+      ],
+      "distinct_documents_read": [
+        4,
+        4,
+        4
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        53014,
+        89159,
+        89121
+      ],
+      "total_cost": [
+        0.00855451,
+        0.013356119999999999,
+        0.013378769999999998
+      ],
+      "duration_seconds": [
+        31.64090350002516,
+        35.819123666966334,
+        22.073579582967795
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 89159,
+      "projected_tokens_under_fault": 267477,
+      "token_headroom_at_risk": false
+    },
+    "6": {
+      "question_id": "6",
+      "catalog_document_count": 5,
+      "catalog_document_ids": [
+        "doc_0021",
+        "doc_0022",
+        "doc_0023",
+        "doc_0024",
+        "doc_0025"
+      ],
+      "reference_answer": "Mendelevium is named after Dmitri Mendeleev.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Dmitri Mendeleev",
+        "Dmitri Mendeleev",
+        "Dmitri Mendeleev"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        42091,
+        42062,
+        43860
+      ],
+      "total_cost": [
+        0.00678199,
+        0.00681089,
+        0.007400839999999999
+      ],
+      "duration_seconds": [
+        11.664828500011936,
+        15.112297583022155,
+        18.131315291044302
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 43860,
+      "projected_tokens_under_fault": 131580,
+      "token_headroom_at_risk": false
+    },
+    "779": {
+      "question_id": "779",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0113",
+        "doc_0608",
+        "doc_2378"
+      ],
+      "reference_answer": "35",
+      "correct": [
+        false,
+        false,
+        true
+      ],
+      "pattern": "FFT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "34 years old",
+        "34",
+        "35"
+      ],
+      "workers_spawned": [
+        3,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        3,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        45253,
+        28429,
+        30723
+      ],
+      "total_cost": [
+        0.00688216,
+        0.00446914,
+        0.00438276
+      ],
+      "duration_seconds": [
+        35.31112774997018,
+        21.88927858392708,
+        10.406125332927331
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 45253,
+      "projected_tokens_under_fault": 135759,
+      "token_headroom_at_risk": false
+    },
+    "164": {
+      "question_id": "164",
+      "catalog_document_count": 6,
+      "catalog_document_ids": [
+        "doc_0534",
+        "doc_0535",
+        "doc_0536",
+        "doc_0537",
+        "doc_0538",
+        "doc_0539"
+      ],
+      "reference_answer": "Gladys Knight",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Gladys Knight",
+        "Gladys Knight",
+        "Gladys Knight"
+      ],
+      "workers_spawned": [
+        3,
+        6,
+        6
+      ],
+      "distinct_documents_read": [
+        3,
+        6,
+        6
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        42589,
+        78493,
+        76786
+      ],
+      "total_cost": [
+        0.006422359999999999,
+        0.01272846,
+        0.012241759999999999
+      ],
+      "duration_seconds": [
+        21.34657629195135,
+        39.247894749976695,
+        18.183972708997317
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 78493,
+      "projected_tokens_under_fault": 235479,
+      "token_headroom_at_risk": false
+    },
+    "716": {
+      "question_id": "716",
+      "catalog_document_count": 9,
+      "catalog_document_ids": [
+        "doc_2191",
+        "doc_2192",
+        "doc_2193",
+        "doc_2194",
+        "doc_2195",
+        "doc_2196",
+        "doc_2197",
+        "doc_2198",
+        "doc_2199"
+      ],
+      "reference_answer": "Bowens, Thomas, & Madison",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Bowens; Thomas; Madison",
+        "Bowens; Thomas; Madison",
+        "Bowens; Thomas; Madison"
+      ],
+      "workers_spawned": [
+        4,
+        5,
+        6
+      ],
+      "distinct_documents_read": [
+        4,
+        5,
+        6
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        115351,
+        133509,
+        119836
+      ],
+      "total_cost": [
+        0.013895780000000002,
+        0.018820510000000002,
+        0.01840466
+      ],
+      "duration_seconds": [
+        31.60085695795715,
+        45.11078950006049,
+        36.65299316600431
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 133509,
+      "projected_tokens_under_fault": 400527,
+      "token_headroom_at_risk": false
+    },
+    "349": {
+      "question_id": "349",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0244",
+        "doc_1179",
+        "doc_1180"
+      ],
+      "reference_answer": "Joplin, Missouri metropolitan area",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Joplin, Missouri metropolitan area",
+        "Joplin, Missouri metropolitan area",
+        "Joplin, Missouri metropolitan area"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        36211,
+        50198,
+        67519
+      ],
+      "total_cost": [
+        0.005617209999999999,
+        0.006909269999999999,
+        0.00782649
+      ],
+      "duration_seconds": [
+        14.825610957923345,
+        15.140971290995367,
+        15.557472791988403
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 67519,
+      "projected_tokens_under_fault": 202557,
+      "token_headroom_at_risk": false
+    },
+    "160": {
+      "question_id": "160",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_0524",
+        "doc_0525"
+      ],
+      "reference_answer": "35",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "35 years",
+        "35 years",
+        "35 years"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        29407,
+        29574,
+        30405
+      ],
+      "total_cost": [
+        0.00400756,
+        0.00406691,
+        0.004294109999999999
+      ],
+      "duration_seconds": [
+        72.54839825001545,
+        7.600496041006409,
+        11.392194999963976
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 30405,
+      "projected_tokens_under_fault": 91215,
+      "token_headroom_at_risk": false
+    },
+    "221": {
+      "question_id": "221",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0717",
+        "doc_0718",
+        "doc_0719"
+      ],
+      "reference_answer": "6.2 circuits.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "6.2 circuits",
+        "6.2 circuits",
+        "6.2 circuits"
+      ],
+      "workers_spawned": [
+        3,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        3,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        54166,
+        34736,
+        32596
+      ],
+      "total_cost": [
+        0.007879299999999997,
+        0.00516811,
+        0.00530454
+      ],
+      "duration_seconds": [
+        45.19540758396033,
+        10.7063606249867,
+        14.989314959035255
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 54166,
+      "projected_tokens_under_fault": 162498,
+      "token_headroom_at_risk": false
+    },
+    "783": {
+      "question_id": "783",
+      "catalog_document_count": 7,
+      "catalog_document_ids": [
+        "doc_0748",
+        "doc_2389",
+        "doc_2390",
+        "doc_2391",
+        "doc_2392",
+        "doc_2393",
+        "doc_2394"
+      ],
+      "reference_answer": "Of the 6 states within New England, Maine, New Hampshire, and Rhode Island had populations between 400,000 and 800,000 in 1920.",
+      "correct": [
+        null,
+        false,
+        false
+      ],
+      "pattern": "?FF",
+      "status": [
+        "completed",
+        "budget_exhausted",
+        "budget_exhausted"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "run_token_budget",
+        "run_token_budget"
+      ],
+      "grade_method": [
+        "judge_error",
+        "not_answered",
+        "not_answered"
+      ],
+      "extracted_answer": [
+        "Maine; New Hampshire; Rhode Island",
+        null,
+        null
+      ],
+      "workers_spawned": [
+        9,
+        9,
+        10
+      ],
+      "distinct_documents_read": [
+        7,
+        7,
+        7
+      ],
+      "redundant_document_assignments": [
+        {
+          "doc_2390": 3
+        },
+        {
+          "doc_2391": 3
+        },
+        {
+          "doc_0748": 2,
+          "doc_2394": 3
+        }
+      ],
+      "total_tokens": [
+        604860,
+        628628,
+        622996
+      ],
+      "total_cost": [
+        0.07651919,
+        0.07486904999999999,
+        0.07488730999999998
+      ],
+      "duration_seconds": [
+        106.767639333033,
+        78.05461591703352,
+        92.04506383300759
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 628628,
+      "projected_tokens_under_fault": 1885884,
+      "token_headroom_at_risk": true
+    },
+    "345": {
+      "question_id": "345",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_1168",
+        "doc_1169",
+        "doc_1170"
+      ],
+      "reference_answer": "Ty Van Burkleo",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Ty Van Burkleo",
+        "Ty Van Burkleo",
+        "Ty Van Burkleo"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        50650,
+        46426,
+        46683
+      ],
+      "total_cost": [
+        0.00763641,
+        0.007095889999999999,
+        0.00719149
+      ],
+      "duration_seconds": [
+        22.696124666021205,
+        11.315691374940798,
+        8.868754416005686
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 50650,
+      "projected_tokens_under_fault": 151950,
+      "token_headroom_at_risk": false
+    },
+    "94": {
+      "question_id": "94",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_0323",
+        "doc_0324"
+      ],
+      "reference_answer": "The Theory of Vision",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Ibn al-Haytham (Alhazen), who invented the first true pinhole camera, was also the first to correctly explain the intromission theory of vision \u2014 that vision occurs when light reflects from an object and passes into the eyes",
+        "The intromission theory of vision \u2014 Ibn al-Haytham (Alhazen), inventor of the first true pinhole camera, was the first to correctly explain that vision occurs when light reflects from an object and passes into the eyes (intromission, rather than extramission)",
+        "The intromission theory of vision \u2014 Ibn al-Haytham (Alhazen), inventor of the first true pinhole camera, was the first to correctly explain that vision occurs when light reflects off objects and enters the eye (intromission), rather than rays being emitted by the eye"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        49275,
+        60219,
+        63777
+      ],
+      "total_cost": [
+        0.008175640000000001,
+        0.008821550000000001,
+        0.009842449999999999
+      ],
+      "duration_seconds": [
+        25.580220915959217,
+        17.526045457925647,
+        55.35426049993839
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 63777,
+      "projected_tokens_under_fault": 191331,
+      "token_headroom_at_risk": false
+    },
+    "390": {
+      "question_id": "390",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1286",
+        "doc_1287"
+      ],
+      "reference_answer": "Monster Mash' by Bobby 'Boris' Pickett & the Crypt-Kickers",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Monster Mash by Bobby \"Boris\" Pickett and the Crypt-Kickers",
+        "Monster Mash by Bobby \"Boris\" Pickett and the Crypt-Kickers",
+        "Monster Mash by Bobby \"Boris\" Pickett and the Crypt-Kickers"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        91092,
+        80720,
+        91656
+      ],
+      "total_cost": [
+        0.010855059999999998,
+        0.011365150000000001,
+        0.01294887
+      ],
+      "duration_seconds": [
+        32.80442008306272,
+        32.10577225009911,
+        31.364252708968706
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 91656,
+      "projected_tokens_under_fault": 274968,
+      "token_headroom_at_risk": false
+    },
+    "99": {
+      "question_id": "99",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0337",
+        "doc_0338",
+        "doc_0339"
+      ],
+      "reference_answer": "14 years younger",
+      "correct": [
+        true,
+        false,
+        true
+      ],
+      "pattern": "TFT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "14 years",
+        "15 years",
+        "14 years"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        145753,
+        105553,
+        118645
+      ],
+      "total_cost": [
+        0.02167485,
+        0.01692544,
+        0.01918917
+      ],
+      "duration_seconds": [
+        51.53621016710531,
+        48.118381833075546,
+        42.553239208995365
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 145753,
+      "projected_tokens_under_fault": 437259,
+      "token_headroom_at_risk": false
+    },
+    "368": {
+      "question_id": "368",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_1225",
+        "doc_1226",
+        "doc_1227"
+      ],
+      "reference_answer": "Don Magnuson",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "exact_match"
+      ],
+      "extracted_answer": [
+        "Don Magnuson",
+        "Don Magnuson",
+        "Don Magnuson"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        30712,
+        35868,
+        30813
+      ],
+      "total_cost": [
+        0.00508809,
+        0.005867109999999999,
+        0.00511619
+      ],
+      "duration_seconds": [
+        16.87619345798157,
+        15.96439229103271,
+        14.096399707952514
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 35868,
+      "projected_tokens_under_fault": 107604,
+      "token_headroom_at_risk": false
+    },
+    "353": {
+      "question_id": "353",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_1189",
+        "doc_1190",
+        "doc_1191"
+      ],
+      "reference_answer": "Columbine",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Columbine High School massacre (April 20, 1999)",
+        "Columbine High School massacre",
+        "Columbine High School massacre"
+      ],
+      "workers_spawned": [
+        3,
+        2,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        2,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        86564,
+        27965,
+        66312
+      ],
+      "total_cost": [
+        0.0127131,
+        0.00422594,
+        0.010400789999999998
+      ],
+      "duration_seconds": [
+        22.99971975001972,
+        9.832033958053216,
+        15.457401874940842
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 86564,
+      "projected_tokens_under_fault": 259692,
+      "token_headroom_at_risk": false
+    },
+    "620": {
+      "question_id": "620",
+      "catalog_document_count": 2,
+      "catalog_document_ids": [
+        "doc_1931",
+        "doc_1932"
+      ],
+      "reference_answer": "Duchess Anastasia Romanov would have been 96 years old.",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "llm_judge",
+        "llm_judge",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "96 years old",
+        "96 years old",
+        "96 years old"
+      ],
+      "workers_spawned": [
+        2,
+        2,
+        2
+      ],
+      "distinct_documents_read": [
+        2,
+        2,
+        2
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        27855,
+        28094,
+        27922
+      ],
+      "total_cost": [
+        0.00420559,
+        0.00429324,
+        0.00423594
+      ],
+      "duration_seconds": [
+        11.552352332975715,
+        7.715768625028431,
+        7.537598625058308
+      ],
+      "tool_errors": [
+        0,
+        0,
+        0
+      ],
+      "max_total_tokens": 28094,
+      "projected_tokens_under_fault": 84282,
+      "token_headroom_at_risk": false
+    },
+    "271": {
+      "question_id": "271",
+      "catalog_document_count": 3,
+      "catalog_document_ids": [
+        "doc_0927",
+        "doc_0928",
+        "doc_0929"
+      ],
+      "reference_answer": "Miley Cyrus and Billy Ray Cyrus",
+      "correct": [
+        true,
+        true,
+        true
+      ],
+      "pattern": "TTT",
+      "status": [
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "stop_reason": [
+        "submit_answer",
+        "submit_answer",
+        "submit_answer"
+      ],
+      "grade_method": [
+        "exact_match",
+        "exact_match",
+        "llm_judge"
+      ],
+      "extracted_answer": [
+        "Miley Cyrus and Billy Ray Cyrus",
+        "Miley Cyrus and Billy Ray Cyrus",
+        "Billy Ray Cyrus and Miley Cyrus"
+      ],
+      "workers_spawned": [
+        3,
+        3,
+        3
+      ],
+      "distinct_documents_read": [
+        3,
+        3,
+        3
+      ],
+      "redundant_document_assignments": [
+        {},
+        {},
+        {}
+      ],
+      "total_tokens": [
+        126557,
+        90302,
+        131262
+      ],
+      "total_cost": [
+        0.016163709999999998,
+        0.015156389999999999,
+        0.01757317
+      ],
+      "duration_seconds": [
+        48.81543629197404,
+        45.51703062502202,
+        42.217998166102916
+      ],
+      "tool_errors": [
+        1,
+        0,
+        0
+      ],
+      "max_total_tokens": 131262,
+      "projected_tokens_under_fault": 393786,
+      "token_headroom_at_risk": false
+    }
+  },
+  "accuracy": [
+    {
+      "rep": "v2-rep1",
+      "correct": 45,
+      "incorrect": 3,
+      "execution_failed": 1,
+      "ungradeable": 1,
+      "missing": 0,
+      "buckets_sum": 50,
+      "reconciles": true,
+      "rep_complete": true,
+      "attempted_denominator": 50,
+      "gradeable_denominator": 48,
+      "accuracy_of_attempted": "45/50",
+      "accuracy_of_attempted_pct": 90.0,
+      "accuracy_of_gradeable": "45/48",
+      "accuracy_of_gradeable_pct": 93.8,
+      "ungradeable_ids": [
+        "783"
+      ],
+      "execution_failed_ids": [
+        "694"
+      ],
+      "wall_seconds": 1549.0647787909256,
+      "estimated_cost_usd": 0.53128111,
+      "health": {
+        "model_error_events": 0,
+        "model_timeout_events": 0,
+        "max_model_response_seconds": 41.14,
+        "max_model_response_agent": "batch1-worker2",
+        "max_model_response_question": "160",
+        "questions_with_errors": [],
+        "max_among_error_free_questions": 41.14,
+        "per_question": [
+          {
+            "question_id": "656",
+            "errors": 0,
+            "max_model_response_seconds": 22.77
+          },
+          {
+            "question_id": "114",
+            "errors": 0,
+            "max_model_response_seconds": 10.67
+          },
+          {
+            "question_id": "25",
+            "errors": 0,
+            "max_model_response_seconds": 23.68
+          },
+          {
+            "question_id": "761",
+            "errors": 0,
+            "max_model_response_seconds": 14.75
+          },
+          {
+            "question_id": "282",
+            "errors": 0,
+            "max_model_response_seconds": 7.68
+          },
+          {
+            "question_id": "251",
+            "errors": 0,
+            "max_model_response_seconds": 8.42
+          },
+          {
+            "question_id": "229",
+            "errors": 0,
+            "max_model_response_seconds": 16.2
+          },
+          {
+            "question_id": "143",
+            "errors": 0,
+            "max_model_response_seconds": 7.84
+          },
+          {
+            "question_id": "756",
+            "errors": 0,
+            "max_model_response_seconds": 3.55
+          },
+          {
+            "question_id": "104",
+            "errors": 0,
+            "max_model_response_seconds": 4.03
+          },
+          {
+            "question_id": "694",
+            "errors": 0,
+            "max_model_response_seconds": 33.31
+          },
+          {
+            "question_id": "760",
+            "errors": 0,
+            "max_model_response_seconds": 8.64
+          },
+          {
+            "question_id": "560",
+            "errors": 0,
+            "max_model_response_seconds": 6.77
+          },
+          {
+            "question_id": "89",
+            "errors": 0,
+            "max_model_response_seconds": 5.39
+          },
+          {
+            "question_id": "606",
+            "errors": 0,
+            "max_model_response_seconds": 7.23
+          },
+          {
+            "question_id": "433",
+            "errors": 0,
+            "max_model_response_seconds": 7.27
+          },
+          {
+            "question_id": "32",
+            "errors": 0,
+            "max_model_response_seconds": 27.74
+          },
+          {
+            "question_id": "30",
+            "errors": 0,
+            "max_model_response_seconds": 14.89
+          },
+          {
+            "question_id": "95",
+            "errors": 0,
+            "max_model_response_seconds": 20.97
+          },
+          {
+            "question_id": "224",
+            "errors": 0,
+            "max_model_response_seconds": 17.84
+          },
+          {
+            "question_id": "239",
+            "errors": 0,
+            "max_model_response_seconds": 12.31
+          },
+          {
+            "question_id": "518",
+            "errors": 0,
+            "max_model_response_seconds": 14.54
+          },
+          {
+            "question_id": "618",
+            "errors": 0,
+            "max_model_response_seconds": 13.56
+          },
+          {
+            "question_id": "27",
+            "errors": 0,
+            "max_model_response_seconds": 11.95
+          },
+          {
+            "question_id": "576",
+            "errors": 0,
+            "max_model_response_seconds": 7.45
+          },
+          {
+            "question_id": "204",
+            "errors": 0,
+            "max_model_response_seconds": 8.18
+          },
+          {
+            "question_id": "735",
+            "errors": 0,
+            "max_model_response_seconds": 5.83
+          },
+          {
+            "question_id": "667",
+            "errors": 0,
+            "max_model_response_seconds": 7.53
+          },
+          {
+            "question_id": "720",
+            "errors": 0,
+            "max_model_response_seconds": 6.91
+          },
+          {
+            "question_id": "430",
+            "errors": 0,
+            "max_model_response_seconds": 7.08
+          },
+          {
+            "question_id": "226",
+            "errors": 0,
+            "max_model_response_seconds": 9.81
+          },
+          {
+            "question_id": "460",
+            "errors": 0,
+            "max_model_response_seconds": 8.33
+          },
+          {
+            "question_id": "605",
+            "errors": 0,
+            "max_model_response_seconds": 3.63
+          },
+          {
+            "question_id": "285",
+            "errors": 0,
+            "max_model_response_seconds": 19.91
+          },
+          {
+            "question_id": "6",
+            "errors": 0,
+            "max_model_response_seconds": 4.83
+          },
+          {
+            "question_id": "779",
+            "errors": 0,
+            "max_model_response_seconds": 23.06
+          },
+          {
+            "question_id": "164",
+            "errors": 0,
+            "max_model_response_seconds": 13.21
+          },
+          {
+            "question_id": "716",
+            "errors": 0,
+            "max_model_response_seconds": 8.68
+          },
+          {
+            "question_id": "349",
+            "errors": 0,
+            "max_model_response_seconds": 5.36
+          },
+          {
+            "question_id": "160",
+            "errors": 0,
+            "max_model_response_seconds": 41.14
+          },
+          {
+            "question_id": "221",
+            "errors": 0,
+            "max_model_response_seconds": 25.7
+          },
+          {
+            "question_id": "783",
+            "errors": 0,
+            "max_model_response_seconds": 20.75
+          },
+          {
+            "question_id": "345",
+            "errors": 0,
+            "max_model_response_seconds": 7.45
+          },
+          {
+            "question_id": "94",
+            "errors": 0,
+            "max_model_response_seconds": 13.41
+          },
+          {
+            "question_id": "390",
+            "errors": 0,
+            "max_model_response_seconds": 13.84
+          },
+          {
+            "question_id": "99",
+            "errors": 0,
+            "max_model_response_seconds": 16.56
+          },
+          {
+            "question_id": "368",
+            "errors": 0,
+            "max_model_response_seconds": 6.74
+          },
+          {
+            "question_id": "353",
+            "errors": 0,
+            "max_model_response_seconds": 10.36
+          },
+          {
+            "question_id": "620",
+            "errors": 0,
+            "max_model_response_seconds": 5.66
+          },
+          {
+            "question_id": "271",
+            "errors": 0,
+            "max_model_response_seconds": 22.46
+          }
+        ]
+      }
+    },
+    {
+      "rep": "v2-rep2",
+      "correct": 44,
+      "incorrect": 4,
+      "execution_failed": 2,
+      "ungradeable": 0,
+      "missing": 0,
+      "buckets_sum": 50,
+      "reconciles": true,
+      "rep_complete": true,
+      "attempted_denominator": 50,
+      "gradeable_denominator": 48,
+      "accuracy_of_attempted": "44/50",
+      "accuracy_of_attempted_pct": 88.0,
+      "accuracy_of_gradeable": "44/48",
+      "accuracy_of_gradeable_pct": 91.7,
+      "ungradeable_ids": [],
+      "execution_failed_ids": [
+        "694",
+        "783"
+      ],
+      "wall_seconds": 1466.9277525419602,
+      "estimated_cost_usd": null,
+      "health": {
+        "model_error_events": 2,
+        "model_timeout_events": 0,
+        "max_model_response_seconds": 55.61,
+        "max_model_response_agent": "lead",
+        "max_model_response_question": "694",
+        "questions_with_errors": [
+          "694"
+        ],
+        "max_among_error_free_questions": 29.59,
+        "per_question": [
+          {
+            "question_id": "656",
+            "errors": 0,
+            "max_model_response_seconds": 8.96
+          },
+          {
+            "question_id": "114",
+            "errors": 0,
+            "max_model_response_seconds": 6.29
+          },
+          {
+            "question_id": "25",
+            "errors": 0,
+            "max_model_response_seconds": 13.24
+          },
+          {
+            "question_id": "761",
+            "errors": 0,
+            "max_model_response_seconds": 6.68
+          },
+          {
+            "question_id": "282",
+            "errors": 0,
+            "max_model_response_seconds": 7.34
+          },
+          {
+            "question_id": "251",
+            "errors": 0,
+            "max_model_response_seconds": 5.3
+          },
+          {
+            "question_id": "229",
+            "errors": 0,
+            "max_model_response_seconds": 22.88
+          },
+          {
+            "question_id": "143",
+            "errors": 0,
+            "max_model_response_seconds": 9.81
+          },
+          {
+            "question_id": "756",
+            "errors": 0,
+            "max_model_response_seconds": 4.45
+          },
+          {
+            "question_id": "104",
+            "errors": 0,
+            "max_model_response_seconds": 5.82
+          },
+          {
+            "question_id": "694",
+            "errors": 2,
+            "max_model_response_seconds": 55.61
+          },
+          {
+            "question_id": "760",
+            "errors": 0,
+            "max_model_response_seconds": 20.79
+          },
+          {
+            "question_id": "560",
+            "errors": 0,
+            "max_model_response_seconds": 12.23
+          },
+          {
+            "question_id": "89",
+            "errors": 0,
+            "max_model_response_seconds": 11.81
+          },
+          {
+            "question_id": "606",
+            "errors": 0,
+            "max_model_response_seconds": 12.64
+          },
+          {
+            "question_id": "433",
+            "errors": 0,
+            "max_model_response_seconds": 11.1
+          },
+          {
+            "question_id": "32",
+            "errors": 0,
+            "max_model_response_seconds": 11.56
+          },
+          {
+            "question_id": "30",
+            "errors": 0,
+            "max_model_response_seconds": 8.35
+          },
+          {
+            "question_id": "95",
+            "errors": 0,
+            "max_model_response_seconds": 9.92
+          },
+          {
+            "question_id": "224",
+            "errors": 0,
+            "max_model_response_seconds": 8.33
+          },
+          {
+            "question_id": "239",
+            "errors": 0,
+            "max_model_response_seconds": 7.93
+          },
+          {
+            "question_id": "518",
+            "errors": 0,
+            "max_model_response_seconds": 10.13
+          },
+          {
+            "question_id": "618",
+            "errors": 0,
+            "max_model_response_seconds": 24.97
+          },
+          {
+            "question_id": "27",
+            "errors": 0,
+            "max_model_response_seconds": 11.36
+          },
+          {
+            "question_id": "576",
+            "errors": 0,
+            "max_model_response_seconds": 6.54
+          },
+          {
+            "question_id": "204",
+            "errors": 0,
+            "max_model_response_seconds": 4.44
+          },
+          {
+            "question_id": "735",
+            "errors": 0,
+            "max_model_response_seconds": 9.83
+          },
+          {
+            "question_id": "667",
+            "errors": 0,
+            "max_model_response_seconds": 4.98
+          },
+          {
+            "question_id": "720",
+            "errors": 0,
+            "max_model_response_seconds": 7.38
+          },
+          {
+            "question_id": "430",
+            "errors": 0,
+            "max_model_response_seconds": 8.79
+          },
+          {
+            "question_id": "226",
+            "errors": 0,
+            "max_model_response_seconds": 29.59
+          },
+          {
+            "question_id": "460",
+            "errors": 0,
+            "max_model_response_seconds": 8.74
+          },
+          {
+            "question_id": "605",
+            "errors": 0,
+            "max_model_response_seconds": 7.48
+          },
+          {
+            "question_id": "285",
+            "errors": 0,
+            "max_model_response_seconds": 14.85
+          },
+          {
+            "question_id": "6",
+            "errors": 0,
+            "max_model_response_seconds": 7.66
+          },
+          {
+            "question_id": "779",
+            "errors": 0,
+            "max_model_response_seconds": 12.59
+          },
+          {
+            "question_id": "164",
+            "errors": 0,
+            "max_model_response_seconds": 17.33
+          },
+          {
+            "question_id": "716",
+            "errors": 0,
+            "max_model_response_seconds": 12.49
+          },
+          {
+            "question_id": "349",
+            "errors": 0,
+            "max_model_response_seconds": 6.43
+          },
+          {
+            "question_id": "160",
+            "errors": 0,
+            "max_model_response_seconds": 2.9
+          },
+          {
+            "question_id": "221",
+            "errors": 0,
+            "max_model_response_seconds": 5.48
+          },
+          {
+            "question_id": "783",
+            "errors": 0,
+            "max_model_response_seconds": 8.49
+          },
+          {
+            "question_id": "345",
+            "errors": 0,
+            "max_model_response_seconds": 5.52
+          },
+          {
+            "question_id": "94",
+            "errors": 0,
+            "max_model_response_seconds": 8.66
+          },
+          {
+            "question_id": "390",
+            "errors": 0,
+            "max_model_response_seconds": 19.32
+          },
+          {
+            "question_id": "99",
+            "errors": 0,
+            "max_model_response_seconds": 16.26
+          },
+          {
+            "question_id": "368",
+            "errors": 0,
+            "max_model_response_seconds": 5.19
+          },
+          {
+            "question_id": "353",
+            "errors": 0,
+            "max_model_response_seconds": 4.28
+          },
+          {
+            "question_id": "620",
+            "errors": 0,
+            "max_model_response_seconds": 3.83
+          },
+          {
+            "question_id": "271",
+            "errors": 0,
+            "max_model_response_seconds": 18.52
+          }
+        ]
+      }
+    },
+    {
+      "rep": "v2-rep3",
+      "correct": 46,
+      "incorrect": 2,
+      "execution_failed": 2,
+      "ungradeable": 0,
+      "missing": 0,
+      "buckets_sum": 50,
+      "reconciles": true,
+      "rep_complete": true,
+      "attempted_denominator": 50,
+      "gradeable_denominator": 48,
+      "accuracy_of_attempted": "46/50",
+      "accuracy_of_attempted_pct": 92.0,
+      "accuracy_of_gradeable": "46/48",
+      "accuracy_of_gradeable_pct": 95.8,
+      "ungradeable_ids": [],
+      "execution_failed_ids": [
+        "694",
+        "783"
+      ],
+      "wall_seconds": 1465.8884914999362,
+      "estimated_cost_usd": 0.52972035,
+      "health": {
+        "model_error_events": 0,
+        "model_timeout_events": 0,
+        "max_model_response_seconds": 46.18,
+        "max_model_response_agent": "batch1-worker1",
+        "max_model_response_question": "94",
+        "questions_with_errors": [],
+        "max_among_error_free_questions": 46.18,
+        "per_question": [
+          {
+            "question_id": "656",
+            "errors": 0,
+            "max_model_response_seconds": 6.41
+          },
+          {
+            "question_id": "114",
+            "errors": 0,
+            "max_model_response_seconds": 4.47
+          },
+          {
+            "question_id": "25",
+            "errors": 0,
+            "max_model_response_seconds": 25.58
+          },
+          {
+            "question_id": "761",
+            "errors": 0,
+            "max_model_response_seconds": 9.17
+          },
+          {
+            "question_id": "282",
+            "errors": 0,
+            "max_model_response_seconds": 7.02
+          },
+          {
+            "question_id": "251",
+            "errors": 0,
+            "max_model_response_seconds": 13.49
+          },
+          {
+            "question_id": "229",
+            "errors": 0,
+            "max_model_response_seconds": 12.26
+          },
+          {
+            "question_id": "143",
+            "errors": 0,
+            "max_model_response_seconds": 13.41
+          },
+          {
+            "question_id": "756",
+            "errors": 0,
+            "max_model_response_seconds": 5.82
+          },
+          {
+            "question_id": "104",
+            "errors": 0,
+            "max_model_response_seconds": 3.82
+          },
+          {
+            "question_id": "694",
+            "errors": 0,
+            "max_model_response_seconds": 43.05
+          },
+          {
+            "question_id": "760",
+            "errors": 0,
+            "max_model_response_seconds": 6.23
+          },
+          {
+            "question_id": "560",
+            "errors": 0,
+            "max_model_response_seconds": 9.88
+          },
+          {
+            "question_id": "89",
+            "errors": 0,
+            "max_model_response_seconds": 6.19
+          },
+          {
+            "question_id": "606",
+            "errors": 0,
+            "max_model_response_seconds": 10.61
+          },
+          {
+            "question_id": "433",
+            "errors": 0,
+            "max_model_response_seconds": 7.61
+          },
+          {
+            "question_id": "32",
+            "errors": 0,
+            "max_model_response_seconds": 9.04
+          },
+          {
+            "question_id": "30",
+            "errors": 0,
+            "max_model_response_seconds": 5.8
+          },
+          {
+            "question_id": "95",
+            "errors": 0,
+            "max_model_response_seconds": 17.7
+          },
+          {
+            "question_id": "224",
+            "errors": 0,
+            "max_model_response_seconds": 8.97
+          },
+          {
+            "question_id": "239",
+            "errors": 0,
+            "max_model_response_seconds": 23.85
+          },
+          {
+            "question_id": "518",
+            "errors": 0,
+            "max_model_response_seconds": 9.87
+          },
+          {
+            "question_id": "618",
+            "errors": 0,
+            "max_model_response_seconds": 13.06
+          },
+          {
+            "question_id": "27",
+            "errors": 0,
+            "max_model_response_seconds": 10.63
+          },
+          {
+            "question_id": "576",
+            "errors": 0,
+            "max_model_response_seconds": 5.07
+          },
+          {
+            "question_id": "204",
+            "errors": 0,
+            "max_model_response_seconds": 12.45
+          },
+          {
+            "question_id": "735",
+            "errors": 0,
+            "max_model_response_seconds": 37.32
+          },
+          {
+            "question_id": "667",
+            "errors": 0,
+            "max_model_response_seconds": 8.07
+          },
+          {
+            "question_id": "720",
+            "errors": 0,
+            "max_model_response_seconds": 7.43
+          },
+          {
+            "question_id": "430",
+            "errors": 0,
+            "max_model_response_seconds": 14.41
+          },
+          {
+            "question_id": "226",
+            "errors": 0,
+            "max_model_response_seconds": 10.58
+          },
+          {
+            "question_id": "460",
+            "errors": 0,
+            "max_model_response_seconds": 10.93
+          },
+          {
+            "question_id": "605",
+            "errors": 0,
+            "max_model_response_seconds": 5.4
+          },
+          {
+            "question_id": "285",
+            "errors": 0,
+            "max_model_response_seconds": 8.87
+          },
+          {
+            "question_id": "6",
+            "errors": 0,
+            "max_model_response_seconds": 8.75
+          },
+          {
+            "question_id": "779",
+            "errors": 0,
+            "max_model_response_seconds": 3.69
+          },
+          {
+            "question_id": "164",
+            "errors": 0,
+            "max_model_response_seconds": 4.86
+          },
+          {
+            "question_id": "716",
+            "errors": 0,
+            "max_model_response_seconds": 9.47
+          },
+          {
+            "question_id": "349",
+            "errors": 0,
+            "max_model_response_seconds": 5.91
+          },
+          {
+            "question_id": "160",
+            "errors": 0,
+            "max_model_response_seconds": 5.0
+          },
+          {
+            "question_id": "221",
+            "errors": 0,
+            "max_model_response_seconds": 9.1
+          },
+          {
+            "question_id": "783",
+            "errors": 0,
+            "max_model_response_seconds": 21.44
+          },
+          {
+            "question_id": "345",
+            "errors": 0,
+            "max_model_response_seconds": 5.11
+          },
+          {
+            "question_id": "94",
+            "errors": 0,
+            "max_model_response_seconds": 46.18
+          },
+          {
+            "question_id": "390",
+            "errors": 0,
+            "max_model_response_seconds": 10.9
+          },
+          {
+            "question_id": "99",
+            "errors": 0,
+            "max_model_response_seconds": 14.74
+          },
+          {
+            "question_id": "368",
+            "errors": 0,
+            "max_model_response_seconds": 6.97
+          },
+          {
+            "question_id": "353",
+            "errors": 0,
+            "max_model_response_seconds": 6.69
+          },
+          {
+            "question_id": "620",
+            "errors": 0,
+            "max_model_response_seconds": 3.71
+          },
+          {
+            "question_id": "271",
+            "errors": 0,
+            "max_model_response_seconds": 19.26
+          }
+        ]
+      }
+    }
+  ],
+  "token_headroom": {
+    "rule": "flagged when max observed total tokens x 3 > max_run_tokens (600,000)",
+    "rationale": "The judge shares the run token budget (grading.py:55 routes it through runtime.call_model), so a token-hungry question can starve its own grading and return correct:null, which is indistinguishable from a fault-induced wrong answer. Reported only; nothing is excluded on these grounds.",
+    "flagged": [
+      {
+        "question_id": "25",
+        "max_total_tokens": 407178,
+        "projected_under_fault": 1221534,
+        "per_rep_total_tokens": [
+          407178,
+          226664,
+          328085
+        ],
+        "pattern": "TTT",
+        "status": [
+          "completed",
+          "completed",
+          "completed"
+        ]
+      },
+      {
+        "question_id": "720",
+        "max_total_tokens": 222092,
+        "projected_under_fault": 666276,
+        "per_rep_total_tokens": [
+          62183,
+          222092,
+          34944
+        ],
+        "pattern": "TTT",
+        "status": [
+          "completed",
+          "completed",
+          "completed"
+        ]
+      },
+      {
+        "question_id": "783",
+        "max_total_tokens": 628628,
+        "projected_under_fault": 1885884,
+        "per_rep_total_tokens": [
+          604860,
+          628628,
+          622996
+        ],
+        "pattern": "?FF",
+        "status": [
+          "completed",
+          "budget_exhausted",
+          "budget_exhausted"
+        ]
+      }
+    ],
+    "ranked_by_peak_tokens": [
+      {
+        "question_id": "783",
+        "max_total_tokens": 628628,
+        "pattern": "?FF"
+      },
+      {
+        "question_id": "25",
+        "max_total_tokens": 407178,
+        "pattern": "TTT"
+      },
+      {
+        "question_id": "720",
+        "max_total_tokens": 222092,
+        "pattern": "TTT"
+      },
+      {
+        "question_id": "694",
+        "max_total_tokens": 156873,
+        "pattern": "FFF"
+      },
+      {
+        "question_id": "606",
+        "max_total_tokens": 155334,
+        "pattern": "TTT"
+      },
+      {
+        "question_id": "99",
+        "max_total_tokens": 145753,
+        "pattern": "TFT"
+      },
+      {
+        "question_id": "716",
+        "max_total_tokens": 133509,
+        "pattern": "TTT"
+      },
+      {
+        "question_id": "271",
+        "max_total_tokens": 131262,
+        "pattern": "TTT"
+      }
+    ]
+  },
+  "attrition": [
+    {
+      "step": 1,
+      "criterion": "status == completed in all reps",
+      "surviving": 48,
+      "dropped": 2,
+      "dropped_ids": [
+        "694",
+        "783"
+      ]
+    },
+    {
+      "step": 2,
+      "criterion": "correct == true in all reps",
+      "surviving": 44,
+      "dropped": 4,
+      "dropped_ids": [
+        "761",
+        "667",
+        "779",
+        "99"
+      ]
+    },
+    {
+      "step": 3,
+      "criterion": "worker count identical across reps",
+      "surviving": 32,
+      "dropped": 12,
+      "dropped_ids": [
+        "25",
+        "282",
+        "560",
+        "606",
+        "30",
+        "239",
+        "618",
+        "720",
+        "164",
+        "716",
+        "221",
+        "353"
+      ]
+    }
+  ],
+  "selection": {
+    "selected": [
+      "27",
+      "32",
+      "89",
+      "94",
+      "95",
+      "104",
+      "114",
+      "224",
+      "251",
+      "271"
+    ],
+    "count": 10,
+    "relaxed_step3": false,
+    "criteria": [
+      "status == completed in all 3 reps",
+      "correct == true in all 3 reps",
+      "worker count identical across all 3 reps",
+      "proportional catalog-document-count representation",
+      "deterministic tiebreak: ascending numeric question_id"
+    ],
+    "fault_agnostic": "Answer-evidence localization played no part in selection.",
+    "representation": {
+      "method": "largest remainder (Hare quota) over the 50-question distribution",
+      "tiebreak": "ascending numeric question_id",
+      "population_distribution": {
+        "2": 19,
+        "3": 17,
+        "4": 8,
+        "5": 1,
+        "6": 2,
+        "7": 2,
+        "9": 1
+      },
+      "population_share": {
+        "2": 0.38,
+        "3": 0.34,
+        "4": 0.16,
+        "5": 0.02,
+        "6": 0.04,
+        "7": 0.04,
+        "9": 0.02
+      },
+      "exact_quota_fractions": {
+        "2": "19/5",
+        "3": "17/5",
+        "4": "8/5",
+        "5": "1/5",
+        "6": "2/5",
+        "7": "2/5",
+        "9": "1/5"
+      },
+      "target_quota": {
+        "2": 4,
+        "3": 4,
+        "4": 2,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "9": 0
+      },
+      "achieved": {
+        "2": 4,
+        "3": 4,
+        "4": 2
+      },
+      "survivors_available": {
+        "2": 17,
+        "3": 9,
+        "4": 5,
+        "5": 1,
+        "6": 0,
+        "7": 0,
+        "9": 0
+      },
+      "skew": {},
+      "reallocated_due_to_shortfall": []
+    }
+  },
+  "concurrency_caveat": {
+    "scheduling": "Reps were not run strictly sequentially: rep 2 was launched while rep 1 was still finishing, and rep 3 while rep 2 was still finishing. At most two reps ran at once.",
+    "effect_on_guard": "A rep's peak model.response duration reflects the contention it ran under. Peaks per rep are recorded under accuracy[].health so this is visible.",
+    "q694": "Q694 failed in rep 1 with stop_reason=lead_turn_limit and in rep 2 with ModelCallTimeout (lead, limit 60s). These are NOT a single clean architectural finding. Q694 has the largest catalog in the set, so it spawns the most workers and its Lead prompt carries the most worker reports, making its Lead calls the slowest regardless of load. The 60s crossing in rep 2 is partly an artifact of the decision to parallelize reps, not evidence that the architecture alone exceeds the call timeout.",
+    "scope_checked": "In rep 2 every model.error and every call above 45s was confined to Q694's run; all other questions showed no errors and no call above 29.59s. Nothing affecting selection was touched, and Q694 fails criterion 1 in rep 1 independently."
+  },
+  "execution_failures": {
+    "definition": "An execution failure is status != completed. A completed run with a wrong answer is not a failure and is listed separately.",
+    "doc_heavy_threshold": "catalog_document_count > 4 (= max_workers_per_batch, so >1 batch is forced)",
+    "count": 5,
+    "by_stop_reason": {
+      "ModelCallTimeout: lead: model call timed out (limit: 60s)": 1,
+      "lead_turn_limit": 2,
+      "run_token_budget": 2
+    },
+    "by_stop_reason_doc_heavy": {
+      "ModelCallTimeout: lead: model call timed out (limit: 60s)": 1,
+      "lead_turn_limit": 2,
+      "run_token_budget": 2
+    },
+    "doc_heavy_share": "5/5",
+    "failures": [
+      {
+        "question_id": "694",
+        "rep": "v2-rep1",
+        "status": "budget_exhausted",
+        "stop_reason": "lead_turn_limit",
+        "catalog_document_count": 7,
+        "doc_heavy": true,
+        "workers_spawned": 7,
+        "distinct_documents_read": 7,
+        "total_tokens": 156873
+      },
+      {
+        "question_id": "694",
+        "rep": "v2-rep2",
+        "status": "failed",
+        "stop_reason": "ModelCallTimeout: lead: model call timed out (limit: 60s)",
+        "catalog_document_count": 7,
+        "doc_heavy": true,
+        "workers_spawned": 8,
+        "distinct_documents_read": 7,
+        "total_tokens": 107571
+      },
+      {
+        "question_id": "694",
+        "rep": "v2-rep3",
+        "status": "budget_exhausted",
+        "stop_reason": "lead_turn_limit",
+        "catalog_document_count": 7,
+        "doc_heavy": true,
+        "workers_spawned": 7,
+        "distinct_documents_read": 7,
+        "total_tokens": 144046
+      },
+      {
+        "question_id": "783",
+        "rep": "v2-rep2",
+        "status": "budget_exhausted",
+        "stop_reason": "run_token_budget",
+        "catalog_document_count": 7,
+        "doc_heavy": true,
+        "workers_spawned": 9,
+        "distinct_documents_read": 7,
+        "total_tokens": 628628
+      },
+      {
+        "question_id": "783",
+        "rep": "v2-rep3",
+        "status": "budget_exhausted",
+        "stop_reason": "run_token_budget",
+        "catalog_document_count": 7,
+        "doc_heavy": true,
+        "workers_spawned": 10,
+        "distinct_documents_read": 7,
+        "total_tokens": 622996
+      }
+    ],
+    "completed_but_incorrect_count": 10,
+    "completed_but_incorrect": [
+      {
+        "question_id": "761",
+        "rep": "v2-rep1",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 2,
+        "doc_heavy": false
+      },
+      {
+        "question_id": "761",
+        "rep": "v2-rep2",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 2,
+        "doc_heavy": false
+      },
+      {
+        "question_id": "761",
+        "rep": "v2-rep3",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 2,
+        "doc_heavy": false
+      },
+      {
+        "question_id": "667",
+        "rep": "v2-rep1",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 6,
+        "doc_heavy": true
+      },
+      {
+        "question_id": "667",
+        "rep": "v2-rep2",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 6,
+        "doc_heavy": true
+      },
+      {
+        "question_id": "667",
+        "rep": "v2-rep3",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 6,
+        "doc_heavy": true
+      },
+      {
+        "question_id": "779",
+        "rep": "v2-rep1",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 3,
+        "doc_heavy": false
+      },
+      {
+        "question_id": "779",
+        "rep": "v2-rep2",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 3,
+        "doc_heavy": false
+      },
+      {
+        "question_id": "783",
+        "rep": "v2-rep1",
+        "correct": null,
+        "grade_method": "judge_error",
+        "catalog_document_count": 7,
+        "doc_heavy": true
+      },
+      {
+        "question_id": "99",
+        "rep": "v2-rep2",
+        "correct": false,
+        "grade_method": "llm_judge",
+        "catalog_document_count": 3,
+        "doc_heavy": false
+      }
+    ]
+  },
+  "stability_by_evidence": {
+    "purpose": "Post-hoc diagnostic. Evidence classification played no part in selection; this only describes how targetable the chosen set happens to be.",
+    "rows": [
+      "stable (passed criteria 1-3)",
+      "not stable"
+    ],
+    "columns": [
+      "localized",
+      "derived",
+      "weak_match",
+      "ambiguous",
+      "not_found"
+    ],
+    "table": {
+      "stable (passed criteria 1-3)": {
+        "localized": 10,
+        "derived": 1,
+        "weak_match": 6,
+        "ambiguous": 14,
+        "not_found": 1,
+        "total": 32
+      },
+      "not stable": {
+        "localized": 2,
+        "derived": 0,
+        "weak_match": 3,
+        "ambiguous": 9,
+        "not_found": 4,
+        "total": 18
+      }
+    },
+    "totals": {
+      "localized": 12,
+      "derived": 1,
+      "weak_match": 9,
+      "ambiguous": 23,
+      "not_found": 5
+    },
+    "stable_by_class": {
+      "localized": [
+        "114",
+        "760",
+        "89",
+        "224",
+        "518",
+        "576",
+        "430",
+        "349",
+        "345",
+        "271"
+      ],
+      "derived": [
+        "143"
+      ],
+      "weak_match": [
+        "656",
+        "756",
+        "104",
+        "204",
+        "94",
+        "390"
+      ],
+      "ambiguous": [
+        "251",
+        "229",
+        "433",
+        "32",
+        "95",
+        "735",
+        "226",
+        "460",
+        "605",
+        "285",
+        "6",
+        "160",
+        "368",
+        "620"
+      ],
+      "not_found": [
+        "27"
+      ]
+    },
+    "selected_by_class": {
+      "localized": [
+        "89",
+        "114",
+        "224",
+        "271"
+      ],
+      "derived": [],
+      "weak_match": [
+        "94",
+        "104"
+      ],
+      "ambiguous": [
+        "32",
+        "95",
+        "251"
+      ],
+      "not_found": [
+        "27"
+      ]
+    }
+  },
+  "targeting": [
+    {
+      "question_id": "27",
+      "classification": "not_found",
+      "reference_answer": "9",
+      "catalog_document_ids": [
+        "doc_0101",
+        "doc_0102"
+      ],
+      "catalog_document_count": 2,
+      "bearer_document_id": null,
+      "matched_literal": null,
+      "literal_specific": null,
+      "caveat": null,
+      "offsets": null,
+      "pages": null,
+      "page_size": 24000
+    },
+    {
+      "question_id": "32",
+      "classification": "ambiguous",
+      "reference_answer": "55",
+      "catalog_document_ids": [
+        "doc_0011",
+        "doc_0114",
+        "doc_0115"
+      ],
+      "catalog_document_count": 3,
+      "bearer_document_id": null,
+      "matched_literal": null,
+      "literal_specific": null,
+      "caveat": null,
+      "offsets": null,
+      "pages": null,
+      "page_size": 24000
+    },
+    {
+      "question_id": "89",
+      "classification": "localized",
+      "reference_answer": "November 24, 1921",
+      "catalog_document_ids": [
+        "doc_0304",
+        "doc_0305",
+        "doc_0306"
+      ],
+      "catalog_document_count": 3,
+      "bearer_document_id": "doc_0306",
+      "matched_literal": "November 24, 1921",
+      "literal_specific": true,
+      "caveat": null,
+      "offsets": [
+        658,
+        1245
+      ],
+      "pages": [
+        0
+      ],
+      "page_size": 24000
+    },
+    {
+      "question_id": "94",
+      "classification": "weak_match",
+      "reference_answer": "The Theory of Vision",
+      "catalog_document_ids": [
+        "doc_0323",
+        "doc_0324"
+      ],
+      "catalog_document_count": 2,
+      "bearer_document_id": null,
+      "matched_literal": "Theory",
+      "literal_specific": false,
+      "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target.",
+      "offsets": [
+        603,
+        6287,
+        6647,
+        6668,
+        6807,
+        6832
+      ],
+      "pages": [
+        0
+      ],
+      "page_size": 24000
+    },
+    {
+      "question_id": "95",
+      "classification": "ambiguous",
+      "reference_answer": "74 years",
+      "catalog_document_ids": [
+        "doc_0181",
+        "doc_0325",
+        "doc_0326",
+        "doc_0327"
+      ],
+      "catalog_document_count": 4,
+      "bearer_document_id": null,
+      "matched_literal": null,
+      "literal_specific": null,
+      "caveat": null,
+      "offsets": null,
+      "pages": null,
+      "page_size": 24000
+    },
+    {
+      "question_id": "104",
+      "classification": "weak_match",
+      "reference_answer": "103",
+      "catalog_document_ids": [
+        "doc_0351",
+        "doc_0352"
+      ],
+      "catalog_document_count": 2,
+      "bearer_document_id": null,
+      "matched_literal": "103",
+      "literal_specific": false,
+      "caveat": "Literal is too short or too small a fraction of the answer to identify it; the match is probably coincidental. Verify by hand before using this as a fault target.",
+      "offsets": [
+        22638,
+        118340
+      ],
+      "pages": [
+        0,
+        4
+      ],
+      "page_size": 24000
+    },
+    {
+      "question_id": "114",
+      "classification": "localized",
+      "reference_answer": "The Mona Lisa",
+      "catalog_document_ids": [
+        "doc_0379",
+        "doc_0380"
+      ],
+      "catalog_document_count": 2,
+      "bearer_document_id": "doc_0379",
+      "matched_literal": "The Mona Lisa",
+      "literal_specific": true,
+      "caveat": null,
+      "offsets": [
+        599,
+        1451,
+        2021,
+        2152,
+        3772,
+        5365
+      ],
+      "pages": [
+        0
+      ],
+      "page_size": 24000
+    },
+    {
+      "question_id": "224",
+      "classification": "localized",
+      "reference_answer": "Verizon Center",
+      "catalog_document_ids": [
+        "doc_0725",
+        "doc_0726",
+        "doc_0727",
+        "doc_0728"
+      ],
+      "catalog_document_count": 4,
+      "bearer_document_id": "doc_0728",
+      "matched_literal": "Verizon Center",
+      "literal_specific": true,
+      "caveat": null,
+      "offsets": [
+        459,
+        1856,
+        6804,
+        6937,
+        7597,
+        11340
+      ],
+      "pages": [
+        0
+      ],
+      "page_size": 24000
+    },
+    {
+      "question_id": "251",
+      "classification": "ambiguous",
+      "reference_answer": "Snowflake Bentley",
+      "catalog_document_ids": [
+        "doc_0858",
+        "doc_0859",
+        "doc_0860"
+      ],
+      "catalog_document_count": 3,
+      "bearer_document_id": null,
+      "matched_literal": null,
+      "literal_specific": null,
+      "caveat": null,
+      "offsets": null,
+      "pages": null,
+      "page_size": 24000
+    },
+    {
+      "question_id": "271",
+      "classification": "localized",
+      "reference_answer": "Miley Cyrus and Billy Ray Cyrus",
+      "catalog_document_ids": [
+        "doc_0927",
+        "doc_0928",
+        "doc_0929"
+      ],
+      "catalog_document_count": 3,
+      "bearer_document_id": "doc_0929",
+      "matched_literal": "Miley Cyrus and Billy Ray Cyrus",
+      "literal_specific": true,
+      "caveat": null,
+      "offsets": [
+        14251
+      ],
+      "pages": [
+        0
+      ],
+      "page_size": 24000
+    }
+  ],
+  "worker_count_comparison": [
+    {
+      "question_id": "656",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        1,
+        1,
+        1
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "114",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "25",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        7,
+        6,
+        7
+      ],
+      "changed": true,
+      "v2_redundant": [
+        "doc_0094",
+        "doc_0094",
+        "doc_0094",
+        "doc_0097"
+      ]
+    },
+    {
+      "question_id": "761",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "282",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "251",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        1,
+        2,
+        1
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "229",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        4,
+        4,
+        4
+      ],
+      "v2_workers": [
+        4,
+        4,
+        4
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "143",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "756",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        1,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "104",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "694",
+      "catalog_document_count": 7,
+      "prior_workers": [
+        2,
+        1,
+        3
+      ],
+      "v2_workers": [
+        7,
+        8,
+        7
+      ],
+      "changed": true,
+      "v2_redundant": [
+        "doc_2127"
+      ]
+    },
+    {
+      "question_id": "760",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "560",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        1,
+        1
+      ],
+      "v2_workers": [
+        2,
+        3,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "89",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        3
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "606",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": [
+        "doc_1883"
+      ]
+    },
+    {
+      "question_id": "433",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        1,
+        2,
+        1
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "32",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        1,
+        1,
+        1
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "30",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        3,
+        2,
+        3
+      ],
+      "v2_workers": [
+        5,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": [
+        "doc_0109",
+        "doc_0110"
+      ]
+    },
+    {
+      "question_id": "95",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        1,
+        2,
+        1
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "224",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        2,
+        3,
+        3
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "239",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        3,
+        4,
+        3
+      ],
+      "v2_workers": [
+        3,
+        4,
+        4
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "518",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        1
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "618",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        1
+      ],
+      "v2_workers": [
+        2,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "27",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "576",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "204",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        1,
+        1,
+        1
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "735",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        1,
+        2
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "667",
+      "catalog_document_count": 6,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "720",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        2,
+        3,
+        3
+      ],
+      "v2_workers": [
+        3,
+        6,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": [
+        "doc_2206"
+      ]
+    },
+    {
+      "question_id": "430",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        1,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "226",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        3,
+        3,
+        3
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "460",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        3,
+        3,
+        3
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "605",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "285",
+      "catalog_document_count": 4,
+      "prior_workers": [
+        2,
+        1,
+        2
+      ],
+      "v2_workers": [
+        4,
+        4,
+        4
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "6",
+      "catalog_document_count": 5,
+      "prior_workers": [
+        1,
+        2,
+        3
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "779",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        3,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "164",
+      "catalog_document_count": 6,
+      "prior_workers": [
+        1,
+        1,
+        2
+      ],
+      "v2_workers": [
+        3,
+        6,
+        6
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "716",
+      "catalog_document_count": 9,
+      "prior_workers": [
+        4,
+        3,
+        4
+      ],
+      "v2_workers": [
+        4,
+        5,
+        6
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "349",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        1,
+        1,
+        2
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "160",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        1,
+        1,
+        1
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "221",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        3,
+        2,
+        2
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "783",
+      "catalog_document_count": 7,
+      "prior_workers": [
+        4,
+        3,
+        3
+      ],
+      "v2_workers": [
+        9,
+        9,
+        10
+      ],
+      "changed": true,
+      "v2_redundant": [
+        "doc_2390",
+        "doc_2391",
+        "doc_0748",
+        "doc_2394"
+      ]
+    },
+    {
+      "question_id": "345",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        1,
+        2
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "94",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "390",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "99",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "368",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "353",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        3,
+        1
+      ],
+      "v2_workers": [
+        3,
+        2,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "620",
+      "catalog_document_count": 2,
+      "prior_workers": [
+        2,
+        2,
+        2
+      ],
+      "v2_workers": [
+        2,
+        2,
+        2
+      ],
+      "changed": false,
+      "v2_redundant": []
+    },
+    {
+      "question_id": "271",
+      "catalog_document_count": 3,
+      "prior_workers": [
+        2,
+        2,
+        3
+      ],
+      "v2_workers": [
+        3,
+        3,
+        3
+      ],
+      "changed": true,
+      "v2_redundant": []
+    }
+  ]
+}
