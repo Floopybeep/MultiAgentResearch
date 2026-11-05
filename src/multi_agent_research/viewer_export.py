@@ -98,7 +98,7 @@ def publish_manifest(root, summary):
         write_data(root, "viewer-manifest.js", runs)
 
 
-def _attempt_metadata(result, directory):
+def _attempt_metadata(result, directory, run_directories=None):
     metadata = {
         key: result[key]
         for key in ("strategy", "selected_attempt", "restarted", "clean_slate_reset")
@@ -114,7 +114,9 @@ def _attempt_metadata(result, directory):
                 "attempt_number", "run_id", "status", "faults_enabled", "fault_injected",
                 "elapsed_seconds",
             )},
-            "directory": (Path(directory).parent / Path(attempt["output_dir"]).name).as_posix(),
+            "directory": (run_directories or {}).get(attempt.get("run_id"),
+                directory if attempt.get("run_id") == result.get("run_id") else
+                (Path(directory).parent / Path(attempt["output_dir"]).name).as_posix()),
             "model_calls": usage.get("model_calls"),
             "total_tokens": usage.get("total_tokens"),
             "estimated_cost_usd": usage.get("estimated_cost_usd"),
@@ -122,14 +124,14 @@ def _attempt_metadata(result, directory):
     return metadata
 
 
-def publish_snapshot(root, data):
+def publish_snapshot(root, data, run_directories=None):
     """Used by migration; publish payloads before the index that references them."""
     name = data["directory"]
     events = []
     attempts = {}
     for event in data["events"]:
         if event["event_type"] == "run.finished":
-            attempts.update(_attempt_metadata(event["payload"], name))
+            attempts.update(_attempt_metadata(event["payload"], name, run_directories))
         metadata = {k: v for k, v in event.items() if k != "payload"}
         write_data(
             root, f"{name}/viewer-payloads/{event['payload_ref']}.js", event["payload"]
@@ -215,14 +217,22 @@ def export_existing(root):
     root.mkdir(parents=True, exist_ok=True)
     install_html(root)
     exported, errors = [], {}
+    snapshots = []
     for database in sorted(root.rglob("events.sqlite")):
         path = database.parent
         name = path.relative_to(root).as_posix()
         if RUN_NAME.fullmatch(name) and not path.is_symlink():
             try:
-                publish_snapshot(root, read_run(root, name))
-                exported.append(name)
+                snapshots.append(read_run(root, name, include_events=False))
             except (OSError, ValueError, sqlite3.Error) as exc:
                 errors[name] = str(exc)
+    run_directories = {s["run_id"]: s["directory"] for s in snapshots if s.get("run_id")}
+    for snapshot in snapshots:
+        name = snapshot["directory"]
+        try:
+            publish_snapshot(root, read_run(root, name), run_directories)
+            exported.append(name)
+        except (OSError, ValueError, sqlite3.Error) as exc:
+            errors[name] = str(exc)
     publish_manifest(root, None)
     return {"exported": exported, "errors": errors}
