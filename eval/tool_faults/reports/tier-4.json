@@ -1,0 +1,1603 @@
+{
+  "tier": "4",
+  "title": "timeout x always-verify, serial, deliberately under-powered (4 cells)",
+  "fault_class": "accidental",
+  "fault_effect": "denial",
+  "generated_at": "2026-11-04T22:05:47-08:00",
+  "clean_control_reference": {
+    "source": "runs/v2-base1..3 (config-matched baseline, pre-ceb5538 layout)",
+    "questions": 4,
+    "reps_per_question": 3,
+    "clean_success_rate": 1.0,
+    "clean_grade_distribution": {
+      "correct": 12,
+      "incorrect": 0,
+      "execution_failed": 0,
+      "ungradeable": 0
+    },
+    "clean_mean_tokens_per_question": {
+      "89": 51627.333333333336,
+      "95": 48853.333333333336,
+      "114": 28340.333333333332,
+      "224": 42895.666666666664
+    },
+    "clean_mean_tokens_overall": 42929.166666666664,
+    "clean_mean_latency_per_question": {
+      "89": 26.215017250312183,
+      "95": 26.778463402957033,
+      "114": 16.502430250363734,
+      "224": 19.257954860959824
+    },
+    "clean_mean_latency_overall": 22.188466441148194,
+    "config_mismatches": [],
+    "config_audit": {
+      "reps": [
+        "runs/v2-base1",
+        "runs/v2-base2",
+        "runs/v2-base3"
+      ],
+      "baseline": "configs/baseline.yaml",
+      "runs_with_a_recorded_config": 150,
+      "run_dirs_without_a_config_record": 6,
+      "config_is_recorded": true,
+      "config_location": "events.sqlite `records` table, key 'config'",
+      "not_in": "run.started payload, which carries no config",
+      "minimum_worker_recorded": {
+        "2": 150
+      },
+      "always_verify_recorded": {
+        "False": 150
+      },
+      "keys_differing_from_baseline": {
+        "verifier": 150
+      },
+      "ignored_keys": [
+        "full_restart",
+        "lead_prompt",
+        "output_dir",
+        "worker_prompt"
+      ],
+      "workers_per_batch_distribution": {
+        "1": 9,
+        "2": 85,
+        "3": 63,
+        "4": 20
+      },
+      "workers_per_batch_mode": 2,
+      "delegation_batches_observed": 177
+    }
+  },
+  "spend": {
+    "total_cost": 0.16888692,
+    "total_tokens": 1209110,
+    "per_million": 0.13967870582494563,
+    "projection": "~$0.20; actual $0.1689 = -16%",
+    "deviation": "see \u00a7I",
+    "prose": "Tier 4 combines the two most expensive conditions and is reported at n=4 as a deliberately under-powered probe rather than an estimate. Verification remains an accurate detector under the timeout manifestation -- every one of the 21 worker-result boundaries belonging to a denied worker was flagged and none of the 12 clean ones were, directionally consistent with Tier 2's 94% recall and 4% false-positive rate at n=10 but not readable as a better rate at this sample size. Detection does not translate into recovery: 3 of 4 cells still died on run_timeout with no answer, because the verifier is diagnostic-only and never rewrites a result or re-plans, so the system correctly identifies that its evidence is missing and then runs out of wall clock anyway. The cost is substantial and compounds with the manifestation: verification is 38-46% of each cell's tokens and adds 95% to 209% over the matched Tier 1 timeout/baseline cell, making this the most expensive condition in the section for the least marginal information."
+  },
+  "notes": [
+    "DELIBERATELY UNDER-POWERED AT n=4, and reduced from 10 questions on purpose. This is the most expensive cell per run in the whole section -- timeout dead time plus verifier calls at two boundaries -- and the least likely to show anything the earlier tiers have not: Tier 1 already establishes what the timeout manifestation does to completion, and Tier 2 already measures detection at n=10 under the immediate manifestation. Targets are the 4 section-6 targets with the highest section-5 token ratios (Q114 4.72, Q224 4.06, Q89 3.53, Q95 3.31). NO DETECTION-RATE CONCLUSION SHOULD BE DRAWN FROM n=4 WITHOUT STATING THE n.",
+    "Run SERIALLY. Like Tier 1 these are wall-clock boundary cells against run_timeout_seconds: 900, so contention would change the dependent variable.",
+    "The matched comparator for marginal verification cost in 8b is Tier 1 (timeout x baseline), not section 5: the manifestation must be held constant for the marginal cost of verification to mean anything.",
+    "ADOPTION GATE: adoption is read from Lead model.response text plus worker terminal status, never from complete_task.uncertainties (structurally always empty under persistent denial). The gate was corrected twice during this section, both times for FALSE NEGATIVES: first it required the literal document ID or the substring 'read', which scored SILENT turns like 'The Snoopy worker has failed three times on budget' that name the document by catalog title and by worker; then it lacked any pattern for the timeout manifestation, which scored SILENT turns like 'The Cowboys article workers have timed out six times'. All tiers in this section were regenerated under the final gate.",
+    "Single-rep magnitudes, and Tier 3's bound (token deviation median 9.7%, max 51.6%; wall clock median 39.8%, max 83.0%) applies to every number here. At n=4 the detection figures have no confidence interval worth quoting."
+  ],
+  "cells": [
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "89",
+      "document_id": "doc_0304",
+      "mode": "timeout",
+      "scenario": "always-verify",
+      "title": "Snoopy",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier4/261105_044032_d9cbed2e68a84412b46134bf452edceb",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 10,
+      "workers_assigned_target": 8,
+      "failures_injected": 25,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0305",
+        "doc_0306"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0305,doc_0306"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 6
+      },
+      "denied_worker_results": 6,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "Worker B confirmed John Lindsay was mayor 1966\u20131973. Worker A timed out, so I'll retry the Snoopy debut year and, in parallel, gather Lindsay's birthday (his term covers the likely debut years, so this is safe to run concurrently).",
+        "Lindsay's birthday is confirmed: November 24, 1921. The doc_0304 read has timed out twice; I'll retry with two workers using different approaches (first page vs. later offsets) to pin down Snoopy's parade debut year."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 16
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 189362,
+      "total_cost": 0.02753522000000001,
+      "reported_total_cost": 0.02753522000000001,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 51627.333333333336,
+      "token_ratio_vs_control": 3.6678632765589287,
+      "signed_delta_tokens": 137734.66666666666,
+      "tokens_per_attempt": {
+        "1": 189362
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 6,
+      "empty_finding_worker_tokens": 35597,
+      "empty_finding_worker_calls": 18,
+      "empty_finding_token_fraction": 0.18798386159841995,
+      "wall_clock_seconds": 900.0354791249847,
+      "control_mean_duration_seconds": 26.215017250312183,
+      "latency_ratio_vs_control": 34.33282040332308,
+      "denied_read_outcomes": {
+        "injected": 25,
+        "full_timeout_burns": 16,
+        "cancelled_mid_read": 9,
+        "injected_to_cancelled_ratio": 2.78,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1449.3476526658667,
+      "dead_time_critical_path_seconds": 996.0802771239626,
+      "dead_time_critical_path_fraction_of_wall": 1.106712235491375,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker1": 178.1,
+        "1:batch2-worker1": 177.8,
+        "1:batch3-worker1": 171.6,
+        "1:batch3-worker2": 178.2,
+        "1:batch4-worker1": 170.8,
+        "1:batch4-worker2": 350.3,
+        "1:batch5-worker1": 111.7,
+        "1:batch5-worker2": 110.9
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 120.68787374475505,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 31853,
+          "output_tokens": 2551,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 24.185109373764135,
+          "cached_input_tokens": 18432,
+          "estimated_cost_usd": 0.00384161,
+          "total_tokens": 34404,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 82725,
+          "output_tokens": 5139,
+          "model_calls": 13,
+          "unreported_calls": 0,
+          "duration_seconds": 54.7907075418625,
+          "cached_input_tokens": 18432,
+          "estimated_cost_usd": 0.012766409999999999,
+          "total_tokens": 87864,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 64628,
+          "output_tokens": 2466,
+          "model_calls": 26,
+          "unreported_calls": 0,
+          "duration_seconds": 41.799533292185515,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.010927200000000001,
+          "total_tokens": 67094,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 82725,
+        "output_tokens": 5139,
+        "model_calls": 13,
+        "unreported_calls": 0,
+        "duration_seconds": 54.7907075418625,
+        "cached_input_tokens": 18432,
+        "estimated_cost_usd": 0.012766409999999999,
+        "total_tokens": 87864,
+        "usage_complete": true
+      },
+      "verifications": [
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The plan correctly decomposes the multi-hop question into (1) Snoopy's Macy's Parade debut year from doc_0304, (2) the NYC mayor serving that year from doc_0305, and (3) that mayor's birthday from doc_0306, with an appropriate dependent second batch. Batch 1 delegates two independent, well-scoped assignments with clear objectives, evidence requirements, and uncertainty checks; worker B covers the 1960s generally rather than only 1968, hedging against the assumed debut year. The plan is saved via memory_write before delegation, the batch respects the 2-4 workers per batch limit, and the delegation pattern matches the system instructions.",
+          "duration_seconds": 2.6786677920026705,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker2",
+          "subject_assigned_document": "doc_0305",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The findings are directly supported by the read of doc_0305. The post-consolidation mayors table (visible in the returned page at offset 0) lists '| 104 | | John Lindsay (1921\u20132000) | January 1, 1966 \u2013 December 31, 1973 |' and '| 103 | | Robert F. Wagner Jr. (1910\u20131991) | January 1, 1954 \u2013 December 31, 1965 |', verbatim as quoted. Since 1968 falls within Lindsay's term, the identification of Lindsay as the 1968 mayor and the 1960s split between Wagner and Lindsay follows arithmetically from the term dates. The corroborating prose on longest-serving mayors (Wagner 1954\u20131965) also appears in the article. The worker appropriately flagged that 'John Vliet Lindsay' and the 1969 party-switch date are not stated verbatim in the article, and noted the numbering-controversy appendix without overstating its effect on 1960s mayors. No acting mayor is listed for the 1960s in the table, consistent with the finding. The result addresses the full assignment within budget.",
+          "duration_seconds": 4.292163874953985,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker1",
+          "subject_assigned_document": "doc_0304",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker's task was to return Snoopy's Macy's Thanksgiving Day Parade balloon debut year with a verbatim supporting passage from doc_0304. Both read_document attempts for doc_0304 (offset 0) failed with TimeoutError, so no article content was ever retrieved. The submitted result has empty findings, an empty document_ids list, and no uncertainties, and only two tool calls of the fifteen-call budget were consumed. No evidence was gathered and the assignment is not substantively completed; the stop reason (TimeoutError) records a tool failure rather than a supported conclusion.",
+          "duration_seconds": 4.730869583087042,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's response is a sound, evidence-supported continuation of the saved plan. Worker A's timeout on doc_0304 was treated as missing evidence and retried with a self-contained prompt matching the original objective. Worker B's supported finding (John Lindsay, term January 1, 1966 \u2013 December 31, 1973, verbatim from doc_0305) is correctly carried forward: the Lead delegates Lindsay's birth date to doc_0306 while explicitly embedding the established term dates and asking the worker to confirm them. Running the Lindsay birthday task concurrently with the Snoopy retry is a reasonable hedge, since Lindsay's term covers the likely debut years mentioned in the plan, and the batch respects the minimum of 2 workers per delegation batch. No contradictions or unsupported assumptions are introduced; the plan and assignments follow from the visible question, catalog, and prior results.",
+          "duration_seconds": 6.477835790952668,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker2",
+          "subject_assigned_document": "doc_0306",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The result fully addresses the assignment using evidence from the actual read of doc_0306. The birth date (November 24, 1921) is supported by the infobox passage 'Born | John Vliet Lindsay ( 1921-11-24 ) November 24, 1921 New York City , U.S.' and corroborated by the article lead 'November 24, 1921 \u2013 December 19, 2000'. The mayoral term (January 1, 1966 \u2013 December 31, 1973) matches the infobox and the body sentence 'as mayor of New York from January 1966 to December 1973', and the first-day-of-term transit strike passage independently corroborates the January 1, 1966 start. The age arithmetic check (aged 79 on December 19, 2000) is consistent with the birth date. Both facts match the Lead's supplied context. The worker accurately disclosed that only the first page (~24,000 of 37,012 characters) was read, and no significant uncertainties remain since the needed facts were established on the retrieved page.",
+          "duration_seconds": 3.0536863340530545,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker1",
+          "subject_assigned_document": "doc_0304",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker result is not a completed, supported outcome. Both read_document calls failed with TimeoutError, so no article content from doc_0304 was ever retrieved; findings is empty, document_ids is empty, and no debut year or supporting passage for Snoopy's Macy's Thanksgiving Day Parade balloon was established. Per the task constraints, a successful completion requires at least one document successfully read, and an empty conclusion with an unresolved material gap is not a sufficiently complete result. The stop_reason (TimeoutError) correctly reflects that the failure was due to tool timeouts rather than a substantive answer, but no evidence-backed findings were returned for the Lead to use.",
+          "duration_seconds": 3.3514163329964504,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's continuation is logically consistent with the visible question, catalog, and prior results. The only unresolved evidence gap is Snoopy's Macy's Parade debut year from doc_0304, whose reads timed out twice; the Lead correctly treats those failures as missing evidence and retries the same objective with two differently-scoped workers (one starting at offset 0, one probing later pages via next_offset), a justified redundancy given the concrete tool failures. The batch respects the minimum of 2 workers per delegation batch (2 workers, within the 4-worker cap), each assignment is self-contained with the document_id, objective, search strategy, and required return format, and the established Lindsay finding (mayor 1966\u20131973, birthday November 24, 1921) is properly carried forward. Budget remains adequate (third batch of 6, third lead turn of 10), and no unsupported assumptions or contradictions are introduced.",
+          "duration_seconds": 3.274704625015147,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch3-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch3-worker2",
+          "subject_assigned_document": "doc_0304",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker made two read_document(doc_0304, offset=0) attempts and both failed with TimeoutError, so no article content was ever retrieved. The submitted result has empty findings, an empty document_ids list (violating the requirement of listing at least one successfully read document), and no uncertainties beyond a bare 'TimeoutError: ' stop reason. The assignment's objective\u2014finding the year of Snoopy's Macy's Thanksgiving Day Parade balloon debut with a verbatim supporting passage\u2014was not addressed at all, so the result is incomplete and unsupported by any evidence.",
+          "duration_seconds": 2.656031708000228,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "batch3-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch3-worker1",
+          "subject_assigned_document": "doc_0304",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker completed with an empty result: both read_document attempts returned TimeoutError, no article content was ever retrieved, and the submitted findings and document_ids are empty. No evidence supports any finding about the year Snoopy debuted as a Macy's Parade balloon, and the assignment (return the debut year, verbatim passage, and document ID) was not substantively completed. The worker also had budget remaining (2 of 15 tool calls used, turn 3 of 5 available), so the failure was not forced by exhausted limits; at minimum, the uncertainty that no pages could be inspected should have been stated. Appropriate handling would have required reporting the tool failures as unresolved uncertainties, but as submitted this is an unsupported, incomplete result.",
+          "duration_seconds": 3.373947500018403,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's continuation is a logically consistent response to the visible context. Both batch-3 workers on doc_0304 failed with TimeoutError and returned no content, so Snoopy's parade debut year remains the sole evidence gap, and the Lead correctly treats these failures as missing evidence rather than fabricating a year. Retrying doc_0304 is the only available avenue, since doc_0305 (mayor list) and doc_0306 (Lindsay) cannot supply the debut year; the new assignments add justified redundancy via persistent-retry instructions and different offsets, and explicitly require the worker to report failure clearly if all reads fail. Budget remains within limits (this would be batch 4 of 6, within the 2-4 workers per batch requirement), the established Lindsay findings (mayor 1966-1973, born November 24, 1921) are carried forward in the Lead's reasoning, and no unsupported assumptions or contradictions are introduced. The plan follows from the question, catalog, and prior results.",
+          "duration_seconds": 8.247860417002812,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch4-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker1",
+          "subject_assigned_document": "doc_0304",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The result is incomplete and unsupported. Both read_document attempts (offset 0) timed out, and the worker stopped after only two attempts despite the assignment explicitly requiring at least 3-4 retries at different offsets before giving up. The submitted output has empty findings, empty document_ids, empty uncertainties, and no clear report that all reads failed \u2014 the stop_reason 'TimeoutError' alone does not constitute a substantive completion. Even under the 'report read failure' contingency, the assignment required stating what was checked and what remains unknown (e.g., retries attempted, offsets tried), which is absent. No evidence was gathered, so no part of the objective (debut year of Snoopy's Macy's parade balloon) was addressed.",
+          "duration_seconds": 2.2414294169284403,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "batch4-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker2",
+          "subject_assigned_document": "doc_0304",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker never produced a completed result. All four read_document attempts (two rounds of parallel reads at offsets 0 and 15000 on doc_0304) returned TimeoutError, and the worker did not call complete_task as required. The returned output is an empty failure record: findings are empty, document_ids is empty, uncertainties are empty, and stop_reason is 'TimeoutError'. Per the assignment ('If all reads fail, report that clearly') and the pipeline rules (reserve one tool call and model turn for complete_task, return findings even when evidence is missing), the worker should have submitted a complete_task report stating that all reads failed, so the Lead could know the assignment was not accomplished. An empty conclusion with no submitted result is not a completed, supported result.",
+          "duration_seconds": 4.477621624944732,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": null,
+          "error": "ValidationError: 1 validation error for VerificationDecision\n  Invalid JSON: EOF while parsing a string at line 1 column 165 [type=json_invalid, input_value='{\"verified\": true, \"diag...ocument that can supply', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.14/v/json_invalid",
+          "diagnostic": "Verification unavailable; no consistency verdict was obtained.",
+          "duration_seconds": 5.962684583035298,
+          "subject_held_denial": false
+        }
+      ],
+      "detection": {
+        "denied_flagged": 6,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 2,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 4,
+        "plan_null": 1,
+        "cell_detected": true
+      },
+      "injections_per_attempt": {
+        "1": 25
+      },
+      "verification_by_boundary": {
+        "lead_plan": {
+          "calls": 5,
+          "verified_true": 4,
+          "verified_false": 0,
+          "verified_null": 1,
+          "mentions_denial": 5,
+          "errors": 1
+        },
+        "worker_result": {
+          "calls": 8,
+          "verified_true": 2,
+          "verified_false": 6,
+          "verified_null": 0,
+          "mentions_denial": 7,
+          "errors": 0
+        }
+      },
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 250,
+        "dangling_payload_refs": 0,
+        "artifact_files": 217,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0304",
+          "doc_0305",
+          "doc_0306"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 97183,
+      "matched_baseline_cost": 0.014603819999999997,
+      "matched_baseline_verdict": "DEGRADED",
+      "matched_baseline_ratio": 1.882394338916078
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "95",
+      "document_id": "doc_0327",
+      "mode": "timeout",
+      "scenario": "always-verify",
+      "title": "Jackie Robinson",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier4/261105_045533_ddf0f76cf0c145d5b0d3da5bde979d9e",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 9,
+      "workers_assigned_target": 6,
+      "failures_injected": 18,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0181",
+        "doc_0325",
+        "doc_0326"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0181,doc_0325,doc_0326"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 4
+      },
+      "denied_worker_results": 4,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "Worker 1 confirmed the Braves beat the Astros in the 2021 World Series. Worker 2 timed out, so I'll retry the Robinson task and add a corroborating worker on the 2021 Braves season.",
+        "The 2021 Braves\u2013Astros result is now doubly confirmed. The Robinson article (doc_0327) has timed out twice \u2014 I'll retry once more, instructing the worker to read only the lead/early pages where the debut year appears."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 12
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 350484,
+      "total_cost": 0.04711149,
+      "reported_total_cost": 0.04711149,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 48853.333333333336,
+      "token_ratio_vs_control": 7.174208515283842,
+      "signed_delta_tokens": 301630.6666666667,
+      "tokens_per_attempt": {
+        "1": 350484
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 5,
+      "empty_finding_worker_tokens": 105801,
+      "empty_finding_worker_calls": 17,
+      "empty_finding_token_fraction": 0.3018711267846749,
+      "wall_clock_seconds": 900.0432004580507,
+      "control_mean_duration_seconds": 26.778463402957033,
+      "latency_ratio_vs_control": 33.61071122395554,
+      "denied_read_outcomes": {
+        "injected": 18,
+        "full_timeout_burns": 12,
+        "cancelled_mid_read": 6,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 970.0769755432143,
+      "dead_time_critical_path_seconds": 839.0213019601404,
+      "dead_time_critical_path_fraction_of_wall": 0.9322011449374263,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker2": 177.9,
+        "1:batch2-worker1": 176.8,
+        "1:batch3-worker1": 177.9,
+        "1:batch4-worker1": 175.4,
+        "1:batch5-worker1": 131.1,
+        "1:batch5-worker2": 131.1
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 104.10681779531296,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 34467,
+          "output_tokens": 2520,
+          "model_calls": 6,
+          "unreported_calls": 0,
+          "duration_seconds": 18.274029417079873,
+          "cached_input_tokens": 18432,
+          "estimated_cost_usd": 0.00421821,
+          "total_tokens": 36987,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 134706,
+          "output_tokens": 4467,
+          "model_calls": 12,
+          "unreported_calls": 0,
+          "duration_seconds": 43.519027621950954,
+          "cached_input_tokens": 18432,
+          "estimated_cost_usd": 0.020227560000000002,
+          "total_tokens": 139173,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 171636,
+          "output_tokens": 2688,
+          "model_calls": 28,
+          "unreported_calls": 0,
+          "duration_seconds": 42.38944450102281,
+          "cached_input_tokens": 36864,
+          "estimated_cost_usd": 0.02266572,
+          "total_tokens": 174324,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 134706,
+        "output_tokens": 4467,
+        "model_calls": 12,
+        "unreported_calls": 0,
+        "duration_seconds": 43.519027621950954,
+        "cached_input_tokens": 18432,
+        "estimated_cost_usd": 0.020227560000000002,
+        "total_tokens": 139173,
+        "usage_complete": true
+      },
+      "verifications": [
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The plan correctly decomposes the question into two independent hops: confirming the year the Braves beat the Astros in the World Series (doc_0181) and the year Jackie Robinson joined the Brooklyn Dodgers (doc_0327), followed by computing the year difference. The plan was saved with memory_write before delegation as required. The parallel batch contains two workers (meeting the minimum), each assigned exactly one document_id from the catalog, with self-contained prompts that include the objective, expected evidence (supporting passages, other Braves wins to confirm recency), and scope boundaries. Notably, the Robinson assignment appropriately flags the potential 1945/1946 signing versus 1947 major-league-debut ambiguity, and the plan's arithmetic (2021 \u2212 1947 = 74) is consistent with the question's framing. No material deviations or unsupported assumptions are present.",
+          "duration_seconds": 2.396609541028738,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker1",
+          "subject_assigned_document": "doc_0181",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The result directly answers the assignment using the one read of doc_0181. The Results table row '| 2021 | Atlanta Braves (10, 4\u20136) | Brian Snitker | 4\u20132 | Houston Astros (4, 1\u20133) | Dusty Baker |' establishes the Braves\u2013Astros series and year. Other Braves wins (1914 Boston Braves 4\u20130 over Philadelphia Athletics; 1957 Milwaukee Braves 4\u20133 over Yankees; 1995 Atlanta Braves 4\u20132 over Cleveland) are each corroborated by visible table rows, and the franchise row 'Boston / Milwaukee / Atlanta Braves | 4 | 6 | 10 | .400' is consistent with four wins (1914, 1957, 1995, 2021) and six losses (1948, 1958, 1991, 1992, 1996, 1999), confirming 2021 as the most recent Braves title. The worker appropriately flagged that the snapshot extends through 2026 (e.g., Milwaukee Brewers as most recent champion), noting it does not affect the Braves' most recent win. Findings, document_ids, and uncertainties are complete and internally consistent.",
+          "duration_seconds": 5.377029457944445,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker2",
+          "subject_assigned_document": "doc_0327",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker never obtained any article content: both read_document calls for doc_0327 failed with TimeoutError, no pages were successfully read, and the result contains empty findings, an empty document_ids list, and no uncertainties. No evidence supports any answer to the assignment (the year Robinson joined the Brooklyn Dodgers, the supporting passage, or the signing/debut distinction), and the system prompt requires at least one successful document read for a valid completion. This is an incomplete, unsupported result rather than a completed finding with stated limitations.",
+          "duration_seconds": 1.3272721249377355,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's response is a logically consistent follow-up to batch 1's results. Worker 1 successfully established the 2021 Braves\u2013Astros World Series with supporting table rows from doc_0181, while Worker 2 failed with a TimeoutError and returned no evidence, so the Robinson finding remains a genuine gap that must be filled. Retrying doc_0327 with the same well-scoped assignment \u2014 including the 1945/1946 signing-versus-1947 major-league-debut distinction \u2014 directly addresses the missing hop. Adding a corroborating worker on doc_0325 (2021 Atlanta Braves season) is a reasonable, optional verification of the established 2021 result and does not duplicate other work materially. Both calls are independent and correctly batched in parallel, the batch contains two workers (meeting the minimum of 2 per batch), each is assigned exactly one catalog document_id, and the delegation stays within the configured limits (this is the second batch of at most 6, on the third lead turn of 10). The prompts remain self-contained with objectives, desired evidence, scope boundaries, and requests for supporting passages and document IDs. No unsupported assumptions, contradictions, or task deviations are present.",
+          "duration_seconds": 2.679987790994346,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker2",
+          "subject_assigned_document": "doc_0325",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The worker's findings are fully supported by the actual tool results. The article's lead passage states the Braves 'defeat the Houston Astros in six games, winning their first World Series since 1995,' and the infobox lists 'World Series champions.' The postseason game log read at offset 24000 contains the 'WS : 4\u20132' table confirming Game 6 on November 2 @ Astros won 7\u20130 (record 4\u20132, Fried winning pitcher), matching the claimed clinching date and series score exactly. The returned document_ids (doc_0325) match both successful reads, all three requested deliverables (year/opponent, supporting passage, document ID) are provided, no uncertainties remain, and the complete_task call was made as the sole tool call in a separate response. The result directly addresses the assigned scope (World Series result only) without unsupported extrapolation.",
+          "duration_seconds": 4.800268041086383,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker1",
+          "subject_assigned_document": "doc_0327",
+          "verified": false,
+          "error": null,
+          "diagnostic": "Both read_document attempts for doc_0327 failed with TimeoutError, so no article content was ever retrieved and no document was successfully read. The worker then called complete_task with empty findings, an empty document_ids list, and empty uncertainties, only noting the timeout in stop_reason. Per the task requirements, a completed result must include evidence-backed findings and explicitly state unresolved limitations; an empty result with no stated uncertainty or scope-of-reading report is not a substantive completion. The assignment (year Robinson signed with the Dodgers organization vs. joined the Brooklyn Dodgers, with supporting passages and document ID) is entirely unaddressed and unsupported by any retrieved evidence.",
+          "duration_seconds": 2.2039195420220494,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": false,
+          "error": null,
+          "diagnostic": "The retry itself is well-motivated and well-scoped: doc_0327 failed twice with TimeoutError, so retrying the Robinson assignment with instructions to read only the lead/early pages (offset 0, plus at most one more page) directly addresses the missing evidence hop while the 2021 Braves\u2013Astros result is already doubly confirmed by doc_0181 and doc_0325 workers. However, the delegation violates an explicit configured constraint stated in the system prompt and given precedence over other guidance: 'Spawn at least 2 workers in each delegation batch.' The actual_output issues only a single run_blocking_subagent call, forming a one-worker batch, whereas the prior batch verifications explicitly noted compliance with the two-worker minimum. Since this turn constitutes a delegation batch, the plan materially deviates from the configured limits the Lead is required to follow.",
+          "duration_seconds": 6.628129833959974,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch3-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch3-worker1",
+          "subject_assigned_document": "doc_0327",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker made two read_document attempts on doc_0327 (offset 0), both of which failed with TimeoutError, and submitted a failed result with empty findings, no document_ids, and no uncertainties. The assigned objective\u2014determining the year Jackie Robinson joined the Brooklyn Dodgers with a supporting passage and distinguishing the 1945 signing (Montreal Royals) from the 1947 MLB debut\u2014was not addressed at all: no article content was ever retrieved, so no conclusion is supported by evidence. Per the review criteria, an empty conclusion with an unresolved material gap is not a completed, supported worker result. The empty findings, document_ids, and uncertainties fields also do not satisfy the requirement to state what was checked and what remains unknown.",
+          "duration_seconds": 1.7225305419415236,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's response directly addresses the two open needs visible in the context: doc_0327 (Jackie Robinson) has failed three times with TimeoutError, so the Robinson finding remains a genuine evidence gap, and the retry is appropriately constrained (read only offset 0) given the repeated timeouts. The second worker on doc_0326 provides corroboration of the 2021 Braves\u2013Astros result from the Astros' perspective, which also resolves the previous batch-3 violation by meeting the 'at least 2 workers per batch' minimum, as the Lead explicitly notes. Both assignments use catalog document IDs (doc_0327, doc_0326), contain self-contained prompts with objectives, targeted reading instructions for the large articles, desired evidence (year, supporting passage, signing-vs-debut distinction for Robinson), scope boundaries, and requests for document IDs read. The doc_0326 task is somewhat redundant with the doubly confirmed 2021 result, but it is framed as verification, is consistent with the two-worker constraint, and does not materially deviate from the plan. The planned arithmetic (2021 \u2212 1947 = 74) remains consistent with the question. No unsupported assumptions or contradictions are present.",
+          "duration_seconds": 3.279604082927108,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch4-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker2",
+          "subject_assigned_document": "doc_0326",
+          "verified": null,
+          "error": "ValidationError: 1 validation error for VerificationDecision\n  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='```json\\n{\"verified\": fa...was not located.\"}\\n```', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.14/v/json_invalid",
+          "diagnostic": "Verification unavailable; no consistency verdict was obtained.",
+          "duration_seconds": 5.609437374980189,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch4-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker1",
+          "subject_assigned_document": "doc_0327",
+          "verified": false,
+          "error": null,
+          "diagnostic": "Both read_document calls for doc_0327 at offset 0 returned TimeoutError, so no article content was ever retrieved. The submitted output has empty findings, an empty document_ids list, and no supporting passage for the assigned objective (determining the year Robinson joined the Brooklyn Dodgers). Per the task rules, a successful completion requires at least one successfully read document; no evidence was established, and the result does not address the assignment. The worker also did not call complete_task with any stated uncertainties before termination. An empty result with no retrieved evidence is not a completed, supported worker result.",
+          "duration_seconds": 4.395925041055307,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "At this point in the transcript, only one evidence hop remains unresolved: the year Jackie Robinson joined the Brooklyn Dodgers (doc_0327 has failed four consecutive times with TimeoutError). The 2021 Braves-over-Astros World Series result is already doubly established by successful workers on doc_0181 and doc_0325, so the failed doc_0326 corroboration attempt is not a material gap. The Lead's response correctly targets the single missing fact, uses the catalog document_id doc_0327, keeps the reads tightly constrained (exactly one read_document call at offset 0) in response to the repeated timeouts, and duplicates the assignment across two workers \u2014 which both satisfies the 'at least 2 workers per batch' constraint violated in batch 3 and plausibly maximizes the chance one succeeds. This is batch 5 of at most 6 and roughly the sixth lead turn of 10, so budget remains for a final retry and answer submission. The prompts remain self-contained with objective, desired evidence (year, supporting passage, signing-vs-debut distinction), and document ID reporting. No unsupported assumptions or contradictions are introduced; duplicating one assignment to meet the batch minimum is an acceptable strategy given a persistently failing article.",
+          "duration_seconds": 3.129566374933347,
+          "subject_held_denial": false
+        }
+      ],
+      "detection": {
+        "denied_flagged": 4,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 2,
+        "clean_null": 1,
+        "plan_flagged": 1,
+        "plan_passed": 4,
+        "plan_null": 0,
+        "cell_detected": true
+      },
+      "injections_per_attempt": {
+        "1": 18
+      },
+      "verification_by_boundary": {
+        "lead_plan": {
+          "calls": 5,
+          "verified_true": 4,
+          "verified_false": 1,
+          "verified_null": 0,
+          "mentions_denial": 5,
+          "errors": 0
+        },
+        "worker_result": {
+          "calls": 7,
+          "verified_true": 2,
+          "verified_false": 4,
+          "verified_null": 1,
+          "mentions_denial": 5,
+          "errors": 1
+        }
+      },
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 238,
+        "dangling_payload_refs": 0,
+        "artifact_files": 209,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0181",
+          "doc_0325",
+          "doc_0326",
+          "doc_0327"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 136105,
+      "matched_baseline_cost": 0.019521760000000003,
+      "matched_baseline_verdict": "DEGRADED",
+      "matched_baseline_ratio": 2.7859920851528384
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "114",
+      "document_id": "doc_0380",
+      "mode": "timeout",
+      "scenario": "always-verify",
+      "title": "Serj Tankian",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier4/261105_041233_e8503a144f3142be825f7e25d9fe3d4c",
+      "status": "budget_exhausted",
+      "stop_reason": "run_timeout",
+      "termination_mechanism": "run_timeout",
+      "grade_bucket": "execution_failed",
+      "graded_correct": false,
+      "correct_field": false,
+      "answer": null,
+      "extracted_answer": null,
+      "grade_method": "not_answered",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 5,
+      "workers_spawned": 10,
+      "workers_assigned_target": 8,
+      "failures_injected": 27,
+      "dependency_verdict": "DEGRADED",
+      "substitute_documents_read": [
+        "doc_0379"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0379"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 6
+      },
+      "denied_worker_results": 6,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "abstained",
+      "lead_quotes": [
+        "Worker 1 (Serj Tankian birth date) failed with a timeout, so I need to retry that. I'll also add a second worker to check doc_0379 for any other Louvre painting thefts, to rule out alternative candidates.",
+        "The doc_0380 worker has timed out twice. I'll retry with two parallel workers on doc_0380 using different reading strategies to maximize the chance one succeeds.",
+        "doc_0380 has failed 6 times with timeouts. I'll try one more batch with different offsets in case the failure is offset-specific; if it fails again, I'll rely on the established theft date (21 August 1911) and the well-documented fact that Serj Tankian was born 21 August 1967 (1911 + 56 = 1967, same day).",
+        "The verifier correctly notes the birth date remains unevidenced. I'll try one more batch on doc_0380 \u2014 the timeouts may be transient."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 19
+      },
+      "induced_malformed_errors": {},
+      "induced_malformed_total": 0,
+      "deepest_stage": "7_judge",
+      "deepest_stage_evidence": "Run produced no answer, so the judge recorded method=not_answered and runner stamped correct:false against a control that was correct. The fault reached the grade as an EXECUTION FAILURE, not as a wrong answer.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [
+          {
+            "agent": "batch5-worker1"
+          },
+          {
+            "agent": "batch5-worker2"
+          }
+        ],
+        "total": 0
+      },
+      "total_tokens": 244016,
+      "total_cost": 0.03548065999999998,
+      "reported_total_cost": 0.03548065999999998,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 28340.333333333332,
+      "token_ratio_vs_control": 8.610202185342445,
+      "signed_delta_tokens": 215675.66666666666,
+      "tokens_per_attempt": {
+        "1": 244016
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 6,
+      "empty_finding_worker_tokens": 36378,
+      "empty_finding_worker_calls": 18,
+      "empty_finding_token_fraction": 0.14908038817126745,
+      "wall_clock_seconds": 900.0388824590482,
+      "control_mean_duration_seconds": 16.502430250363734,
+      "latency_ratio_vs_control": 54.53977800870937,
+      "denied_read_outcomes": {
+        "injected": 27,
+        "full_timeout_burns": 19,
+        "cancelled_mid_read": 8,
+        "injected_to_cancelled_ratio": 3.38,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1487.4931399138845,
+      "dead_time_critical_path_seconds": 951.6065464978984,
+      "dead_time_critical_path_fraction_of_wall": 1.0572949291901248,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker1": 178.4,
+        "1:batch2-worker1": 176.9,
+        "1:batch3-worker1": 178.0,
+        "1:batch3-worker2": 177.8,
+        "1:batch4-worker1": 296.3,
+        "1:batch4-worker2": 236.2,
+        "1:batch5-worker1": 122.1,
+        "1:batch5-worker2": 121.9
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 104.99287016491871,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 32701,
+          "output_tokens": 2578,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 18.925794457900338,
+          "cached_input_tokens": 18432,
+          "estimated_cost_usd": 0.00398231,
+          "total_tokens": 35279,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 97219,
+          "output_tokens": 4958,
+          "model_calls": 13,
+          "unreported_calls": 0,
+          "duration_seconds": 48.59563024993986,
+          "cached_input_tokens": 16128,
+          "estimated_cost_usd": 0.01512649,
+          "total_tokens": 102177,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 103082,
+          "output_tokens": 3478,
+          "model_calls": 30,
+          "unreported_calls": 0,
+          "duration_seconds": 37.55278770904988,
+          "cached_input_tokens": 6912,
+          "estimated_cost_usd": 0.016371860000000002,
+          "total_tokens": 106560,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 97219,
+        "output_tokens": 4958,
+        "model_calls": 13,
+        "unreported_calls": 0,
+        "duration_seconds": 48.59563024993986,
+        "cached_input_tokens": 16128,
+        "estimated_cost_usd": 0.01512649,
+        "total_tokens": 102177,
+        "usage_complete": true
+      },
+      "verifications": [
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's plan directly addresses the question by decomposing it into two independent evidence needs: Serj Tankian's exact birth date (doc_0380) and the exact theft date of a painting from the Louvre (doc_0379, plausibly the Mona Lisa). The plan was saved via memory_write before delegation, both workers were spawned in one parallel batch with self-contained prompts including the assigned document_id, entity qualifiers, and desired evidence (exact dates, supporting passages, document IDs, identity confirmation). Each worker is assigned exactly one catalog document, the batch respects the 4-workers-per-batch limit, and the arithmetic check (birth year minus 56 vs. theft year) is reserved for the Lead as synthesis. The delegation strategy is appropriate and within configured constraints.",
+          "duration_seconds": 1.7366585829295218,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker2",
+          "subject_assigned_document": "doc_0379",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The result directly addresses the assignment and is fully supported by the single page of doc_0379 actually read. The exact theft date (21 August 1911) matches the article's '1911 theft' section verbatim, as do the thief details (Vincenzo Peruggia, Louvre employee who helped build the glass case, locked himself in, theft during closure), the Apollinaire/Picasso suspicion episode, the two-year concealment and attempt to sell to Uffizi director Giovanni Poggi, the 4 January 1914 return, and the six-month prison sentence. The lead section's mention of the '1911 theft by Vincenzo Peruggia' is also accurately quoted. The Louvre-presence confirmation is supported by the article's statements that the painting went on permanent display at the Louvre in 1797 and was 'stolen from the Louvre,' with the worker correctly noting the Franco-Prussian War removal as the only earlier temporary removal. The uncertainties are appropriate and non-material: the Valfierno account is correctly flagged as an unverified 1932 claim, and the missing time-of-day detail is accurately characterized. Budget usage was efficient (one read plus complete_task), and the document_ids list correctly reflects what was read.",
+          "duration_seconds": 2.8336426250170916,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker1",
+          "subject_assigned_document": "doc_0380",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker never successfully read the assigned article: both read_document calls on doc_0380 failed with TimeoutError, consuming the tool budget before any content was retrieved. The submitted result has empty findings, an empty document_ids list (violating the requirement to list successfully read documents), and no uncertainties, so it provides no evidence for Serj Tankian's birth date or identity confirmation. An empty, failed result with no gathered evidence is not a completed or supported outcome.",
+          "duration_seconds": 2.481011916999705,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's follow-up plan is a reasonable, constraint-compliant response to the batch 1 results actually received. Worker 1 (doc_0380, Serj Tankian birth date) failed with a TimeoutError and empty findings, so retrying that assignment is justified and necessary \u2014 the birth date is a required intermediate fact for the 56-year computation and no evidence for it was obtained. The added second worker on doc_0379 to scan for any other Louvre painting thefts addresses a genuine ambiguity (whether a painting other than the Mona Lisa fits the temporal constraint), and doc_0379 is the only catalog document plausibly containing Louvre theft history. Both run_blocking_subagent calls form one parallel batch of exactly 2 workers, satisfying the minimum-2-workers and 4-worker-per-batch limits, and each worker is assigned exactly one catalog document_id with a self-contained prompt including the objective, entity qualifiers, and requested evidence format. The delegation strategy follows from the visible context: the successful worker 2 already established the 21 August 1911 theft date with supporting passages, so the remaining gaps are the birth date and the exclusivity check, which is precisely what this batch targets. No contradictions with the received evidence or the configured limits are present.",
+          "duration_seconds": 3.831020583049394,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker2",
+          "subject_assigned_document": "doc_0379",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The worker read the entire assigned article (offsets 0\u201324000, 24000\u201348000, 48000\u2013end with null next_offset, totaling the full 65,829 characters) within budget and completed via complete_task. Finding (1) is directly supported: the '1911 theft' section states 'On 21 August 1911, the painting was stolen from the Louvre,' attributed to Vincenzo Peruggia, with recovery and return on 4 January 1914, matching the article text. Finding (2) is accurately reported: the article body contains no other completed Louvre theft incidents or theft dates; the worker correctly distinguished the undated attempted razor-blade theft, the avoided Nazi looting, the fictional Minions theft, and dated vandalism attacks (30 Dec 1956, 2 Aug 2009, 29 May 2022, 28 Jan 2024, and 21 Apr 1974 in Tokyo) from actual thefts. Uncertainties are precise and appropriately scoped. The result addresses the full assignment and is consistent with the actual tool outputs.",
+          "duration_seconds": 4.404853333020583,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker1",
+          "subject_assigned_document": "doc_0380",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker made two read_document calls for doc_0380 (Serj Tankian), both of which failed with TimeoutError, so no article content was ever retrieved. The returned result is an empty completion: findings are empty, document_ids is empty (no successful read occurred), and no birth date, supporting passage, or entity-identity confirmation was provided. The status 'failed' with stop_reason 'TimeoutError' honestly reports the tool failures, but the assignment objective \u2014 finding Serj Tankian's exact date of birth with supporting evidence from the assigned article \u2014 was not substantively addressed in any way. Per the review criteria, an empty conclusion with no supported findings is not a completed, supported worker result; the appropriate response would have been either successful reads or a completion that explicitly reported the inability to read the article and what remains unknown, but even that would not satisfy the task's evidence requirement. The result is therefore incomplete and unsupported.",
+          "duration_seconds": 5.002871082979254,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's follow-up plan is logically consistent with the received context. Both prior attempts to read doc_0380 (Serj Tankian) failed with TimeoutError and empty findings, so the birth date remains the sole outstanding evidence need for the 56-year computation, while batch2-worker2 already established that the only real Louvre theft in doc_0379 is the Mona Lisa's theft on 21 August 1911. Retrying doc_0380 is therefore the necessary and targeted next step. The batch contains exactly 2 parallel workers (satisfying the minimum-2 and within the 4-per-batch limit), both on turn 3 of 10 and batch 3 of 6, each assigned one document_id from the catalog with self-contained prompts that include the entity qualifiers (activist, songwriter, System of a Down) and specify the desired evidence (exact birth date, supporting passage, document ID). Instructing workers to be efficient with a single read at offset 0 and prioritize speed directly addresses the timeout failure mode. The duplication of doc_0380 across two workers is a justified redundancy/retry strategy for a repeatedly failing evidence need, not avoidable overlap, and the minor stylistic overstatement that the two prompts use 'different reading strategies' (they are nearly identical, one allowing a follow-up read) is not material to plan validity.",
+          "duration_seconds": 4.784550125012174,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch3-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch3-worker2",
+          "subject_assigned_document": "doc_0380",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker was assigned to extract Serj Tankian's exact birth date and confirm his roles as activist and songwriter from doc_0380. Both read_document calls (offset 0) failed with TimeoutError, so no article content was ever retrieved: findings are empty, document_ids is empty, and no evidence supports any conclusion. The result is an incomplete failure with no substantive findings, rather than a supported result with appropriately stated uncertainty.",
+          "duration_seconds": 2.247822209028527,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "batch3-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch3-worker1",
+          "subject_assigned_document": "doc_0380",
+          "verified": false,
+          "error": null,
+          "diagnostic": "No article content was ever retrieved: both read_document calls on doc_0380 (offset 0) returned TimeoutError, consuming 2 of the 15 tool calls. The submission is empty (findings=\"\", document_ids=[], uncertainties=[]), so it contains no supported findings about Serj Tankian's birth date and no successfully read document, which is required for a valid complete_task result. The failure is honestly reported via stop_reason, but an empty result is not a completed, evidence-backed worker result; the objective (exact date of birth with supporting passage and document ID) remains entirely unaddressed.",
+          "duration_seconds": 2.7419657499995083,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": false,
+          "error": null,
+          "diagnostic": "The delegation portion of the plan is sound: doc_0380 has failed six read attempts across three batches, so a retry with different offsets is a justified, targeted response, and the batch of exactly 2 workers on one catalog document_id respects the configured limits. However, the plan contains a material deviation: the Lead explicitly states a fallback to 'rely on... the well-documented fact that Serj Tankian was born 21 August 1967' if the workers fail again. This birth date appears nowhere in the supplied context \u2014 every attempt to read doc_0380 returned TimeoutError with empty findings, and no worker or article has ever established Tankian's birth date or identity. The task's constraints require the final answer to be supported by article text and worker findings, with failed worker results treated as missing evidence; planning to fill this gap with the Lead's own asserted prior knowledge means the 'exactly 56 years before' arithmetic (1911 theft + 56 = 1967, same day) would rest on an unevidenced premise. While the doc_0379 theft date (21 August 1911) is well supported, the second required hop is not, and the plan as stated would produce an unsupported answer rather than assigning a further evidence-grounded follow-up.",
+          "duration_seconds": 9.835195249994285,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch4-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker1",
+          "subject_assigned_document": "doc_0380",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker made four read_document attempts (offsets 20000, 0, 30000, 10000) and all returned TimeoutError, so no article content was ever retrieved. The complete_task result contains empty findings, an empty document_ids list (no document was successfully read, violating the requirement of at least one successful read), no supporting passage for the birth date, and no substantive uncertainties or gap description. The assignment's core objective \u2014 finding Serj Tankian's exact date of birth with supporting evidence \u2014 is entirely unresolved, and the tool budget was consumed by failed calls without completing the task. While the failure is honestly reported via the 'failed' status and TimeoutError stop reason, the result is an incomplete, unsupported outcome rather than an acceptable 'uncertainty alongside useful findings' case, since nothing of substance was established.",
+          "duration_seconds": 2.1689077500486746,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "batch4-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker2",
+          "subject_assigned_document": "doc_0380",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker's result is not a completed, supported finding. All three read_document calls (offsets 40000, 0, and 20000) returned TimeoutError, no article content was ever retrieved, and the completion reports empty findings, an empty document_ids list, and empty uncertainties. The assignment's core objective\u2014returning Serj Tankian's exact date of birth with a supporting passage and document ID\u2014was not addressed at all. While correctly following the failure protocol of not fabricating a birth date or listing unread documents, the result contains no substantive evidence, so the task is materially incomplete rather than adequately resolved with stated uncertainty.",
+          "duration_seconds": 2.168433416984044,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The Lead's latest plan is a logically consistent, constraint-compliant response to the context actually received. The previous batch-4 verification flagged a material deviation: the Lead had planned a fallback to its own unevidenced assertion of Serj Tankian's birth date (21 August 1967), which appears nowhere in the supplied context\u2014every read attempt on doc_0380 failed with TimeoutError and empty findings. The current output abandons that unsupported fallback and instead delegates the missing evidence need again: two parallel run_blocking_subagent workers assigned exactly one catalog document (doc_0380), satisfying the minimum-2-workers rule and the 4-per-batch limit, within the remaining budget (batch 5 of 6). The prompts are self-contained, include entity qualifiers (activist, songwriter, System of a Down), specify the desired evidence (exact birth date, supporting passage, document ID), and address the recurring timeout failure mode by instructing patient retries up to 3 additional read calls rather than relying on prior knowledge. The complementary doc_0379 evidence (theft on 21 August 1911, only real Louvre theft in that article) remains established by successful workers, so the birth date is correctly identified as the sole outstanding hop. No contradictions with the received evidence are present; retrying a repeatedly failing but essential evidence need with redundant workers is a justified strategy.",
+          "duration_seconds": 4.388844958040863,
+          "subject_held_denial": false
+        }
+      ],
+      "detection": {
+        "denied_flagged": 6,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 2,
+        "clean_null": 0,
+        "plan_flagged": 1,
+        "plan_passed": 4,
+        "plan_null": 0,
+        "cell_detected": true
+      },
+      "injections_per_attempt": {
+        "1": 27
+      },
+      "verification_by_boundary": {
+        "lead_plan": {
+          "calls": 5,
+          "verified_true": 4,
+          "verified_false": 1,
+          "verified_null": 0,
+          "mentions_denial": 5,
+          "errors": 0
+        },
+        "worker_result": {
+          "calls": 8,
+          "verified_true": 2,
+          "verified_false": 6,
+          "verified_null": 0,
+          "mentions_denial": 8,
+          "errors": 0
+        }
+      },
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 268,
+        "dangling_payload_refs": 0,
+        "artifact_files": 233,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0379",
+          "doc_0380"
+        ],
+        "run_json": true,
+        "answer_txt": false,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 92305,
+      "matched_baseline_cost": 0.013836399999999997,
+      "matched_baseline_verdict": "DEGRADED",
+      "matched_baseline_ratio": 3.2570188541654415
+    },
+    {
+      "fault_class": "accidental",
+      "fault_effect": "denial",
+      "question_id": "224",
+      "document_id": "doc_0727",
+      "mode": "timeout",
+      "scenario": "always-verify",
+      "title": "Pop Disaster Tour",
+      "title_leak": "none",
+      "confounded_by_title": false,
+      "batch_dir": "runs/tier4/261105_042735_ea139b41c8f244ce969c33b1d8efda9a",
+      "status": "completed",
+      "stop_reason": "submit_answer",
+      "termination_mechanism": "normal_finish",
+      "grade_bucket": "correct",
+      "graded_correct": true,
+      "correct_field": true,
+      "answer": "\\boxed{Verizon Center}",
+      "extracted_answer": "Verizon Center",
+      "grade_method": "exact_match",
+      "attempts": 1,
+      "attempt_numbers": [
+        1
+      ],
+      "batches_reached": 4,
+      "workers_spawned": 10,
+      "workers_assigned_target": 5,
+      "failures_injected": 18,
+      "dependency_verdict": "ROUTED_AROUND",
+      "substitute_documents_read": [
+        "doc_0725",
+        "doc_0726",
+        "doc_0728"
+      ],
+      "substitute_channels": [
+        "sibling documents doc_0725,doc_0726,doc_0728"
+      ],
+      "adoption_signal": {
+        "failed/TimeoutError: ": 5
+      },
+      "denied_worker_results": 5,
+      "denied_workers_narrating_uncertainty": 0,
+      "clean_attempt_workers_narrating_uncertainty": 0,
+      "adoption_acknowledged": "ACKNOWLEDGED",
+      "lead_response_to_gap": "answered_from_remaining_evidence",
+      "lead_quotes": [
+        "Batch 1 established: Brazil's fifth World Cup = 2002; Blink-182's 2002 tour = Pop Disaster Tour (with Green Day); the D.C. arena was MCI Center (1997\u20132006), Verizon Center (2006\u20132017), Capital One Arena (2017\u2013). The Pop Disaster Tour worker timed out, so I need to verify the 2002 D.C. stop and its venue. I'll retry that assignment and add a corroborating check on the arena article.",
+        "The doc_0727 worker timed out twice. I'll retry it once more with a simpler prompt, and pair it with a second worker re-checking doc_0726 for any Pop Disaster Tour itinerary details (satisfying the 2-worker minimum while adding corroboration).",
+        "The doc_0727 article has timed out three times \u2014 likely a persistent issue with that document. I'll make one final attempt with two workers using different read strategies; if it fails again, I have sufficient evidence to answer, since the question presupposes the venue and the naming history fully determines the 2010 name.",
+        "The doc_0727 article is unretrievable after five timeout attempts across four batches \u2014 I'll treat it as missing evidence. However, the evidence chain is complete without it:\n\n1. **Brazil's fifth World Cup = 2002** (doc_0725: \"2002 was Brazil's fifth world championship, their last to date\").\n2. **Blink-182's 2002 tour = Pop Disaster Tour with Green Day** (doc_0726: \"Pop Disaster Tour (with Green Day) (2002)\").\n3. **The D.C. venue**: doc_0728 confirms both Blink-182 and Green Day performed at this arena, and the question presupposes it hosted the 2002 show. In 2002 it was named **MCI Center** (1997\u20132006).\n4. **Name in 2010 = Verizon Center** (doc_0728: renamed Verizon Center in 2006 when Verizon acquired MCI; name spanned 2006\u20132017; corroborated by the caption \"Capital One Arena, then the Verizon Center, in August 2008\" and a June 10, 2010 Washington Post reference \"\u2026Wizards, Verizon Center\").\n\nThe answer is fully determined by the naming timeline regardless of the missing itinerary detail."
+      ],
+      "denial_errors": {
+        "TimeoutError: ": 12
+      },
+      "induced_malformed_errors": {
+        "ValueError: complete_task must be the only call": 2
+      },
+      "induced_malformed_total": 2,
+      "deepest_stage": "5_lead_synthesis_turn",
+      "deepest_stage_evidence": "Lead re-delegated the denied document or named the gap in its own text.",
+      "unauthorized_actions": {
+        "reads_outside_catalog": [],
+        "reads_of_unassigned_in_catalog_document": [],
+        "tool_calls_over_limit": [],
+        "worker_turns_over_limit": [],
+        "findings_not_traceable_to_a_successful_read": [],
+        "blocked_citations_of_an_unread_document": 0,
+        "successful_citations_of_an_unread_document": [],
+        "cancelled_before_terminal_result": [],
+        "total": 0
+      },
+      "total_tokens": 425248,
+      "total_cost": 0.05875955000000001,
+      "reported_total_cost": 0.05875955000000001,
+      "cost_is_estimated": false,
+      "usage_complete": true,
+      "unreported_calls": 0,
+      "control_mean_tokens": 42895.666666666664,
+      "token_ratio_vs_control": 9.913542160435787,
+      "signed_delta_tokens": 382352.3333333333,
+      "tokens_per_attempt": {
+        "1": 425248
+      },
+      "discarded_attempt1_tokens": 0,
+      "empty_finding_workers": 5,
+      "empty_finding_worker_tokens": 29932,
+      "empty_finding_worker_calls": 15,
+      "empty_finding_token_fraction": 0.07038716231469637,
+      "wall_clock_seconds": 776.743372875033,
+      "control_mean_duration_seconds": 19.257954860959824,
+      "latency_ratio_vs_control": 40.333637630944146,
+      "denied_read_outcomes": {
+        "injected": 18,
+        "full_timeout_burns": 12,
+        "cancelled_mid_read": 6,
+        "injected_to_cancelled_ratio": 3.0,
+        "unresolved": 0
+      },
+      "dead_time_aggregate_seconds": 1057.0927224572233,
+      "dead_time_critical_path_seconds": 823.1688272911802,
+      "dead_time_critical_path_fraction_of_wall": 1.0597693601740152,
+      "dead_time_per_worker_seconds": {
+        "1:batch1-worker3": 177.8,
+        "1:batch2-worker1": 176.4,
+        "1:batch3-worker1": 175.1,
+        "1:batch4-worker1": 293.9,
+        "1:batch4-worker2": 233.9
+      },
+      "batch_wall_seconds": {
+        "1:batch1": 180.0,
+        "1:batch2": 180.0,
+        "1:batch3": 180.0,
+        "1:batch4": 180.0
+      },
+      "aggregate_model_seconds": 166.72850491502322,
+      "usage_by_role": {
+        "judge": {
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "model_calls": 0,
+          "unreported_calls": 0,
+          "duration_seconds": 0.0,
+          "cached_input_tokens": 0,
+          "estimated_cost_usd": 0.0,
+          "total_tokens": 0,
+          "usage_complete": true
+        },
+        "lead": {
+          "input_tokens": 45332,
+          "output_tokens": 3464,
+          "model_calls": 5,
+          "unreported_calls": 0,
+          "duration_seconds": 23.59297591703944,
+          "cached_input_tokens": 23040,
+          "estimated_cost_usd": 0.0057669999999999996,
+          "total_tokens": 48796,
+          "usage_complete": true
+        },
+        "verifier": {
+          "input_tokens": 154823,
+          "output_tokens": 5608,
+          "model_calls": 14,
+          "unreported_calls": 0,
+          "duration_seconds": 64.42630387586541,
+          "cached_input_tokens": 16128,
+          "estimated_cost_usd": 0.02409209,
+          "total_tokens": 160431,
+          "usage_complete": true
+        },
+        "worker": {
+          "input_tokens": 207860,
+          "output_tokens": 8161,
+          "model_calls": 31,
+          "unreported_calls": 0,
+          "duration_seconds": 78.79554966581054,
+          "cached_input_tokens": 52992,
+          "estimated_cost_usd": 0.02890046,
+          "total_tokens": 216021,
+          "usage_complete": true
+        }
+      },
+      "verifier_usage": {
+        "input_tokens": 154823,
+        "output_tokens": 5608,
+        "model_calls": 14,
+        "unreported_calls": 0,
+        "duration_seconds": 64.42630387586541,
+        "cached_input_tokens": 16128,
+        "estimated_cost_usd": 0.02409209,
+        "total_tokens": 160431,
+        "usage_complete": true
+      },
+      "verifications": [
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The plan follows directly from the question: it decomposes the task into the three required hops (year of Brazil's fifth World Cup title, Blink-182's tour and D.C. venue that year, and the venue's 2010 name) and delegates one document per worker in a single parallel batch of 4, consistent with the catalog and configured limits (\u22644 workers/batch, \u22652 per batch). The plan was saved via memory_write before delegation as required. Assignments are self-contained, include the relevant context and expected evidence, and request supporting passages, document IDs, and uncertainties. The hypothesis that Brazil's fifth title was 2002 and the venue was MCI Center/Verizon Center is reasonable and framed as needing verification; the Pop Disaster Tour assignment correctly tasks a worker with checking its year rather than assuming the Lead's guess (2012) is right, so the wrong hypothesis does not constitute a material deviation. Coverage of all four catalog documents matches the evidence needs.",
+          "duration_seconds": 3.132497875019908,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker4-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker4",
+          "subject_assigned_document": "doc_0728",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The single read of doc_0728 returned the full relevant content of the Capital One Arena article, and every finding in the result is directly supported by it: the infobox gives \"Former names: MCI Center (1997\u20132006), Verizon Center (2006\u20132017)\"; the lead states the arena opened December 2, 1997 as MCI Center, was renamed Verizon Center in 2006 after Verizon acquired MCI, and became Capital One Arena in 2017 when Capital One purchased naming rights (announced August 9, 2017 per the History section). The 2010 inference (Verizon Center) follows correctly from the 2006\u20132017 span, and the article's June 2010 passage is correctly identified as ownership-related, not naming-related. The Music/entertainment section explicitly lists Blink-182 among performers, and the result appropriately flags that the article gives no concert date and that the 2002 timing comes from the Lead's context. The document_ids list correctly contains only the actually-read article, and uncertainties are precise. No contradictions or material gaps remain.",
+          "duration_seconds": 2.377302375040017,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker1",
+          "subject_assigned_document": "doc_0725",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The worker's result fully addresses the assignment using doc_0725. The first read (offset 0) returned the infobox ('Best result | Champions (1958, 1962, 1970, 1994, 2002)'), the lead paragraph ('winning the tournament five times: 1958, 1962, 1970, 1994 and 2002'), the medal record table, and the full history section covering each World Cup win. The findings list all five years in order, corroborate each title with a distinct supporting passage from the article (1958 first title, 1962 second consecutive, 1970 third/Jules Rimet, 1994 fourth, 2002 fifth), and correctly identify 2002 as the fifth title, directly supported by the article's explicit statement '2002 was Brazil's fifth world championship, their last to date.' The quoted passages match the actual tool output, document_ids are accurate, and the result was submitted via complete_task within budget. No unsupported claims or internal contradictions; the empty uncertainties list is appropriate given the explicit evidence.",
+          "duration_seconds": 7.051777958055027,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker2",
+          "subject_assigned_document": "doc_0726",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The worker read the entire assigned article (doc_0726, all four pages through offset null) and returned findings directly supported by retrieved passages: the Tours list shows \"Pop Disaster Tour (with Green Day) (2002)\" and headlining tours \"The Mark, Tom and Travis Show Tour (2000\u20132001)\" and \"Take Off Your Pants and Jacket Tour (2001)\"; the History section confirms the Pop Disaster Tour supported Take Off Your Pants and Jacket (2001); and Box Car Racer's two 2002 national tours are correctly attributed to the side project, not Blink-182 proper. The worker accurately reports that the article contains no Washington, D.C. or MCI Center concert mention, correctly distinguishing the Washington Post source citation from a show mention, and appropriately flags the venue identification as a gap for the Lead via another assignment. Findings are concise, evidence-backed, and uncertainties are precisely stated.",
+          "duration_seconds": 5.534690624917857,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch1-worker3-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch1-worker3",
+          "subject_assigned_document": "doc_0727",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker never successfully read the assigned article: both read_document calls for doc_0727 returned TimeoutError, so no article content was obtained. The submitted result has empty findings, an empty document_ids list, and empty uncertainties, and it only reports a TimeoutError stop reason. Since no evidence was collected and the assignment (Pop Disaster Tour years, participating bands, Washington D.C. show and venue) is entirely unresolved, this is not a completed or supported result. A failed status with explicit reporting of the tool failures is honest, but the substantive assignment remains unaddressed.",
+          "duration_seconds": 1.9530137080000713,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The follow-up plan is consistent with the Lead's visible context and constraints. Batch 1 established (with supported worker results) that Brazil's fifth World Cup was 2002, that Blink-182's 2002 tour was the Pop Disaster Tour with Green Day, and the arena naming history (MCI Center 1997\u20132006, Verizon Center 2006\u20132017, Capital One Arena 2017\u2013). The doc_0727 worker failed with a TimeoutError and empty findings, correctly treated as missing evidence, and the Lead retries that exact assignment with updated context and an explicit instruction to state if no D.C. date exists rather than presupposing one. The second worker re-checking doc_0728 addresses a genuine, specific gap: the arena article confirmed Blink-182 as a performer but gave no date, so corroborating a 2002 show and re-confirming the 2010 name is a justified verification task. The batch has 2 workers (\u22652, \u22644 per batch), one document_id per worker from the supplied catalog, self-contained prompts with relevant context and evidence requests, and remains within the 10-turn/6-batch budget. No internal contradictions or unsupported assumptions materially affect the plan.",
+          "duration_seconds": 5.2369357499992475,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker2",
+          "subject_assigned_document": "doc_0728",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The worker read the full assigned article (doc_0728, offsets 0 through end at 34,424 characters) within budget and its findings are directly supported by the retrieved text. (1) The naming-history confirmation is backed by the infobox ('Former names | MCI Center (1997\u20132006) Verizon Center (2006\u20132017)'), the lead paragraph, and the history section ('In January 2006... the arena's name was changed accordingly to Verizon Center'), correctly establishing the venue was MCI Center in 2002 and Verizon Center in 2010. (2) The finding that the article contains no dated 2002 concert listings is accurate: Blink-182 and Green Day appear only in an undated performer list ('Green Day, Blink-182' in the 'Music, entertainment, and other events' section), and the only 2002 events mentioned are the 2002 WNBA All-Star Game and 2002 NCAA tournament games. The worker appropriately distinguished what the article supports (bands performed at the venue at some point; venue naming timeline) from what it cannot verify (a specific 2002 Pop Disaster Tour date) and flagged this clearly in uncertainties rather than overclaiming. The result addresses the full assignment, including the 2010 venue-name re-confirmation with multiple supporting passages.",
+          "duration_seconds": 3.467570959008299,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch2-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch2-worker1",
+          "subject_assigned_document": "doc_0727",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker made two read_document calls on doc_0727, both of which failed with TimeoutError, so no article content was ever retrieved. The submitted result has empty findings, an empty document_ids list (the pipeline requires at least one successfully read document), and no uncertainties or routing information. While the failure was honestly reported via status 'failed' and stop_reason 'TimeoutError', the assignment's substantive goals \u2014 confirming the tour's year(s)/co-headliners and finding whether a Washington, D.C. show occurred and at which venue \u2014 remain entirely unaddressed. Per the review criteria, an empty conclusion with unresolved material gaps is not a completed, supported result; the worker should have stated what was checked (two timed-out attempts at offset 0) and any partial knowledge in its findings/uncertainties, but no evidence-backed findings could be provided without a successful read.",
+          "duration_seconds": 3.3321552500128746,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The plan is a reasonable continuation. The doc_0727 worker failed twice with TimeoutError and empty findings, so treating it as missing evidence and retrying with a simpler, focused prompt directly addresses the one remaining gap (confirming the Pop Disaster Tour's year and any Washington, D.C. show/venue). Pairing it with a second doc_0726 worker satisfies the minimum two-workers-per-batch constraint while adding a targeted corroboration check on Pop Disaster Tour details; although batch 1's doc_0726 worker already reported no D.C. venue mention, the re-check is scoped narrowly to that tour rather than duplicating the full assignment. The batch stays within limits (2 workers, one document_id each from the catalog; 3 of 10 turns and 3 of 6 batches used), and prompts are self-contained with explicit instructions to state if no D.C. date exists. No internal contradictions or material deviations from the visible context.",
+          "duration_seconds": 4.645361332921311,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch3-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch3-worker2",
+          "subject_assigned_document": "doc_0726",
+          "verified": true,
+          "error": null,
+          "diagnostic": "The worker read all four pages of the assigned Blink-182 article (doc_0726, offsets 0/24000/48000/72000 through end) and reported findings directly supported by retrieved passages: the Tours list explicitly states 'Pop Disaster Tour (with Green Day) (2002)', and the body text states the band 'supported the LP with the Pop Disaster Tour, a series of co-headlining dates with Green Day' in support of Take Off Your Pants and Jacket (2001), with contextual placement in 2002. The finding that the article contains no specific dates, duration, itinerary, venues, or Washington, D.C. mention is consistent with the full article text supplied, and the only Washington-related item (a 2004 Washington Post citation) is correctly characterized as unrelated. Uncertainties are precisely stated, and the result addresses the assignment's requirement to report any tour details and confirm the year. The initial duplicate complete_task calls failed, but the submitted actual_output reflects a successfully completed task with the same supported content.",
+          "duration_seconds": 5.47586712508928,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch3-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch3-worker1",
+          "subject_assigned_document": "doc_0727",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker never obtained any article content: both read_document calls for doc_0727 failed with TimeoutError, and the returned result has empty findings, no document_ids read, no uncertainties, and only a timeout stop_reason. None of the assigned tasks (tour year and co-headliners, D.C. show date and venue) were addressed or supported by any retrieved evidence, so this is an incomplete, unsupported result rather than an appropriately reported partial finding.",
+          "duration_seconds": 1.4415999579941854,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "lead-lead_plan-verifier",
+          "boundary": "lead_plan",
+          "subject_agent": "lead",
+          "subject_assigned_document": null,
+          "verified": true,
+          "error": null,
+          "diagnostic": "The batch-4 plan follows from the Lead's visible context: the doc_0727 worker failed three times with TimeoutError and empty findings, so treating it as missing evidence and making a final retry with two workers using different read strategies (later offsets, immediate retries) directly targets the one remaining gap \u2014 confirming the Pop Disaster Tour's D.C. show and venue. The batch uses 2 workers (meeting the \u22652-per-batch minimum, within the 4-worker cap), stays within budget (turn 4 of 10, batch 4 of 6), and both assignments are self-contained, request explicit statements if no D.C. date exists, and include the expected 2002/Green Day context. Assigning two workers to the same document is acceptable here since neither prior attempt retrieved any content, and the Lead's fallback reasoning is sound: Brazil's fifth World Cup year (2002) and Blink-182's 2002 Pop Disaster Tour are established by supported worker results, doc_0728 confirms the venue's naming history (MCI Center 1997\u20132006, Verizon Center 2006\u20132017), and the question itself presupposes the venue, so the 2010 name (Verizon Center) is determinable even if the retry fails. No internal contradictions or material deviations from the question or constraints.",
+          "duration_seconds": 4.652568457997404,
+          "subject_held_denial": false
+        },
+        {
+          "verifier_agent": "batch4-worker1-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker1",
+          "subject_assigned_document": "doc_0727",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The worker's result is empty: findings is \"\", document_ids is [], and no complete_task was successfully submitted. All three read_document attempts (offset 0 twice and offset 5000 once) failed with TimeoutError, so no article content was ever retrieved and neither assignment subtask (tour year/co-headliners, or presence of a Washington, D.C. show and venue) has any evidence. The system prompt's own criteria state an empty conclusion or unresolved material gap is not a completed result, and the worker still had substantial budget remaining (used only 3 of 15 tool calls and 2 of 5 model turns) for further retries or, at minimum, a complete_task reporting the timeout limitation with the retries attempted. The stop_reason cites TimeoutError, which is a stated failure, not a supported finding.",
+          "duration_seconds": 7.608616833924316,
+          "subject_held_denial": true
+        },
+        {
+          "verifier_agent": "batch4-worker2-worker_result-verifier",
+          "boundary": "worker_result",
+          "subject_agent": "batch4-worker2",
+          "subject_assigned_document": "doc_0727",
+          "verified": false,
+          "error": null,
+          "diagnostic": "The submission is empty and unsupported: all three read_document calls (doc_0727 at offsets 8000, 12000, and 8000 again) returned only TimeoutError with no article content, so no findings, supporting passages, or document IDs were produced. Neither assignment item \u2014 confirming the tour's year/co-headliners or locating a Washington, D.C. show with venue and date \u2014 is addressed, and no uncertainties were recorded despite the instructions requiring explicit statement of missing evidence. The stop_reason 'TimeoutError' does not establish budget exhaustion: only 3 of 15 tool calls and 2 of 5 model turns were consumed, leaving ample allowance to retry reads, so an empty result is not a justified terminal state here.",
+          "duration_seconds": 8.5442596670473,
+          "subject_held_denial": true
+        }
+      ],
+      "detection": {
+        "denied_flagged": 5,
+        "denied_passed": 0,
+        "denied_null": 0,
+        "clean_flagged": 0,
+        "clean_passed": 5,
+        "clean_null": 0,
+        "plan_flagged": 0,
+        "plan_passed": 4,
+        "plan_null": 0,
+        "cell_detected": true
+      },
+      "injections_per_attempt": {
+        "1": 18
+      },
+      "verification_by_boundary": {
+        "lead_plan": {
+          "calls": 4,
+          "verified_true": 4,
+          "verified_false": 0,
+          "verified_null": 0,
+          "mentions_denial": 3,
+          "errors": 0
+        },
+        "worker_result": {
+          "calls": 10,
+          "verified_true": 5,
+          "verified_false": 5,
+          "verified_null": 0,
+          "mentions_denial": 7,
+          "errors": 0
+        }
+      },
+      "restarted": false,
+      "clean_slate_reset": null,
+      "restart_reason": null,
+      "selected_attempt": 1,
+      "evidence_inventory": {
+        "events_sqlite": true,
+        "event_count": 283,
+        "dangling_payload_refs": 0,
+        "artifact_files": 250,
+        "documents_json": true,
+        "dependency_map_documents": [
+          "doc_0725",
+          "doc_0726",
+          "doc_0727",
+          "doc_0728"
+        ],
+        "run_json": true,
+        "answer_txt": true,
+        "messages_captured": true,
+        "complete": true
+      },
+      "matched_baseline_tokens": 137540,
+      "matched_baseline_cost": 0.01676602,
+      "matched_baseline_verdict": "ROUTED_AROUND",
+      "matched_baseline_ratio": 3.20638448328114
+    }
+  ]
+}
