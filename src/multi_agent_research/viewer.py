@@ -9,22 +9,29 @@ from importlib.resources import files
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from .viewer_export import export_existing
+from .viewer_export import export_existing, group_summary
 
-RUN_NAME = re.compile(r"(?:\d{6}_\d{6}_)?[a-f0-9]{32}")
+RUN_NAME = re.compile(
+    r"(?:\d{6}_\d{6}_)?[a-f0-9]{32}(?:/questions/[0-9]+/attempt-[12])?"
+)
 
 
 def run_path(root, name):
     if not RUN_NAME.fullmatch(name):
         raise ValueError("Invalid run directory")
     path = root / name
-    if path.is_symlink() or not path.is_dir():
+    if (any(p.is_symlink() for p in (path, *path.parents))
+            or not path.is_dir() or not path.resolve().is_relative_to(root.resolve())):
         raise ValueError("Run does not exist")
     return path
 
 
 def read_run(root, name, include_events=True):
     path = run_path(root, name)
+    if (path / "batch.json").is_file():
+        traces = [read_run(root, p.parent.relative_to(root).as_posix(), False)
+                  for p in sorted(path.glob("questions/*/attempt-*/events.sqlite"))]
+        return group_summary(path, traces)
     db_path = path / "events.sqlite"
     if db_path.is_symlink():
         raise ValueError("Symlinked databases are not supported")
@@ -82,6 +89,7 @@ def read_run(root, name, include_events=True):
         # Absence of a finish event cannot distinguish a running job from an interruption.
         "status": finished.get("status", "unfinished"),
         "stop_reason": finished.get("stop_reason"),
+        "correct": finished.get("correct"),
         "usage": finished.get("usage", usage),
         "config": records.get("config", {}),
         "warnings": warnings,
@@ -113,7 +121,8 @@ def make_handler(root):
                     self.respond(200, (root / "viewer-assets" / "markdown-it.min.js").read_bytes(),
                                  "text/javascript")
                 elif parsed.path == "/viewer-manifest.js" or re.fullmatch(
-                    r"/(?:\d{6}_\d{6}_)?[a-f0-9]{32}/(?:viewer-data\.js|"
+                    r"/(?:\d{6}_\d{6}_)?[a-f0-9]{32}"
+                    r"(?:/questions/[0-9]+/attempt-[12])?/(?:viewer-data\.js|"
                     r"viewer-payloads/[a-f0-9]{64}\.js)", parsed.path
                 ):
                     target = root / parsed.path.lstrip("/")

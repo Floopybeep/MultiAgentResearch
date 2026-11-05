@@ -23,8 +23,9 @@ judge:
   options:
     temperature: 0
     seed: 42
+always_verify: false
 verifier:
-  model: glm-5.3-flash
+  model: api-glm-5.3-flash
   input_cost_per_million: 0.15
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
@@ -76,7 +77,7 @@ max_worker_turns: 5
 max_worker_tool_calls: 15
 max_batches: 6
 max_workers_per_batch: 4
-minimum_worker: 3
+minimum_worker: 2
 # lead + workers budget - document-heavy tasks eat up a large amount
 max_run_tokens: 600000
 run_timeout_seconds: 900

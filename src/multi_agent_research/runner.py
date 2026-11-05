@@ -6,6 +6,7 @@ import logging
 import time
 from contextlib import AsyncExitStack
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -172,6 +173,7 @@ async def _run_attempt(
 async def run_qa(
     question: str, config: RunConfig, model: ModelAdapter, documents: OracleDocuments,
     *, reference_answer: str | None = None, metadata: dict[str, Any] | None = None,
+    question_root: Path | None = None,
 ) -> dict[str, Any]:
     if not question.strip():
         raise ValueError("Question cannot be empty")
@@ -185,6 +187,8 @@ async def run_qa(
         # Reuse only immutable inputs and the stateless transport, never graph state.
         runtime = Runtime(
             attempt_config, model, deepcopy(documents),
+            root=question_root / f"attempt-{number}" if question_root else None,
+            viewer_root=config.output_dir if question_root else None,
             budget_question_key=str((metadata or {}).get("question_id", question)),
         )
         runtime.attempt_number = number

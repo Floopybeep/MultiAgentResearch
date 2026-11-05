@@ -24,6 +24,13 @@ details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summ
 #main>header{display:block}
 .run-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
 #title{overflow-wrap:anywhere}
+.question-selector{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;max-width:100%;padding:10px 3px;box-sizing:border-box}
+.question-selector[hidden]{display:none}
+.question-selector button{flex:0 0 auto;min-width:34px;padding:6px 8px;border-radius:4px;background:#354357;color:#e5eaf1}
+.question-selector button.pending{background:#e5bf49;color:#241c00}
+.question-selector button.correct{background:#60b883;color:#082614}
+.question-selector button.incorrect{background:#d96e76;color:#2d080d}
+.question-selector button[aria-pressed="true"]{outline:2px solid #f0f6ff;outline-offset:1px}
 .view-tabs{display:flex;gap:8px;margin-top:16px}
 .view-tabs button{background:transparent;border-color:transparent;color:#a8b9ce;border-radius:6px 6px 0 0}
 .view-tabs button[aria-selected="true"]{background:#263b54;color:#f0f6ff;border-bottom:3px solid #8bc8ff}
@@ -62,7 +69,8 @@ details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summ
 <div class="view-tabs" role="tablist" aria-label="Run views">
 <button id="tab-graph" role="tab" aria-controls="graph-panel" aria-selected="true" tabindex="0">Agent Output Graph</button>
 <button id="tab-report" role="tab" aria-controls="report-panel" aria-selected="false" tabindex="-1">QA Results</button>
-</div></header>
+</div>
+<div id="question-selector" class="question-selector" role="group" aria-label="Questions" hidden></div></header>
 <div id="summary"><p>Select a run. Expand blocks to inspect model inputs, recorded reasoning, outputs, and tools.</p></div><p id="error" role="alert"></p>
 <section id="graph-panel" role="tabpanel" aria-labelledby="tab-graph">
 <p class="graph-note">Top to bottom: execution order. Parallel worker columns share a batch. Arrows show orchestration and per-agent sequence, not elapsed time. Expand blocks for full payloads.</p>
@@ -71,6 +79,7 @@ details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summ
 <script src="viewer-assets/markdown-it.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
+let selectedQuestion=null;
 let selected=null, runs=[], requestVersion=0, stageElements=[];
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const pretty=v=>typeof v==='string'?v:JSON.stringify(v,null,2);
@@ -97,9 +106,9 @@ function loadData(path){
  promise.then(()=>pendingLoads.delete(path),()=>pendingLoads.delete(path));
  return promise;
 }
-async function loadSingleRun(name){
- if(!/^(?:\d{6}_\d{6}_)?[a-f0-9]{32}$/.test(name))throw Error('Invalid run directory');
- const data=await loadData(name+'/viewer-data.js');
+async function loadSingleRun(name, snapshot=null){
+ if(!/^(?:\d{6}_\d{6}_)?[a-f0-9]{32}(?:\/questions\/[0-9]+\/attempt-[12])?$/.test(name))throw Error('Invalid run directory');
+ const data=snapshot||await loadData(name+'/viewer-data.js');
  data.warnings=[...(data.warnings||[])];
  let cursor=0;
  async function worker(){
@@ -116,8 +125,8 @@ async function loadSingleRun(name){
  await Promise.all(Array.from({length:8},worker));
  return data;
 }
-async function loadRun(name){
- const data=await loadSingleRun(name);
+async function loadRun(name, snapshot=null){
+ const data=await loadSingleRun(name,snapshot);
  if((data.attempts||[]).length>1){
   data.attempt_runs=await Promise.all(data.attempts.map(async attempt=>{
    try{
@@ -154,6 +163,7 @@ async function refreshList(){
  const button=$('#refresh-list');button.disabled=true;
  try{
   runs=await loadData('viewer-manifest.js');drawList();
+  const current=runs.find(run=>run.directory===selected);if(current?.questions)drawQuestions(current);
   const visible=visibleRuns(),parent=visible.find(run=>(run.attempts||[]).some(attempt=>attempt.directory===selected));
   if(parent&&parent.directory!==selected)await selectRun(parent.directory);
   else if(!selected&&visible.length)await selectRun(visible[0].directory);
@@ -462,9 +472,28 @@ function drawArrows(){
   previous=last.length?last:delegation.slice(-1);
  }
 }
-async function selectRun(name){
+function sortedQuestions(group){
+ return [...(group?.questions||[])].sort((a,b)=>Number(a.question_id)-Number(b.question_id));
+}
+function drawQuestions(group){
+ const strip=$('#question-selector'),scroll=strip.scrollLeft;
+ strip.replaceChildren();strip.hidden=!group||group.questions.length<2;
+ for(const question of sortedQuestions(group)){
+  const state=question.correct===true?'correct':question.correct===false?'incorrect':
+   ['pending','unfinished','running','interrupted'].includes(question.status)?'pending':'ungraded';
+  const button=el('button',state,String(question.question_id));
+  button.setAttribute('aria-pressed',String(String(question.question_id)===selectedQuestion));
+  button.title='Question '+question.question_id+' · '+state+' · '+question.status;
+  button.setAttribute('aria-label',button.title);
+  button.onclick=()=>selectRun(group.directory,String(question.question_id));
+  strip.append(button);
+ }
+ strip.scrollLeft=scroll;
+}
+async function selectRun(name, questionId=null){
  const changed=selected!==name;
- if(changed){
+ if(changed||(questionId!==null&&questionId!==selectedQuestion)){
+  if(changed){selectedQuestion=null;drawQuestions(null)}
   $('#flow').replaceChildren();stageElements=[];$('#arrows').replaceChildren();
   $('#report-panel').replaceChildren(el('p','empty','Loading this run’s results…'));
   $('#summary').replaceChildren(el('p','','Loading run…'));$('#title').textContent=name;
@@ -472,12 +501,23 @@ async function selectRun(name){
  selected=name;drawList();const version=++requestVersion;$('#refresh-run').disabled=true;$('#error').textContent='';
  const openIds=new Set([...document.querySelectorAll('.card details[open]')].map(d=>d.parentElement.dataset.event+'|'+d.querySelector('summary').textContent));
  try{
-  const data=await loadRun(name);if(version!==requestVersion)return;
-  $('#title').textContent=(data.attempt_runs?'Full Restart · ':'')+name;const summary=$('#summary');summary.replaceChildren();
+  const entry=await loadData(name+'/viewer-data.js');if(version!==requestVersion)return;
+  let data;
+  if(entry.questions){
+   const question=entry.questions.find(q=>String(q.question_id)===(questionId||selectedQuestion))||sortedQuestions(entry)[0];
+   selectedQuestion=question?String(question.question_id):null;drawQuestions(entry);
+   data=question?.directory?await loadRun(question.directory):{
+    query:question?.query||'No questions selected',status:question?.status||entry.status,
+    stop_reason:question?.error,usage:{},warnings:[],events:[],config:entry.config,
+   };
+  }else{selectedQuestion=null;drawQuestions(null);data=await loadRun(name,entry)}
+  if(version!==requestVersion)return;
+  $('#title').textContent=(data.attempt_runs?'Full Restart · ':'')+name+(selectedQuestion?' · Question '+selectedQuestion:'');const summary=$('#summary');summary.replaceChildren();
   summary.append(el('h2','',data.query||'No query recorded'));
   const u=data.usage;summary.append(el('p','stats',`Status: ${data.status} · ${u.model_calls||0} model calls · ${(u.input_tokens||0).toLocaleString()} input / ${(u.output_tokens||0).toLocaleString()} output tokens`));
   if(data.attempt_runs)summary.append(el('p','stats',data.attempt_runs.length+' attempts · selected result: Attempt '+data.selected_attempt+' · usage totals include both attempts'));
   if(data.stop_reason)summary.append(el('p','notice','Stop reason: '+data.stop_reason));
+  if(data.status==='pending')summary.append(el('p','notice','This question has not started yet.'));
   if(data.status==='unfinished')summary.append(el('p','notice','No final run event: this run may be active or interrupted.'));
   if(data.warnings.length)summary.append(el('p','notice',data.warnings.join('\n')));
   const baseConfig=data.attempt_runs?collectQA(data).final?.base_config:null;
