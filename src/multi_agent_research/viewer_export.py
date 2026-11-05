@@ -36,18 +36,18 @@ def install_html(root):
     vendor = files("multi_agent_research").joinpath("vendor", "markdown-it")
     for name in ("markdown-it.min.js", "LICENSE"):
         destination = root / "viewer-assets" / name
-        content = vendor.joinpath(name).read_text()
-        if not destination.exists() or destination.read_text() != content:
+        content = vendor.joinpath(name).read_text(encoding="utf-8")
+        if not destination.exists() or destination.read_text(encoding="utf-8") != content:
             atomic_write(destination, content)
-    html = files("multi_agent_research").joinpath("viewer.html").read_text()
+    html = files("multi_agent_research").joinpath("viewer.html").read_text(encoding="utf-8")
     path = root / "index.html"
-    if not path.exists() or path.read_text() != html:
+    if not path.exists() or path.read_text(encoding="utf-8") != html:
         atomic_write(path, html)
 
 
 def group_summary(path, traces):
     """Combine the saved selection with the latest per-attempt trace summaries."""
-    manifest = json.loads((path / "batch.json").read_text())
+    manifest = json.loads((path / "batch.json").read_text(encoding="utf-8"))
     results = {str(r["question_id"]): r for r in manifest["results"]}
     questions = []
     for question in manifest["questions"]:

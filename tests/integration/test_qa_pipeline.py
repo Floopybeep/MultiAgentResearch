@@ -174,6 +174,12 @@ class RestartModel(ScriptedModel):
      "result.timed_out"),
     ({"tool_failure": {"enabled": True, "mode": "immediate"}}, "tool.failure_injected"),
     ({"tool_failure": {"enabled": True, "mode": "timeout"}}, "tool.failure_injected"),
+    ({"pipeline_fault": {"enabled": True, "assignment_ids": ["batch1-worker1"]}}, "fault.injected"),
+    ({"pipeline_fault": {"enabled": True, "fault_type": "dispatch_failure",
+                         "assignment_ids": ["batch1-worker1"]}}, "fault.injected"),
+    ({"worker_budget_faults": {"tool_call_budget": {
+        "enabled": True, "max_tool_calls": 1, "target_workers": ["batch1-worker1"],
+    }}}, "fault.budget.exhausted"),
 ])
 async def test_fault_restarts_with_clean_state(tmp_path, fault, event_type):
     result = await execute(
@@ -186,8 +192,12 @@ async def test_fault_restarts_with_clean_state(tmp_path, fault, event_type):
     assert [event["event_type"] for event in first["injected_faults"]] == [event_type]
     assert clean["status"] == "completed" and clean["correct"] is True
     assert not clean["fault_injected"] and not clean["faults_enabled"]
-    for name in ("document_injection", "connection_drop", "result_timeout", "tool_failure"):
+    for name in (
+        "document_injection", "pipeline_fault", "connection_drop", "result_timeout", "tool_failure",
+    ):
         assert not clean["config"][name]["enabled"]
+    assert not clean["config"]["worker_budget_faults"]["generation_budget"]["enabled"]
+    assert not clean["config"]["worker_budget_faults"]["tool_call_budget"]["enabled"]
     assert result["usage"]["model_calls"] == sum(
         attempt["usage"]["model_calls"] for attempt in result["attempts"]
     )

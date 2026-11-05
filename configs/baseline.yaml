@@ -55,6 +55,22 @@ result_timeout:
   select: last
   seed: 0
   persistent: false
+# Worker budget faults. probability: how often each selected worker is affected.
+# max_output_tokens / max_tool_calls: how severe. target_workers: batchN-workerM; [] means all.
+worker_budget_faults:
+  generation_budget:
+    enabled: false
+    probability: 1.0
+    max_output_tokens: 128  # per_call: each request; per_worker: total for the assignment.
+    budget_scope: per_call
+    target_workers: []
+    seed: 42
+  tool_call_budget:
+    enabled: false
+    probability: 1.0
+    max_tool_calls: 1  # Reads, failed calls and complete_task all count.
+    target_workers: []
+    seed: 42
 max_lead_turns: 10
 max_worker_turns: 5
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.

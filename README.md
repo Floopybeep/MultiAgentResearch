@@ -285,7 +285,7 @@ MultiAgentResearch/
 - Keep immutable evidence and report artifacts on disk. Use SQLite for run/event metadata and persistent LangGraph checkpoints; expose plan memory separately from execution checkpoints.
 - Log model/tool requests and responses, agent and assignment IDs, timestamps, input/output artifact dependencies, token usage, estimated cost, errors, and retry attempts. Exclude credentials from logs.
 - Apply explicit concurrency, tool-call, token, and time limits. Record completion, failure, and budget exhaustion distinctly; preserve successful worker results when a sibling fails.
-- Keep model/tool execution behind observable boundaries so fault injection and recovery can be added later. Do not implement those experimental policies in this milestone.
+- Keep model/tool execution behind observable boundaries so fault injection and recovery can be added later. Pipeline dispatch/delivery fault injection is available as an opt-in experiment; recovery remains deferred.
 
 
 ## Phase 1 handoff
@@ -297,7 +297,7 @@ English `# TODO:` comments mark the extension points below. Paths are relative t
 |---|---|---|
 | Grading — `grading.py:grade_answer` | Extract the contents of one nonempty, unnested `\boxed{...}` answer; normalize Unicode, case and whitespace; exact match followed by an LLM judge. Missing, multiple or malformed boxes go to the judge. Store correctness and format validity separately. | Answer aliases, numbers/units, multi-part answers, partial credit, judge rubric/model and error handling. |
 | Tool → Worker injection — `runtime.py:read_document` | Optional `document_injection` config prepends a literal prompt to at most `num_docs` successful reads per question run; events retain original/injected artifact references. See [config documentation](configs/README.md#document-prompt-injection). | TODO: Target text or table fields; select timing and additional fault types. |
-| Worker → Lead injection — `graphs/research.py:build_research` | Structured findings, document IDs and uncertainties at the delivery boundary. | Target Worker/fact; corruption, malicious content, timeouts and stale results; fault scheduling and paired clean/fault runs. |
+| Worker → Lead injection — `graphs/research.py:build_research` | Structured findings, document IDs and uncertainties at the delivery boundary. | Implemented opt-in dropped results, dispatch failure and communication timeout; see [configuration examples](configs/README.md#pipeline-fault-injection). TODO: content corruption, stale results and paired clean/fault runs. |
 | Propagation metrics — `runner.py:run_qa` result construction | Event IDs, parent dependencies, handoff payloads, task outcome, usage and timing. | Exposure, adoption and answer impact; affected stages, wasted work and attribution method. |
 | Recovery — `runner.py:run_qa` | One attempt per question, with graph checkpoints. | Oracle-triggered full restart, attempt state and memory reset, inter-agent verification, and combined latency/token/cost accounting. |
 
@@ -312,3 +312,5 @@ frequencies and result aggregation rules.
 - [Anthropic Cookbook: research agent prompts](https://github.com/anthropics/claude-cookbooks/tree/main/patterns/agents/prompts)
 - [LangChain Open Deep Research](https://github.com/langchain-ai/open_deep_research)
 
+
+Pipeline fault controls and audit semantics are documented in [configs/README.md](configs/README.md#pipeline-fault-injection). Faults are disabled by default.

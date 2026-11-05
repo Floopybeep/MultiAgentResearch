@@ -28,8 +28,12 @@ logger = logging.getLogger(__name__)
 def _build_clean_restart_config(base_config: RunConfig) -> RunConfig:
     """Copy the saved experimental baseline without normalizing any resource limits."""
     clean = base_config.model_copy(deep=True)
-    for name in ("document_injection", "connection_drop", "result_timeout", "tool_failure"):
+    for name in (
+        "document_injection", "pipeline_fault", "connection_drop", "result_timeout", "tool_failure",
+    ):
         getattr(clean, name).enabled = False
+    clean.worker_budget_faults.generation_budget.enabled = False
+    clean.worker_budget_faults.tool_call_budget.enabled = False
     return clean
 
 
@@ -185,6 +189,7 @@ async def run_qa(
             attempt_config, model, deepcopy(documents),
             root=question_root / f"attempt-{number}" if question_root else None,
             viewer_root=config.output_dir if question_root else None,
+            budget_question_key=str((metadata or {}).get("question_id", question)),
         )
         runtime.attempt_number = number
         runtime.faults_enabled = number == 1

@@ -61,6 +61,7 @@ class WorkerResult(Contract):
 class AgentState(TypedDict, total=False):
     messages: list[Any]
     turns: int
+    output_tokens: int
     tool_calls: int
     batches: int
     results: dict[str, dict]
