@@ -20,6 +20,20 @@ GENERATION_STOPS = {
 }
 
 
+# Budget stop reason -> the label agents see. Logs and worker_results keep the raw reason.
+MODEL_VISIBLE_STOPS = {
+    "injected_generation_budget_exhausted": "worker_output_limit",
+    "injected_tool_call_budget_exhausted": "worker_tool_limit",
+    "generation_budget_not_honored": "worker_response_unusable",
+    "generation_budget_usage_unavailable": "worker_response_unusable",
+}
+
+
+def model_visible(delivery: dict[str, Any]) -> dict[str, Any]:
+    reason = MODEL_VISIBLE_STOPS.get(delivery.get("stop_reason"))
+    return {**delivery, "stop_reason": reason} if reason else delivery
+
+
 def select_fault(config: WorkerFaultSelectionConfig, fault_type: str,
                  question_key: str, assignment_id: str) -> dict[str, Any]:
     key = json.dumps([config.seed, fault_type, question_key, assignment_id])

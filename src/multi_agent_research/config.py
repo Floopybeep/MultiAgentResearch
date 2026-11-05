@@ -203,4 +203,4 @@ class RunConfig(BaseModel):
 
     @classmethod
     def load(cls, path: str | Path):
-        return cls.model_validate(yaml.safe_load(Path(path).read_text()) or {})
+        return cls.model_validate(yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {})

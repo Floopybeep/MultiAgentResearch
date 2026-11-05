@@ -281,7 +281,8 @@ question text if no ID exists. `target_workers` entries are per-question
 `batchN-workerM` positions. A selected fault is only *active* if it reduces the
 configured limit: a `per_call` cap or `max_tool_calls` at or above the configured
 worker value has no effect. Agents are not told about injected limits; rendered
-prompts keep the configured values.
+prompts keep the configured values. Worker results delivered to the Lead and verifier
+carry a natural-looking `stop_reason`; logs and `worker_results` keep the raw reason.
 
 **`generation_budget` severity.** `per_call` caps each request at `max_output_tokens`.
 `per_worker` gives one assignment that many returned output tokens in total, and each

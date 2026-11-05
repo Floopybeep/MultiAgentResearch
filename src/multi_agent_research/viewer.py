@@ -64,7 +64,7 @@ def read_run(root, name, include_events=True):
                 path.resolve()
             ):
                 raise ValueError("Invalid artifact path")
-            event["payload"] = json.loads(artifact.read_text())
+            event["payload"] = json.loads(artifact.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             event["payload"] = {"unavailable": str(exc)}
             warnings.append(f"Missing or unreadable payload for {event['event_id']}")
@@ -170,7 +170,8 @@ def main():
     root.mkdir(parents=True, exist_ok=True)
     # Ship the UI with the package and install it in the requested runs directory.
     (root / "index.html").write_text(
-        files("multi_agent_research").joinpath("viewer.html").read_text()
+        files("multi_agent_research").joinpath("viewer.html").read_text(encoding="utf-8"),
+        encoding="utf-8",
     )
     export_existing(root)
     server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(root))

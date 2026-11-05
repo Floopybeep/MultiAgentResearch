@@ -321,6 +321,30 @@ async def test_exhaustion_logs_stay_redacted(tmp_path, monkeypatch):
     assert response["content"] == "partial [REDACTED]"
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("settings,raw,visible", [
+    (generation(max_output_tokens=3, target_workers=[W1]), GEN_EXHAUSTED, "worker_output_limit"),
+    (tool_budget(max_tool_calls=1, target_workers=[W1]), TOOL_EXHAUSTED, "worker_tool_limit"),
+])
+async def test_injection_labels_stay_out_of_model_context(tmp_path, settings, raw, visible):
+    scripts = {W1: [step(READ, output=3, finish="length")]} if raw == GEN_EXHAUSTED else {}
+
+    class VerifyingModel(BudgetModel):
+        async def invoke(self, role, agent, messages, tools, config):
+            if role == "verifier":
+                self.requests.append((role, agent, list(messages)))
+                return AIMessage(content='{"verified": false, "diagnostic": "Incomplete."}')
+            return await super().invoke(role, agent, messages, tools, config)
+
+    model = VerifyingModel(scripts)
+    result = await execute(tmp_path, model, **settings, always_verify=True, max_lead_turns=4)
+    assert result["worker_results"][W1]["stop_reason"] == raw
+    seen = " ".join(str(m.content) for _, _, messages in model.requests for m in messages)
+    assert visible in seen
+    assert "injected" not in seen.lower()
+    assert of(events(result), "fault.budget.exhausted", W1)[0][1]["stop_reason"] == raw
+
+
 # Production adapter
 
 def completion(body, *, calls, finish, output):

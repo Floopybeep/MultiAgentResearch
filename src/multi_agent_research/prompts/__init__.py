@@ -13,7 +13,7 @@ def load(role, path=None):
         raise ValueError(f"Unknown prompt role: {role}")
     if path is not None:
         return Path(path).read_text(encoding="utf-8")
-    return files(__package__).joinpath(f"{role}.md").read_text()
+    return files(__package__).joinpath(f"{role}.md").read_text(encoding="utf-8")
 
 
 def render(template, context):

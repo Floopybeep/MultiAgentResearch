@@ -9,6 +9,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from ..fault_injections import model_visible
 from ..faults.pipeline import PipelineFaultInjector
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
@@ -193,7 +194,7 @@ def build_research(
                     if cfg.always_verify:
                         diagnostic = await verify_boundary(
                             runtime, agent, "worker_result", runtime.model_inputs.get(agent, []),
-                            delivery, parents=parents,
+                            model_visible(delivery), parents=parents,
                         )
                         delivery = {**delivery, "verification": diagnostic}
                         parents.append(diagnostic["event_id"])
@@ -235,7 +236,8 @@ def build_research(
             batches = batch
         for index, call in enumerate(calls):
             messages.append(
-                ToolMessage(content=json.dumps(outputs[index]), tool_call_id=call["id"])
+                ToolMessage(content=json.dumps(model_visible(outputs[index])),
+                            tool_call_id=call["id"])
             )
         if plan_diagnostic is not None:
             # One batch-level diagnostic, after all matching tool responses.
