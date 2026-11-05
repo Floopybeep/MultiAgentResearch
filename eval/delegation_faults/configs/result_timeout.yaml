@@ -1,0 +1,65 @@
+lead:
+  model: api-glm-5.3-flash
+  input_cost_per_million: 0.15
+  cached_input_cost_per_million: 0.03
+  output_cost_per_million: 0.5
+  options:
+    temperature: 0
+    seed: 42
+worker:
+  model: api-glm-5.3-flash
+  input_cost_per_million: 0.15
+  cached_input_cost_per_million: 0.03
+  output_cost_per_million: 0.5
+  options:
+    temperature: 0
+    seed: 42
+judge:
+  model: api-glm-5.3-flash
+  input_cost_per_million: 0.15
+  cached_input_cost_per_million: 0.03
+  output_cost_per_million: 0.5
+  max_output_tokens: 1024
+  options:
+    temperature: 0
+    seed: 42
+always_verify: false
+verifier:
+  model: api-glm-5.3-flash
+  input_cost_per_million: 0.15
+  cached_input_cost_per_million: 0.03
+  output_cost_per_million: 0.5
+  max_output_tokens: 1024
+lead_prompt: src/multi_agent_research/prompts/lead.md
+worker_prompt: src/multi_agent_research/prompts/worker.md
+document_injection:
+  enabled: false
+  num_docs: 1
+  prompt: ''
+connection_drop:
+  enabled: false
+  batch: 1
+  num_delivered: 1
+  select: last
+  seed: 0
+  persistent: false
+result_timeout:
+  enabled: true
+  batch: 1
+  num_delivered: 1
+  timeout_seconds: 180
+  select: last
+  seed: 0
+  persistent: false
+max_lead_turns: 10
+max_worker_turns: 5
+max_worker_tool_calls: 15
+max_batches: 6
+max_workers_per_batch: 6
+minimum_worker: 2
+max_run_tokens: 600000
+run_timeout_seconds: 900
+worker_timeout_seconds: 180
+call_timeout_seconds: 60
+max_document_chars: 24000
+output_dir: runs
