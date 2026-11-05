@@ -183,9 +183,18 @@ Open **`runs/index.html`** in a browser:
   expandable Worker findings and per-role statistics.
 - **Agent Output Graph**: agent activity, model messages, tool payloads and handoffs.
 
-Per-question outputs are in `runs/<timestamp_run-id>/`: `run.json`, the submitted
-answer, document snapshots, SQLite events, payload artifacts and graph checkpoints.
-Batch selections and aggregate results are in `runs/batches/`.
+Each invocation creates one `runs/<timestamp_run-id>/` directory. Its `batch.json`
+stores the selected questions and aggregate results, updated as questions finish.
+Per-question outputs are under `questions/<question-id>/attempt-1/`: `run.json`,
+the submitted answer, document snapshots, SQLite events, payload artifacts and
+checkpoints. A full restart stores its clean attempt in `attempt-2/` beside it.
+
+For multiple-question runs, select an original question ID in the horizontal strip
+below the view tabs. Yellow means pending/running, green means correct, red means
+incorrect; ungraded results and preparation failures are neutral. The strip scrolls
+horizontally when needed. Refresh the selected run to update its question states and
+results; list refresh remains separate. Older flat run directories and archived
+exports remain supported without moving their files.
 
 
 ### Baseline decisions and limits

@@ -2,6 +2,7 @@
 
 import json
 import logging
+import sqlite3
 import time
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -10,7 +11,7 @@ from .frames import DEFAULT_CORPUS, load_frames, prepare_documents, select_examp
 from .observability.events import Redactor
 from .observability.usage import sum_usage
 from .runner import run_qa
-from .viewer_export import atomic_write
+from .viewer_export import atomic_write, install_html, publish_manifest
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +57,18 @@ async def run_frames(config, model, *, corpus_dir=DEFAULT_CORPUS, size=10, seed=
     selected = select_examples(examples, size, seed, question_ids)
     timestamp = datetime.now(timezone.utc).strftime("%y%m%d_%H%M%S")
     batch_id = f"{timestamp}_{uuid4().hex}"
-    path = config.output_dir / "batches" / f"{batch_id}.json"
+    run_root = config.output_dir / batch_id
+    path = run_root / "batch.json"
+    run_root.mkdir(parents=True, exist_ok=False)
+    try:
+        install_html(config.output_dir)
+    except OSError:
+        logger.warning("Browser viewer installation failed; batch logging remains enabled.")
     manifest = {
         "batch_id": batch_id, "dataset": provenance, "seed": seed,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "questions": [{"question_id": e.question_id, "query": e.question}
+                      for e in selected],
         "question_ids": [e.question_id for e in selected], "results": [],
         "config": config.model_dump(mode="json"), "status": "running",
     }
@@ -68,6 +78,10 @@ async def run_frames(config, model, *, corpus_dir=DEFAULT_CORPUS, size=10, seed=
     def save():
         manifest["summary"] = summarize(manifest["results"])
         atomic_write(path, json.dumps(redact(manifest), indent=2))
+        try:
+            publish_manifest(config.output_dir, None)
+        except (OSError, ValueError, sqlite3.Error):
+            logger.warning("Browser export could not be updated; batch.json remains authoritative.")
 
     started = time.monotonic()
     save()
@@ -90,6 +104,7 @@ async def run_frames(config, model, *, corpus_dir=DEFAULT_CORPUS, size=10, seed=
         preparation_seconds = time.monotonic() - preparation_started
         result = await run_qa(
             example.question, config, model, documents, reference_answer=example.answer,
+            question_root=run_root / "questions" / str(example.question_id),
             metadata={
                 "batch_id": batch_id, "question_id": example.question_id,
                 "dataset": provenance, "reasoning_types": example.reasoning_types,

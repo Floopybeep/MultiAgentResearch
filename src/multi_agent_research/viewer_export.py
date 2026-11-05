@@ -45,6 +45,32 @@ def install_html(root):
         atomic_write(path, html)
 
 
+def group_summary(path, traces):
+    """Combine the saved selection with the latest per-attempt trace summaries."""
+    manifest = json.loads((path / "batch.json").read_text())
+    results = {str(r["question_id"]): r for r in manifest["results"]}
+    questions = []
+    for question in manifest["questions"]:
+        question_id = str(question["question_id"])
+        prefix = f"{path.name}/questions/{question_id}/"
+        attempts = sorted((t for t in traces if t["directory"].startswith(prefix)),
+                          key=lambda t: t["directory"])
+        result = results.get(question_id, {})
+        trace = attempts[-1] if attempts else {}
+        questions.append({
+            **question, "directory": trace.get("directory"),
+            "status": result.get("status", trace.get("status", "pending")),
+            "correct": result.get("correct", trace.get("correct")),
+            "error": result.get("error"),
+        })
+    return {
+        "directory": path.name, "started_at": manifest.get("started_at"),
+        "status": manifest["status"], "query": f"{len(questions)} questions",
+        "questions": questions, "config": manifest["config"],
+        "summary": manifest.get("summary", {}),
+    }
+
+
 def publish_manifest(root, summary):
     # Serialize manifest publication across concurrent research processes. A reader
     # always sees a complete old/new JS file; one run cannot overwrite another.
@@ -62,11 +88,17 @@ def publish_manifest(root, summary):
                 runs.append(json.loads(body))
             else:
                 connection.execute("DELETE FROM runs WHERE name=?", (name,))
+        groups = []
+        for path in sorted(root.glob("*/batch.json")):
+            group = group_summary(path.parent, runs)
+            write_data(root, f"{path.parent.name}/viewer-data.js", group)
+            groups.append(group)
+        runs = [r for r in runs if "/" not in r["directory"]] + groups
         runs.sort(key=lambda r: r.get("started_at") or r["directory"], reverse=True)
         write_data(root, "viewer-manifest.js", runs)
 
 
-def _attempt_metadata(result):
+def _attempt_metadata(result, directory):
     metadata = {
         key: result[key]
         for key in ("strategy", "selected_attempt", "restarted", "clean_slate_reset")
@@ -82,7 +114,7 @@ def _attempt_metadata(result):
                 "attempt_number", "run_id", "status", "faults_enabled", "fault_injected",
                 "elapsed_seconds",
             )},
-            "directory": Path(attempt["output_dir"]).name,
+            "directory": (Path(directory).parent / Path(attempt["output_dir"]).name).as_posix(),
             "model_calls": usage.get("model_calls"),
             "total_tokens": usage.get("total_tokens"),
             "estimated_cost_usd": usage.get("estimated_cost_usd"),
@@ -97,7 +129,7 @@ def publish_snapshot(root, data):
     attempts = {}
     for event in data["events"]:
         if event["event_type"] == "run.finished":
-            attempts.update(_attempt_metadata(event["payload"]))
+            attempts.update(_attempt_metadata(event["payload"], name))
         metadata = {k: v for k, v in event.items() if k != "payload"}
         write_data(
             root, f"{name}/viewer-payloads/{event['payload_ref']}.js", event["payload"]
@@ -111,9 +143,9 @@ def publish_snapshot(root, data):
 class ViewerExport:
     """Write each payload once and update only the small trace index per event."""
 
-    def __init__(self, run_path, config):
-        self.root = run_path.parent
-        self.name = run_path.name
+    def __init__(self, run_path, config, viewer_root=None):
+        self.root = viewer_root if viewer_root is not None else run_path.parent
+        self.name = run_path.relative_to(self.root).as_posix()
         self.data = {
             "directory": self.name, "query": "", "started_at": None, "updated_at": None,
             "status": "unfinished", "stop_reason": None, "config": config, "warnings": [],
@@ -150,8 +182,8 @@ class ViewerExport:
             for key in ("input_tokens", "output_tokens"):
                 self.data["usage"][key] += usage.get(key, 0)
         elif kind == "run.finished":
-            self.data.update(_attempt_metadata(payload))
-            for key in ("status", "stop_reason", "usage"):
+            self.data.update(_attempt_metadata(payload, self.name))
+            for key in ("status", "stop_reason", "usage", "correct"):
                 if key in payload:
                     self.data[key] = payload[key]
         self.flush()
@@ -183,12 +215,14 @@ def export_existing(root):
     root.mkdir(parents=True, exist_ok=True)
     install_html(root)
     exported, errors = [], {}
-    for path in sorted(root.iterdir()):
-        if RUN_NAME.fullmatch(path.name) and path.is_dir() and not path.is_symlink():
+    for database in sorted(root.rglob("events.sqlite")):
+        path = database.parent
+        name = path.relative_to(root).as_posix()
+        if RUN_NAME.fullmatch(name) and not path.is_symlink():
             try:
-                publish_snapshot(root, read_run(root, path.name))
-                exported.append(path.name)
+                publish_snapshot(root, read_run(root, name))
+                exported.append(name)
             except (OSError, ValueError, sqlite3.Error) as exc:
-                errors[path.name] = str(exc)
+                errors[name] = str(exc)
     publish_manifest(root, None)
     return {"exported": exported, "errors": errors}

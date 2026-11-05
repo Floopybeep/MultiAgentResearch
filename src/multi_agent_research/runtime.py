@@ -39,7 +39,8 @@ class ModelCallTimeout(RuntimeError):
 
 
 class Runtime:
-    def __init__(self, config, model, documents, root: Path | None = None):
+    def __init__(self, config, model, documents, root: Path | None = None,
+                 viewer_root: Path | None = None):
         self.config, self.model, self.documents = config, model, documents
         self.document_injection_count = 0
         self.tool_failure_state = tool_failures.ToolFailureState()
@@ -67,7 +68,7 @@ class Runtime:
         self.db.record("config", redacted_config)
         self.viewer_export = None
         try:
-            self.viewer_export = ViewerExport(self.root, redacted_config)
+            self.viewer_export = ViewerExport(self.root, redacted_config, viewer_root)
             self.log.on_event = self.viewer_export.observe
         except (OSError, sqlite3.Error):
             warnings.warn("Browser export unavailable; SQLite logging remains enabled.",

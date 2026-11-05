@@ -23,8 +23,9 @@ judge:
   options:
     temperature: 0
     seed: 42
+always_verify: false
 verifier:
-  model: glm-5.3-flash
+  model: api-glm-5.3-flash
   input_cost_per_million: 0.15
   cached_input_cost_per_million: 0.03
   output_cost_per_million: 0.50
