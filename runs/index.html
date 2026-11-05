@@ -14,7 +14,8 @@ main{overflow:auto;position:relative}#run-list{padding:10px}.run{display:block;w
 .attempt-heading{padding:16px 20px;margin:0 0 28px;border-left:3px solid #8bc8ff;background:#1b293b;border-radius:7px}.attempt-heading p{margin-bottom:0;color:#a8b9ce;font-size:12px;overflow-wrap:anywhere}
 .restart-boundary{padding:20px;margin:0 0 28px;text-align:center;color:#e8c98a;border:1px dashed #887548;border-radius:8px;background:#29261f}
 .lanes{display:flex;gap:28px;align-items:flex-start;justify-content:safe center}.lane{flex:1;min-width:240px;max-width:700px}.lane-heading{padding:9px 12px;background:var(--lane-bg,#203147);border-radius:8px;color:var(--role-accent,#8bc8ff);font-weight:600;margin-bottom:16px}
-.card{border:1px solid var(--card-border,#42546c);background:var(--card-bg,#1b293b);border-radius:10px;margin-bottom:24px;box-shadow:0 5px 15px #0002;position:relative;overflow:hidden}.card.error{border-color:#d47d7d}.card.pending{border-style:dashed}.card-head{padding:12px 14px;display:flex;justify-content:space-between;gap:10px;font-weight:600;background:var(--card-head-bg,#213248)}.card-head small{font-size:11px;color:var(--role-muted,#b1c0d4);font-weight:400;white-space:nowrap}.preview{padding:12px 14px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:150px;overflow:auto;color:var(--role-text,#d0deee)}
+.card{border:1px solid var(--card-border,#42546c);background:var(--card-bg,#1b293b);border-radius:10px;margin-bottom:24px;box-shadow:0 5px 15px #0002;position:relative;overflow:hidden}.card pre{max-height:480px}.card.error{border-color:#d47d7d}.card.pending{border-style:dashed}.card-head{padding:12px 14px;display:flex;justify-content:space-between;gap:10px;font-weight:600;background:var(--card-head-bg,#213248)}.card-head small{font-size:11px;color:var(--role-muted,#b1c0d4);font-weight:400;white-space:nowrap}.preview{padding:12px 14px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--role-text,#d0deee)}
+.preview.scrollable{max-height:150px;overflow:auto}
 details{border-top:1px solid var(--detail-border,#34465d);padding:10px 14px}summary{cursor:pointer;color:var(--role-accent,#9dccf7)}pre{font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:480px;overflow:auto;margin:10px 0 0}svg#arrows{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
 .empty{padding:28px;color:#a8b9ce}#error{color:#ffb2b2;padding:0 24px}a{color:#9dccf7}
 /* Role palettes apply to the whole lane, including tool and completion blocks. */
@@ -99,7 +100,7 @@ function loadData(path){
   script.onload=()=>finish();
   script.onerror=()=>finish(Error('Cannot load '+path+'. Keep index.html and its exported run files together.'));
   timer=setTimeout(()=>finish(Error('Timed out loading '+path)),15000);
-  script.src=new URL(path,location.href).href+'?refresh='+Date.now()+'-'+Math.random();
+  script.src=new URL(path.split('/').map(encodeURIComponent).join('/'),location.href).href+'?refresh='+Date.now()+'-'+Math.random();
   document.head.append(script);
  });
  pendingLoads.set(path,promise);
@@ -107,7 +108,7 @@ function loadData(path){
  return promise;
 }
 async function loadSingleRun(name, snapshot=null){
- if(!/^(?:\d{6}_\d{6}_)?[a-f0-9]{32}(?:\/questions\/[0-9]+\/attempt-[12])?$/.test(name))throw Error('Invalid run directory');
+ if(!/^(?!\.{1,2}(?:\/|$))[^\/\\\x00-\x1f\x7f]+(?:\/questions\/[0-9]+\/attempt-[12])?$/.test(name))throw Error('Invalid run directory');
  const data=snapshot||await loadData(name+'/viewer-data.js');
  data.warnings=[...(data.warnings||[])];
  let cursor=0;
@@ -166,7 +167,7 @@ async function refreshList(){
   const current=runs.find(run=>run.directory===selected);if(current?.questions)drawQuestions(current);
   const visible=visibleRuns(),parent=visible.find(run=>(run.attempts||[]).some(attempt=>attempt.directory===selected));
   if(parent&&parent.directory!==selected)await selectRun(parent.directory);
-  else if(!selected&&visible.length)await selectRun(visible[0].directory);
+  else if(!visible.some(run=>run.directory===selected)&&visible.length)await selectRun(visible[0].directory);
  }catch(e){showError(e)}finally{button.disabled=false}
 }
 function section(card,label,value,open=false){
@@ -374,12 +375,13 @@ function renderCard(entry){
  const head=el('div','card-head');head.append(el('span','',title),el('small','',new Date(e.timestamp).toLocaleTimeString()));card.append(head);
  let preview=model?(q.content||q.tool_calls||q.message||'Request sent; no response recorded.'):tool?(q.message||q.error||q):p;
  if(model&&Array.isArray(preview)&&!preview.length)preview='No text output.';
- card.append(el('div','preview',pretty(preview).slice(0,600)));
+ const previewText=pretty(preview);
+ card.append(el('div','preview'+(previewText.length>600?' scrollable':''),previewText));
  if(model){
+  const reason=reasoning(q);
+  section(card,'Reasoning (recorded only)',reason||'No reasoning text was returned or recorded. Token counts do not contain reasoning text.',Boolean(reason));
   section(card,'Input messages',p.messages||[]);
   section(card,'Available tools',p.tools||[]);
-  const reason=reasoning(q);
-  section(card,'Reasoning (recorded only)',reason||'No reasoning text was returned or recorded. Token counts do not contain reasoning text.');
   if(r){section(card,'Output / tool calls',{content:q.content,tool_calls:q.tool_calls,invalid_tool_calls:q.invalid_tool_calls});
    section(card,'Usage / response metadata',{usage:q.usage_metadata,metadata:q.response_metadata,error:q.message||q.error});}
  }else if(tool){

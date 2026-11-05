@@ -43,6 +43,10 @@ class Runtime:
                  viewer_root: Path | None = None):
         self.config, self.model, self.documents = config, model, documents
         self.document_injection_count = 0
+        # Freeze targets in catalog order; slicing caps N at the catalog size.
+        self.document_injection_ids = frozenset(
+            list(documents.documents)[:config.document_injection.num_docs]
+        )
         self.tool_failure_state = tool_failures.ToolFailureState()
         self.question_key = tool_failures.question_key(documents.documents)
         self.attempt_number = 1
@@ -253,23 +257,18 @@ class Runtime:
     ) -> dict[str, Any]:
         """Read a page, unless a configured accidental fault denies it.
 
-        Two invariants future changes must preserve. First, the document
-        injection below checks `document_injection_count` and increments it with
-        no suspension point in between, so concurrent workers cannot both claim
-        the last slot; keep that pair synchronous and adjacent. The `await`
-        below is the only suspension point in this method and it precedes the
-        check, which is why the pair stays atomic. Second, `deny_document`
-        either returns without suspending or raises, so a read that is not
-        denied is never delayed.
+        Injection targets are fixed for this question run, shared by all workers
+        and pages. Denial does not change those targets. `deny_document` either
+        returns without suspending or raises, so an allowed read is never delayed.
         """
         original = self.documents.read(document_id, offset, self.config.max_document_chars)
         if self.faults_enabled and self.config.tool_failure.enabled:
             await self.deny_document(document_id, offset, agent, original)
         injection = self.config.document_injection
         if (self.faults_enabled and injection.enabled
-                and self.document_injection_count < injection.num_docs):
+                and document_id in self.document_injection_ids):
             injected = inject_document_prompt(original, injection)
-            # No await between this cap check and increment: workers share one cap.
+            # Count delivered injections for auditing, including repeated reads.
             self.document_injection_count += 1
             self.event(
                 "document.injected", agent,

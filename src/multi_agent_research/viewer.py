@@ -7,12 +7,13 @@ import sqlite3
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
+from threading import Lock
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from .viewer_export import export_existing, group_summary
 
 RUN_NAME = re.compile(
-    r"(?:\d{6}_\d{6}_)?[a-f0-9]{32}(?:/questions/[0-9]+/attempt-[12])?"
+    r"(?!\.{1,2}(?:/|$))[^/\\\x00-\x1f\x7f]+(?:/questions/[0-9]+/attempt-[12])?"
 )
 
 
@@ -83,6 +84,7 @@ def read_run(root, name, include_events=True):
                 usage[key] += metadata.get(key, 0)
     result = {
         "directory": name,
+        "run_id": finished.get("run_id", started.get("run_id")),
         "query": started.get("payload", {}).get("query", ""),
         "started_at": started.get("timestamp"),
         "updated_at": events[-1]["timestamp"] if events else None,
@@ -102,7 +104,8 @@ def read_run(root, name, include_events=True):
 def list_runs(root):
     runs = []
     for path in root.iterdir():
-        if RUN_NAME.fullmatch(path.name) and path.is_dir() and not path.is_symlink():
+        if (RUN_NAME.fullmatch(path.name) and path.is_dir() and not path.is_symlink()
+                and any((path / file).is_file() for file in ("batch.json", "events.sqlite"))):
             try:
                 runs.append(read_run(root, path.name, include_events=False))
             except (OSError, ValueError, sqlite3.Error) as exc:
@@ -111,27 +114,43 @@ def list_runs(root):
 
 
 def make_handler(root):
+    def directory_snapshot():
+        return frozenset(
+            p.relative_to(root).as_posix()
+            for p in (*root.rglob("events.sqlite"), *root.glob("*/batch.json"))
+        )
+
+    known_directories = directory_snapshot()
+    refresh_lock = Lock()
+
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
+            nonlocal known_directories
             parsed = urlsplit(self.path)
+            request_path = unquote(parsed.path)
             try:
-                if parsed.path in ("/", "/index.html"):
+                if request_path in ("/", "/index.html"):
                     self.respond(200, (root / "index.html").read_bytes(), "text/html")
-                elif parsed.path == "/viewer-assets/markdown-it.min.js":
+                elif request_path == "/viewer-assets/markdown-it.min.js":
                     self.respond(200, (root / "viewer-assets" / "markdown-it.min.js").read_bytes(),
                                  "text/javascript")
-                elif parsed.path == "/viewer-manifest.js" or re.fullmatch(
-                    r"/(?:\d{6}_\d{6}_)?[a-f0-9]{32}"
-                    r"(?:/questions/[0-9]+/attempt-[12])?/(?:viewer-data\.js|"
-                    r"viewer-payloads/[a-f0-9]{64}\.js)", parsed.path
+                elif request_path == "/viewer-manifest.js" or re.fullmatch(
+                    rf"/{RUN_NAME.pattern}/(?:viewer-data\.js|"
+                    r"viewer-payloads/[a-f0-9]{64}\.js)", request_path
                 ):
-                    target = root / parsed.path.lstrip("/")
+                    if request_path == "/viewer-manifest.js":
+                        with refresh_lock:
+                            current = directory_snapshot()
+                            if current != known_directories:
+                                export_existing(root)
+                                known_directories = current
+                    target = root / request_path.lstrip("/")
                     if not target.resolve().is_relative_to(root.resolve()):
                         raise ValueError("Invalid export path")
                     self.respond(200, target.read_bytes(), "text/javascript")
-                elif parsed.path == "/api/runs":
+                elif request_path == "/api/runs":
                     self.respond_json(list_runs(root))
-                elif parsed.path == "/api/run":
+                elif request_path == "/api/run":
                     name = parse_qs(parsed.query).get("name", [""])[0]
                     self.respond_json(read_run(root, name))
                 else:
@@ -165,6 +184,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runs-dir", type=Path, default=Path("runs"))
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--export-only", action="store_true",
+                        help="Rebuild browser exports after moving/renaming runs, then exit")
     args = parser.parse_args()
     root = args.runs_dir.resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -172,7 +193,12 @@ def main():
     (root / "index.html").write_text(
         files("multi_agent_research").joinpath("viewer.html").read_text()
     )
-    export_existing(root)
+    result = export_existing(root)
+    if result["errors"]:
+        print(json.dumps(result["errors"], indent=2), flush=True)
+    if args.export_only:
+        print(f"Rebuilt viewer exports in {root}", flush=True)
+        return
     server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(root))
     print(f"Run viewer: http://127.0.0.1:{server.server_port} (directory: {root})", flush=True)
     try:
