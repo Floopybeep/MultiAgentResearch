@@ -45,7 +45,8 @@ def build_worker(runtime, agent, checkpointer, *, document_id: str, faults=None)
             )
             total, reason = faults.inspect_generation(answer, consumed)
             update = {"messages": state["messages"] + [answer],
-                      "turns": state.get("turns", 0) + 1}
+                      "turns": state.get("turns", 0) + 1,
+                      "pending_tools": answer.tool_calls, "tool_index": 0}
             if faults.generation_active:
                 update["output_tokens"] = total
                 faults.log(runtime, agent, "generation", {
@@ -69,86 +70,71 @@ def build_worker(runtime, agent, checkpointer, *, document_id: str, faults=None)
             return finish(state, "budget_exhausted", str(exc), document_ids=state.get("documents", []))
 
     async def tools(state):
-        answer = state["messages"][-1]
-        calls = answer.tool_calls
+        calls = state.get("pending_tools", [])
+        index = state.get("tool_index", 0)
         messages, documents = list(state["messages"]), list(state.get("documents", []))
         if not calls:
             messages.append(
                 HumanMessage(content="Submit findings with complete_task, including document_ids.")
             )
             return {"messages": messages}
-        remaining = faults.tool_limit - state.get("tool_calls", 0)
+        used = state.get("tool_calls", 0)
         reason = "injected_tool_call_budget_exhausted" if faults.tools_active else "worker_tool_limit"
-        if remaining <= 0:
+        if used >= faults.tool_limit:
+            blocked = calls[index:]
+            messages.extend(ToolMessage(content=json.dumps({"error": reason}),
+                                        tool_call_id=call["id"]) for call in blocked)
             if faults.tools_active:
                 faults.log(runtime, agent, "exhausted", {
                     "fault_type": "tool_call_budget", "stop_reason": reason,
-                    "tool_calls": state.get("tool_calls", 0), "limit": faults.tool_limit,
-                    "blocked_tool_call_ids": [c["id"] for c in calls],
+                    "tool_calls": used, "limit": faults.tool_limit,
+                    "blocked_tool_call_ids": [call["id"] for call in blocked],
                 })
-            return finish(state, "budget_exhausted", reason, document_ids=documents)
-        allowed = calls[:remaining]
-        used = state.get("tool_calls", 0) + len(allowed)
+            update = {"messages": messages, "tool_index": len(calls)}
+            if index == 0 or faults.tools_active:
+                update.update(finish(state, "budget_exhausted", reason, document_ids=documents))
+            return update
 
-        async def execute(call):
-            async def handler():
-                if call["name"] == "read_document":
-                    args = read_document.model_validate(call["args"])
-                    if args.document_id != document_id:
-                        raise PermissionError("Document is not assigned to this worker")
-                    return await runtime.read_document(args.document_id, args.offset, agent=agent)
-                if call["name"] == "complete_task":
-                    if len(calls) != 1:
-                        raise ValueError("complete_task must be the only call")
-                    args = complete_task.model_validate(call["args"])
-                    if not set(args.document_ids) <= set(documents):
-                        raise ValueError("Reference document IDs successfully read in this assignment")
-                    return {"completed": args.model_dump()}
-                raise ValueError("Unknown worker tool")
+        call = calls[index]
 
-            return await runtime.call_tool(agent, call, handler)
+        async def handler():
+            if call["name"] == "read_document":
+                args = read_document.model_validate(call["args"])
+                if args.document_id != document_id:
+                    raise PermissionError("Document is not assigned to this worker")
+                return await runtime.read_document(args.document_id, args.offset, agent=agent)
+            if call["name"] == "complete_task":
+                if len(calls) != 1:
+                    raise ValueError("complete_task must be the only call")
+                args = complete_task.model_validate(call["args"])
+                if not set(args.document_ids) <= set(documents):
+                    raise ValueError("Reference document IDs successfully read in this assignment")
+                return {"completed": args.model_dump()}
+            raise ValueError("Unknown worker tool")
 
-        outputs = await asyncio.gather(*(execute(c) for c in allowed))
-        for call, output in zip(allowed, outputs):
-            if isinstance(output, dict) and "completed" in output:
-                args = output["completed"]
-                return {"tool_calls": used, **finish(
-                    state,
-                    "completed",
-                    "complete_task",
-                    findings=args["findings"],
-                    document_ids=args["document_ids"],
-                    uncertainties=args["uncertainties"],
-                )}
-            if isinstance(output, dict) and "document_id" in output:
-                documents.append(output["document_id"])
-            messages.append(ToolMessage(content=json.dumps(output), tool_call_id=call["id"]))
-        for call in calls[remaining:]:
-            messages.append(
-                ToolMessage(content=f'{{"error":"{reason}"}}', tool_call_id=call["id"])
-            )
-        if faults.tools_active and len(calls) > remaining:
-            faults.log(runtime, agent, "exhausted", {
-                "fault_type": "tool_call_budget", "stop_reason": reason,
-                "tool_calls": used,
-                "limit": faults.tool_limit,
-                "blocked_tool_call_ids": [c["id"] for c in calls[remaining:]],
-            })
-            return {"messages": messages, "documents": sorted(set(documents)), "tool_calls": used,
-                    **finish(state, "budget_exhausted", reason,
-                             document_ids=sorted(set(documents)))}
-        return {
-            "messages": messages,
-            "documents": sorted(set(documents)),
-            "tool_calls": used,
-        }
+        output = await runtime.call_tool(agent, call, handler)
+        update = {"tool_calls": used + 1, "tool_index": index + 1}
+        if isinstance(output, dict) and "completed" in output:
+            args = output["completed"]
+            return {**update, **finish(
+                state, "completed", "complete_task", findings=args["findings"],
+                document_ids=args["document_ids"], uncertainties=args["uncertainties"],
+            )}
+        if isinstance(output, dict) and "document_id" in output:
+            documents.append(output["document_id"])
+        messages.append(ToolMessage(content=json.dumps(output), tool_call_id=call["id"]))
+        return {**update, "messages": messages, "documents": sorted(set(documents))}
 
+    descriptor = {"kind": "worker", "document_id": document_id,
+                  "generation_active": faults.generation_active, "tools_active": faults.tools_active}
     graph = StateGraph(AgentState)
-    graph.add_node("worker", model_turn)
-    graph.add_node("tools", tools)
+    graph.add_node("worker", runtime.recovery.node(model_turn, checkpointer, descriptor))
+    graph.add_node("tools", runtime.recovery.node(tools, checkpointer, descriptor))
     graph.add_edge(START, "worker")
     graph.add_conditional_edges("worker", lambda s: END if s.get("result") else "tools")
-    graph.add_conditional_edges("tools", lambda s: END if s.get("result") else "worker")
+    graph.add_conditional_edges("tools", lambda s: END if s.get("result") else (
+        "tools" if s.get("tool_index", 0) < len(s.get("pending_tools", [])) else "worker"
+    ))
     return graph.compile(checkpointer=checkpointer)
 
 
@@ -185,9 +171,11 @@ async def run_worker(runtime, agent, prompt, checkpointer, *, document_id: str):
                     "turns": 0,
                 },
                 {
-                    "configurable": {"thread_id": f"{runtime.run_id}:{agent}"},
-                    "recursion_limit": 2 * runtime.config.max_worker_turns + 5,
+                    "configurable": {"thread_id": f"{runtime.run_id}:{agent}", "checkpoint_ns": ""},
+                    "recursion_limit": (2 * runtime.config.max_worker_turns
+                                        + runtime.config.max_worker_tool_calls + 10),
                 },
+                durability="sync",
             ),
             runtime.config.worker_timeout_seconds,
         )

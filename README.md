@@ -175,6 +175,109 @@ Validation preserves every draft character and checks source/span existence. It 
 judge whether claims are factually supported. Failed citation validation never publishes a
 `report.md`. Logs contain research content but redact known environment credentials. -->
 
+### Per-call checkpoints and manual recovery
+
+Every executed Lead/Worker model call and tool call has a pre-call recovery point.
+Judge and verifier model calls are also checkpointed. Calls rejected by a budget
+check before execution do not create a recovery point. This applies to new runs;
+older runs do not have the required index or graph layout.
+
+Recovery-point IDs are readable and stable:
+
+```text
+<original-run-id>/br00/lead/call0004
+<original-run-id>/br00/batch2-worker1/call0007
+```
+
+`br00` identifies the original execution. Model and tool calls share a counter
+starting at 1 for each agent in each branch. Recovery creates a unique
+`br<random-id>` branch with fresh counters; its records retain the original run ID
+and the source recovery-point ID. Native LangGraph IDs are stored separately as
+`thread_id`, `checkpoint_ns`, and `checkpoint_id`; never replace these with a
+"latest checkpoint" lookup when replaying historical work.
+
+From the repository root, list checkpoints in an **attempt directory**, not the
+batch's top-level directory:
+
+```bash
+uv run mar-recover runs/<batch>/questions/<question-id>/attempt-1 --agent lead
+```
+
+The list contains the recovery-point ID, call kind, model/tool name, and UTC time.
+Omit `--agent` to list every agent. Replay a selected point:
+
+```bash
+uv run mar-recover runs/<batch>/questions/<question-id>/attempt-1 \
+  --checkpoint '<original-run-id>/br00/lead/call0004'
+```
+
+The Python API is in `src/multi_agent_research/recovery.py`:
+
+```python
+from pathlib import Path
+from multi_agent_research.recovery import list_recovery_points, recover
+
+attempt = Path("runs/<batch>/questions/<question-id>/attempt-1")
+points = list_recovery_points(attempt, agent="lead")
+# Choose the exact ID from the list; this call makes real model/tool requests.
+result = await recover(attempt, recovery_point_id=points[0]["recovery_point_id"])
+```
+
+`recover` requires a stopped attempt and writes to a new sibling
+`recovery-br<random-id>/` directory. `--output-dir` (or the Python `output_dir`
+argument) can select a different **new** directory outside the source attempt.
+The source is never overwritten. Run credentials still come from the environment.
+Recovery preserves the saved model choices, fault settings and execution limits;
+it is not the fault-disabled `--full-restart` strategy.
+
+| Selected call | What resumes |
+| --- | --- |
+| Lead model or local tool | That call, then the remaining Lead chain and subsequent worker batches. Earlier local tools in the same turn are retained. |
+| Worker model or tool | That call, then the remainder of that worker only. Its result is written to `recovery.json`. |
+| `run_blocking_subagent` | The whole parallel delegation batch, then the Lead chain. Calls in that batch have distinct readable IDs pointing to the same pre-batch graph checkpoint. |
+| Judge or verifier model | Only the saved model request; its response is written to `recovery.json`. Existing grades/diagnostics are not replaced. |
+
+Worker recovery does **not** deliver a replacement result into a completed Lead
+execution. To recompute the final answer, select the Lead's delegation checkpoint
+and replay the batch. This preserves parallel worker execution; tools **within**
+each worker now run sequentially, one per graph node, so individual tool recovery
+has a real graph boundary. Automatic downstream invalidation and result replacement
+remain TODOs. A checkpoint does not undo external side effects or guarantee the
+same model response.
+
+Storage and agent implementation reference:
+
+- `checkpoints.sqlite` stores Lead/Worker LangGraph state; `calls.sqlite` stores
+  independent judge/verifier graphs. All executions use `durability="sync"`.
+  Full-restart attempts also use separate, initially empty SQLite stores.
+- `events.sqlite` contains a searchable `recovery_points` table. Each row maps the
+  readable ID to the exact graph checkpoint, graph type, request artifact, and
+  runtime snapshot. Request events carry `recovery_point_id`; `checkpoint.saved`
+  events expose the corresponding record in the trace.
+- Graph state retains the current tool list, cursor, completed tool outputs, and
+  conversation. Runtime snapshots retain the active plan reference, fault counters,
+  prompt context, dependency IDs and verification context. The index is committed
+  before the actual call starts. For parallel delegation, every call is indexed
+  before dispatch begins.
+- `Runtime.call_model`, `Runtime.call_tool`, and the delegation boundary create
+  records. `RecoveryPoints.node` binds them to the enclosing graph checkpoint.
+  Any new call site must execute inside such a resumable node; do not insert
+  multiple sequential calls into a single node and label them independently
+  resumable. Keep the `checkpoint_map` extraction compatible with the locked
+  LangGraph version when upgrading dependencies.
+- Recovery copies the stopped source's SQLite databases and immutable artifacts,
+  restores its selected runtime snapshot, and invokes the exact graph checkpoint
+  with `None` input. New workers use new thread IDs. `recovery.json` records scope,
+  source, status, answer/worker result/model response, elapsed recovery time and
+  cumulative usage; a recovered answer also produces `answer.txt`.
+- Actual usage is retained from the **end of the source execution**, then increased
+  by replay work; rolling back does not refund tokens or reset the run token limit.
+  Each branch includes its own ancestry, not costs from sibling recovery branches.
+  Source traces remain in the copied database; new events have a new run ID.
+- A normal close marks an attempt stopped. Abruptly killed runs remain marked
+  running and are not accepted by this manual replay API. Crash recovery, automatic
+  checkpoint selection, regrading and viewer controls for recovery are TODOs.
+
 ### Results and trace viewer
 
 Open **`runs/index.html`** in a browser:
@@ -225,13 +328,14 @@ This rebuilds derived viewer files from the saved traces; it does not rerun ques
 - Related documents are fed into the context from a local cache dataset. This may be subject to change in future iterations.
 <!-- - Search uses Tavily; fetching supports public HTML/plain text with byte and text limits.
   PDF extraction, browser rendering, private integrations, and retrieval replay are not implemented. -->
-- Independent worker tools run concurrently. Tool-call, turn, batch, and time limits are enforced.
+- Worker assignments run concurrently; tools within each worker run sequentially at checkpoint boundaries.
+  Tool-call, turn, batch, and time limits are enforced.
   The run token limit is a **reported-usage stopping threshold** checked before each model call;
   an in-flight call or concurrent batch can exceed it. Per-call output limits also apply.
 <!-- - All fetched source documents go to the citation pass. Exceeding its configured input character
   limit ends the run explicitly; chunked citation processing is not yet implemented. -->
 - SDK retries are disabled. Tools return typed errors; failed workers do not erase successful
-  siblings. Checkpoints support inspection, but restart/resume and recovery commands are deferred.
+  siblings. Manual checkpoint replay is available through `mar-recover`; see the recovery scope above.
 - Estimated model cost is `null` unless input/output rates are configured per role; search costs
   are excluded and cache-specific pricing is not modeled. Provider usage is retained in events.
 - The CLI exits nonzero on failure or budget exhaustion. Scripted tests require no credentials;
@@ -303,7 +407,7 @@ MultiAgentResearch/
 - Keep immutable evidence and report artifacts on disk. Use SQLite for run/event metadata and persistent LangGraph checkpoints; expose plan memory separately from execution checkpoints.
 - Log model/tool requests and responses, agent and assignment IDs, timestamps, input/output artifact dependencies, token usage, estimated cost, errors, and retry attempts. Exclude credentials from logs.
 - Apply explicit concurrency, tool-call, token, and time limits. Record completion, failure, and budget exhaustion distinctly; preserve successful worker results when a sibling fails.
-- Keep model/tool execution behind observable boundaries so fault injection and recovery can be added later. Pipeline dispatch/delivery fault injection is available as an opt-in experiment; recovery remains deferred.
+- Keep model/tool execution behind observable, checkpointed boundaries. Pipeline dispatch/delivery fault injection and manual call-indexed replay are implemented; automatic checkpoint selection and downstream repair remain TODOs.
 
 
 ## Phase 1 handoff
@@ -317,7 +421,7 @@ English `# TODO:` comments mark the extension points below. Paths are relative t
 | Tool → Worker injection — `runtime.py:read_document` | Optional `document_injection` config selects the first `num_docs` catalog document IDs (capped at catalog size) per question run and prepends a literal prompt on every successful read of those IDs; events retain original/injected artifact references. See [config documentation](configs/README.md#document-prompt-injection). | TODO: Target text or table fields; select timing and additional fault types. |
 | Worker → Lead injection — `graphs/research.py:build_research` | Structured findings, document IDs and uncertainties at the delivery boundary. | Implemented opt-in dropped results, dispatch failure and communication timeout; see [configuration examples](configs/README.md#pipeline-fault-injection). TODO: content corruption, stale results and paired clean/fault runs. |
 | Propagation metrics — `runner.py:run_qa` result construction | Event IDs, parent dependencies, handoff payloads, task outcome, usage and timing. | Exposure, adoption and answer impact; affected stages, wasted work and attribution method. |
-| Recovery — `runner.py:run_qa` | One attempt per question, with graph checkpoints. | Oracle-triggered full restart, attempt state and memory reset, inter-agent verification, and combined latency/token/cost accounting. |
+| Recovery — `runner.py:run_qa`, `recovery.py:recover` | Oracle-triggered full restart, diagnostic verification, and manual call-indexed replay into separate branches, with cumulative usage. | TODO: Automatic checkpoint selection, downstream result replacement, regrading and recovery viewer controls. |
 
 The experiment protocol also needs subset selection, repeats/seeds, fault
 frequencies and result aggregation rules.

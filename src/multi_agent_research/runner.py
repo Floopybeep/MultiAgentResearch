@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langgraph.checkpoint.memory import InMemorySaver
 
 from . import prompts
 from .config import RunConfig
@@ -54,12 +53,13 @@ async def _run_attempt(
     snapshots = runtime.snapshot_documents()
     async with AsyncExitStack() as stack:
         # Each restart attempt owns a new, empty checkpointer, not a resumed checkpoint.
-        saver = InMemorySaver() if config.full_restart else await stack.enter_async_context(
+        saver = await stack.enter_async_context(
             checkpoint_store(runtime.root / "checkpoints.sqlite")
         )
         invocation_config = {
             "configurable": {"thread_id": runtime.run_id},
-            "recursion_limit": 2 * config.max_lead_turns + 6,
+            # One step per tool plus routing/model steps; turn limits still apply.
+            "recursion_limit": (config.lead.max_output_tokens + 4) * config.max_lead_turns + 10,
         }
         initial_state = {
             "messages": [
@@ -104,7 +104,8 @@ async def _run_attempt(
             # Fault events never cancel calls. The graph stops at a completed node/batch.
             # Ordinary configured deadlines still apply and produce native failures.
             state = await asyncio.wait_for(
-                graph.ainvoke(initial_state, invocation_config), config.run_timeout_seconds,
+                graph.ainvoke(initial_state, invocation_config, durability="sync"),
+                config.run_timeout_seconds,
             )
         except TimeoutError:
             state = {"status": "budget_exhausted", "stop_reason": "run_timeout"}
@@ -217,7 +218,7 @@ async def run_qa(
                     attempts[0]["run_id"] != attempt["run_id"]
                     and attempt["state_reset"]["empty_checkpointer"]
                     and attempt["state_reset"]["initial_plan_ref"] is None
-                    and attempt["state_reset"]["checkpointer_type"] == "InMemorySaver"
+                    and attempt["state_reset"]["checkpointer_type"] == "AsyncSqliteSaver"
                     and attempt["state_reset"]["previous_runtime_closed"]
                     and attempt["state_reset"]["initial_message_count"] == 2
                     and attempt["state_reset"]["initial_model_calls"] == 0

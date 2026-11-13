@@ -12,9 +12,13 @@ local data loading, Lead → parallel Reader Workers → reassessment, `{answer}
 and a naive hybrid grader. The CLI always performs a fresh real API run; no
 synthetic/demo or fixed-example modes.
 Keep unresolved design decisions in README and mark existing entries with TODOs;
-do not expand them into frameworks. General faults, propagation metrics, restart
-and inter-agent verification are not implemented. Phase 2 rollback/detection is out
-of scope. Acceptance is the user's real full run and trace inspection. **Do not run
+do not expand them into frameworks. General fault coverage and propagation metrics
+remain open design work. Manual
+call-indexed checkpoint replay, full restart and inter-agent verification are
+implemented. See README.md, "Per-call checkpoints and manual recovery", for the
+recovery API, IDs and scope. Automatic rollback selection/detection and downstream
+result replacement remain out of scope. Acceptance is the user's real full run and
+trace inspection. **Do not run
 smoke tests or substitute synthetic evidence**, or claim readiness from mock counts.
 
 Prefer the smallest working change. Do not add defensive frameworks, abstractions,
@@ -49,6 +53,7 @@ Paths below are under `src/multi_agent_research/` unless stated otherwise:
 - `benchmark.py`: sequential questions, incremental batch manifests, preparation failures and usage.
 - `cli.py`: `mar`, corpus directory, sample selection, config/output options.
 - `runner.py`: fresh run lifecycle, checkpoints, post-solve grading and final files.
+- `recovery.py`: per-call checkpoint index, stopped-attempt replay and `mar-recover`.
 - `runtime.py`: observable model/tool calls, exact document snapshots, usage and exports.
 - `schemas.py`: Lead `submit_answer`, worker `complete_task`, reader arguments and state.
 - `graphs/research.py`: plan memory, parallel batches, reassessment and final answer.
@@ -83,7 +88,9 @@ SQLite events and immutable artifacts are authoritative; browser exports are der
 Preserve full observable prompts/responses, tool results, document snapshots, parent
 IDs, role-specific usage and timing. Dependencies show exposure, not proof of causal
 reliance or propagation. Do not infer hidden reasoning from token counts. Checkpoints
-support inspection, not recovery/resume. Keep credential redaction and safe exports.
+support inspection and explicit manual replay of stopped attempts into a new branch;
+never overwrite source traces or assume a worker replay repairs the Lead result.
+Keep credential redaction and safe exports.
 
 Viewer changes must update **both** `src/multi_agent_research/viewer.html` and
 `runs/index.html`. Preserve direct-file use, local assets, Markdown safety, role

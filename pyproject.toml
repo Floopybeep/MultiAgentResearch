@@ -16,6 +16,7 @@ dependencies = [
 [project.scripts]
 mar = "multi_agent_research.cli:main"
 mar-view = "multi_agent_research.viewer:main"
+mar-recover = "multi_agent_research.recovery:main"
 
 [dependency-groups]
 dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2", "ruff>=0.12,<1"]

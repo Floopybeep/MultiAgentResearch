@@ -70,6 +70,10 @@ class AgentState(TypedDict, total=False):
     stop_reason: str
     documents: list[str]
     result: dict
+    pending_tools: list[dict]
+    tool_index: int
+    tool_outputs: dict[str, Any]
+    plan_diagnostic: dict | None
 
 
 def merge_results(left: dict, right: dict) -> dict:

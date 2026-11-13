@@ -305,7 +305,8 @@ fault keep baseline handling of truncated responses.
 **`tool_call_budget` severity.** `max_tool_calls` replaces `max_worker_tool_calls`
 for the selected assignment, with the same counting: `read_document`, `complete_task`,
 failed and unknown admitted calls each use a slot. Calls in one response are admitted
-in list order before running concurrently; excess calls never reach their handlers.
+and executed sequentially in list order, with a checkpoint before each call; excess
+calls never reach their handlers. Worker assignments still run concurrently.
 Blocking any call ends the worker with `budget_exhausted` and stop reason
 `injected_tool_call_budget_exhausted`, returning only the documents it read. Because
 `complete_task` needs a document read in the same assignment, `0` and `1` cannot

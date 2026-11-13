@@ -41,7 +41,8 @@ class ModelCallTimeout(RuntimeError):
 
 class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None,
-                 viewer_root: Path | None = None, *, budget_question_key: str = ""):
+                 viewer_root: Path | None = None, *, budget_question_key: str = "",
+                 restore: bool = False):
         self.config, self.model, self.documents = config, model, documents
         self.budget_question_key = budget_question_key
         self.document_injection_count = 0
@@ -61,7 +62,7 @@ class Runtime:
         self.prompt_context = prompts.context(config, now.date().isoformat())
         timestamp = now.strftime("%y%m%d_%H%M%S")
         self.root = root or config.output_dir / f"{timestamp}_{self.run_id}"
-        self.root.mkdir(parents=True, exist_ok=False)
+        self.root.mkdir(parents=True, exist_ok=restore)
         self.artifacts = ArtifactStore(self.root / "artifacts")
         self.db = Database(self.root / "events.sqlite")
         self.log = EventLogger(self.db, self.artifacts, self.run_id)
@@ -70,6 +71,10 @@ class Runtime:
         self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge", "verifier")}
         self.usage.by_role = self.usage_by_role
         self.observed = {}
+        from .recovery import RecoveryPoints
+        self.recovery = RecoveryPoints(self)
+        self.db.record("execution_status", "running")
+        self.save_usage()
         redacted_config = self.log.redact(config.model_dump(mode="json"))
         self.db.record("config", redacted_config)
         self.viewer_export = None
@@ -107,10 +112,25 @@ class Runtime:
         return event
 
     async def call_model(self, role, agent, messages, tools, *, model_config=None):
+        if role in ("judge", "verifier"):
+            if tools:
+                raise ValueError("Auxiliary model replay supports tool-free requests")
+            return await self.recovery.auxiliary_model(
+                role, agent, messages,
+                model_config if model_config is not None else getattr(self.config, role),
+            )
+        return await self._call_model(role, agent, messages, tools, model_config=model_config)
+
+    async def _call_model(self, role, agent, messages, tools, *, model_config=None):
         if self.usage.input_tokens + self.usage.output_tokens >= self.config.max_run_tokens:
             raise BudgetExceeded("run_token_budget")
         config = model_config if model_config is not None else getattr(self.config, role)
         visible_messages = messages_to_dict(messages)
+        recovery_point = await self.recovery.before_call(agent, "model", config.model, {
+            "role": role, "messages": visible_messages,
+            "tools": [t.model_json_schema() for t in tools],
+            "model_config": config.model_dump(mode="json"),
+        })
         if self.config.always_verify and role in ("lead", "worker"):
             # These are the messages actually passed to this model call, including
             # delivered ToolMessages. Never reconstruct them from clean documents.
@@ -127,6 +147,7 @@ class Runtime:
             model=config.model,
             max_output_tokens=config.max_output_tokens,
             retry_number=0,
+            recovery_point_id=recovery_point,
         )
         response = None
         try:
@@ -165,8 +186,10 @@ class Runtime:
             elapsed = time.monotonic() - start
             self.usage.duration_seconds += elapsed
             self.usage_by_role[role].duration_seconds += elapsed
+            self.save_usage()
 
     async def call_tool(self, agent, call, handler):
+        recovery_point = await self.recovery.before_call(agent, "tool", call["name"], call)
         start = time.monotonic()
         request = self.event(
             "tool.request",
@@ -174,6 +197,7 @@ class Runtime:
             call,
             self.observed.get(agent, []).copy(),
             tool_call_id=call["id"],
+            recovery_point_id=recovery_point,
         )
         try:
             result = await asyncio.wait_for(handler(), self.config.call_timeout_seconds)
@@ -209,7 +233,53 @@ class Runtime:
             self.db.record(doc.document_id, entry)
             snapshots.append(entry)
         self.event("documents.available", "lead", {"documents": snapshots})
+        self.db.record("recovery_documents", [item["artifact_ref"] for item in snapshots])
         return snapshots
+
+    def recovery_snapshot(self):
+        failure = self.tool_failure_state
+        return {
+            "plan_ref": self.memory.ref, "prompt_context": self.prompt_context,
+            "budget_question_key": self.budget_question_key,
+            "attempt_number": self.attempt_number, "faults_enabled": self.faults_enabled,
+            "document_injection_count": self.document_injection_count,
+            "injected_faults": self.injected_faults, "observed": self.observed,
+            "model_inputs": self.model_inputs, "verifications": self.verifications,
+            "tool_failures": {
+                "failures": failure.failures, "denied": sorted(failure.denied),
+                "attempts": [[*key, count] for key, count in failure.attempts.items()],
+            },
+        }
+
+    def restore_recovery_snapshot(self, snapshot):
+        self.memory.ref = snapshot["plan_ref"]
+        self.db.record("plan", {"artifact_ref": self.memory.ref})
+        for name in (
+            "prompt_context", "budget_question_key", "attempt_number", "faults_enabled",
+            "document_injection_count", "injected_faults", "observed", "model_inputs",
+            "verifications",
+        ):
+            setattr(self, name, snapshot[name])
+        failure = snapshot["tool_failures"]
+        self.tool_failure_state = tool_failures.ToolFailureState(
+            failures=failure["failures"], denied={tuple(key) for key in failure["denied"]},
+            attempts={(doc, offset): count for doc, offset, count in failure["attempts"]},
+        )
+
+    def save_usage(self):
+        self.db.record("recovery_usage", {
+            "total": {k: v for k, v in vars(self.usage).items() if k != "by_role"},
+            "roles": {role: {k: v for k, v in vars(usage).items() if k != "by_role"}
+                      for role, usage in self.usage_by_role.items()},
+        })
+
+    def restore_usage(self, saved):
+        for key, value in saved["total"].items():
+            setattr(self.usage, key, value)
+        for role, values in saved["roles"].items():
+            for key, value in values.items():
+                setattr(self.usage_by_role[role], key, value)
+        self.save_usage()
 
     async def deny_document(
         self, document_id: str, offset: int, agent: str, original: dict[str, Any],
@@ -289,6 +359,8 @@ class Runtime:
 
     def close(self):
         try:
+            self.save_usage()
+            self.db.record("execution_status", "stopped")
             if self.viewer_export is not None:
                 self.viewer_export.close()
         finally:
