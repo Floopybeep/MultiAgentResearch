@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 # Explicit events emitted by the implemented fault hooks.
 INJECTION_EVENTS = frozenset({
     "document.injected", "connection.dropped", "result.timed_out", "tool.failure_injected",
+    "fault.injected", "fault.budget.exhausted",
 })
 
 
@@ -40,8 +41,9 @@ class ModelCallTimeout(RuntimeError):
 
 class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None,
-                 viewer_root: Path | None = None):
+                 viewer_root: Path | None = None, *, budget_question_key: str = ""):
         self.config, self.model, self.documents = config, model, documents
+        self.budget_question_key = budget_question_key
         self.document_injection_count = 0
         # Freeze targets in catalog order; slicing caps N at the catalog size.
         self.document_injection_ids = frozenset(
@@ -104,10 +106,10 @@ class Runtime:
             logger.info("Full restart: scheduling clean Attempt 2.")
         return event
 
-    async def call_model(self, role, agent, messages, tools):
+    async def call_model(self, role, agent, messages, tools, *, model_config=None):
         if self.usage.input_tokens + self.usage.output_tokens >= self.config.max_run_tokens:
             raise BudgetExceeded("run_token_budget")
-        config = getattr(self.config, role)
+        config = model_config if model_config is not None else getattr(self.config, role)
         visible_messages = messages_to_dict(messages)
         if self.config.always_verify and role in ("lead", "worker"):
             # These are the messages actually passed to this model call, including
@@ -123,6 +125,7 @@ class Runtime:
             },
             self.observed.get(agent, []).copy(),
             model=config.model,
+            max_output_tokens=config.max_output_tokens,
             retry_number=0,
         )
         response = None

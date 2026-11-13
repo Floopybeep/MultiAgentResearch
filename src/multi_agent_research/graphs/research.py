@@ -9,6 +9,8 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from ..fault_injections import model_visible
+from ..faults.pipeline import PipelineFaultInjector
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
@@ -30,6 +32,7 @@ def build_research(
     runtime: Runtime, checkpointer: BaseCheckpointSaver | None,
 ) -> CompiledStateGraph:
     cfg = runtime.config
+    injector = PipelineFaultInjector(cfg.pipeline_fault)
 
     def finish_node(result):
         # Only explicit oracle events stop a completed node or joined worker batch.
@@ -143,6 +146,13 @@ def build_research(
                             "Connection to worker lost; assignment was not delivered"
                         )
                     runtime.observed[agent] = [start]
+                    decision = injector.decide(agent)
+                    fault_parent = injector.log_decision(runtime, agent, batch, start, decision)
+                    if decision["selected"] and cfg.pipeline_fault.fault_type == "dispatch_failure":
+                        value, event = injector.inject(runtime, agent, batch, fault_parent,
+                                                       worker_executed=False)
+                        delivery_parents[index] = [event]
+                        return value
                     result = await run_worker(
                         runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
                     )
@@ -173,12 +183,18 @@ def build_research(
                         result = WorkerResult(
                             assignment_id=agent, status="failed", stop_reason="TimeoutError: ",
                         )
-                    # Verify exactly what will be delivered, never the withheld artifact.
                     delivery = result.model_dump()
+                    if decision["selected"] and result.status == "completed":
+                        delivery, event = injector.inject(
+                            runtime, agent, batch, parents[-1], worker_executed=True,
+                            original=delivery, decision_event=fault_parent,
+                        )
+                        parents = [event]
+                    # Verify exactly what will be delivered, never the withheld artifact.
                     if cfg.always_verify:
                         diagnostic = await verify_boundary(
                             runtime, agent, "worker_result", runtime.model_inputs.get(agent, []),
-                            delivery, parents=parents,
+                            model_visible(delivery), parents=parents,
                         )
                         delivery = {**delivery, "verification": diagnostic}
                         parents.append(diagnostic["event_id"])
@@ -220,7 +236,8 @@ def build_research(
             batches = batch
         for index, call in enumerate(calls):
             messages.append(
-                ToolMessage(content=json.dumps(outputs[index]), tool_call_id=call["id"])
+                ToolMessage(content=json.dumps(model_visible(outputs[index])),
+                            tool_call_id=call["id"])
             )
         if plan_diagnostic is not None:
             # One batch-level diagnostic, after all matching tool responses.
