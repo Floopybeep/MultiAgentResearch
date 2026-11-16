@@ -76,7 +76,8 @@ class RecoveryPoints:
             locator = {"configurable": {
                 "thread_id": configurable["thread_id"], "checkpoint_ns": namespace,
                 "checkpoint_id": checkpoint_id,
-            }, "recursion_limit": config["recursion_limit"]}
+            # Judge/verifier one-call graphs are invoked without a recursion_limit.
+            }, "recursion_limit": config.get("recursion_limit", 25)}
             token = _boundary.set((saver, locator, descriptor))
             try:
                 return await function(state)
