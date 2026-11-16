@@ -228,7 +228,16 @@ result = await recover(attempt, recovery_point_id=points[0]["recovery_point_id"]
 argument) can select a different **new** directory outside the source attempt.
 The source is never overwritten. Run credentials still come from the environment.
 Recovery preserves the saved model choices, fault settings and execution limits;
-it is not the fault-disabled `--full-restart` strategy.
+it is not the fault-disabled `--full-restart` strategy. Because the runtime snapshot
+restores the fault state, replaying a faulted batch normally injects the same fault
+again. Add `--disable-faults` (Python: `disable_faults=True`) to replay with every
+fault disabled, using the same fault-free config as `--full-restart`; this models a
+transient fault, such as a dropped connection, that does not recur on retry:
+
+```bash
+uv run mar-recover runs/<batch>/questions/<question-id>/attempt-1 \
+  --checkpoint '<original-run-id>/br00/lead/call0005' --disable-faults
+```
 
 | Selected call | What resumes |
 | --- | --- |
