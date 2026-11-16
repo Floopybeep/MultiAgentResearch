@@ -76,7 +76,8 @@ class RecoveryPoints:
             locator = {"configurable": {
                 "thread_id": configurable["thread_id"], "checkpoint_ns": namespace,
                 "checkpoint_id": checkpoint_id,
-            }, "recursion_limit": config["recursion_limit"]}
+            # Judge/verifier one-call graphs are invoked without a recursion_limit.
+            }, "recursion_limit": config.get("recursion_limit", 25)}
             token = _boundary.set((saver, locator, descriptor))
             try:
                 return await function(state)
@@ -149,18 +150,21 @@ def _backup(source, destination):
 
 
 async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
-                  output_dir: Path | None = None) -> dict:
+                  output_dir: Path | None = None, disable_faults: bool = False) -> dict:
     """Replay a stopped attempt into a new directory; never overwrite its history.
 
     Lead points resume the Lead chain. Worker points resume only that worker.
     Parallel delegation points resume the whole batch. Judge/verifier points
     replay only their model request. No automatic downstream result replacement.
+    With disable_faults, the replay uses the same fault-free config as full restart,
+    which models transient faults that do not recur on retry.
     """
     from .config import RunConfig
     from .fault_injections import WorkerBudgetFaults
     from .graphs.research import build_research
     from .graphs.worker import build_worker
     from .models.adapter import OpenAIChatCompletionsAdapter
+    from .runner import _build_clean_restart_config
     from .runtime import Runtime
     from .tools.documents import LocalDocument, OracleDocuments
 
@@ -181,6 +185,8 @@ async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
         if record("execution_status") != "stopped":
             raise ValueError("Recovery requires a stopped attempt; stop its execution first")
         config = RunConfig.model_validate(record("config"))
+        if disable_faults:
+            config = _build_clean_restart_config(config)
         document_refs = record("recovery_documents")
         usage = record("recovery_usage")
     model = model if model is not None else OpenAIChatCompletionsAdapter()
@@ -208,10 +214,13 @@ async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
     result = None
     try:
         runtime.restore_recovery_snapshot(artifacts.get(point["runtime_snapshot_ref"]))
+        if disable_faults:
+            # The snapshot restores faults_enabled from the source attempt.
+            runtime.faults_enabled = False
         runtime.restore_usage(usage)
         runtime.event("recovery.started", "system", {
             "source_dir": str(source), "source_recovery_point": recovery_point_id,
-            "branch_id": branch, "scope": descriptor,
+            "branch_id": branch, "scope": descriptor, "faults_disabled": disable_faults,
         })
         async with checkpoint_store(destination / point["checkpoint_file"]) as saver:
             if descriptor["kind"] == "lead":
@@ -249,6 +258,7 @@ async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
                 result.update(
                     source_recovery_point=recovery_point_id, branch_id=branch,
                     run_id=runtime.run_id, output_dir=str(destination), scope=descriptor,
+                    faults_disabled=disable_faults,
                     usage=runtime.usage.as_dict(),
                     duration_seconds=asyncio.get_running_loop().time() - started,
                 )
@@ -270,10 +280,14 @@ def main():
     parser.add_argument("--agent", help="Filter the checkpoint list")
     parser.add_argument("--checkpoint", help="Recovery-point ID to replay; omit to list")
     parser.add_argument("--output-dir", type=Path, help="New directory for replay output")
+    parser.add_argument("--disable-faults", action="store_true",
+                        help="Replay with every fault disabled, as in --full-restart")
     args = parser.parse_args()
     try:
         if args.checkpoint:
-            result = asyncio.run(recover(args.run_dir, args.checkpoint, output_dir=args.output_dir))
+            result = asyncio.run(recover(args.run_dir, args.checkpoint,
+                                         output_dir=args.output_dir,
+                                         disable_faults=args.disable_faults))
             print(json.dumps(result, indent=2))
             if result["status"] != "completed":
                 raise SystemExit(1)
