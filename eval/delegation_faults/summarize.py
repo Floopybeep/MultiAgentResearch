@@ -1,6 +1,7 @@
 """Summarize delegation-fault recovery experiments (connection_drop, result_timeout).
 
-Reads the batch manifests written by `mar` (``<output-dir>/batches/*.json``) and each
+Reads the batch manifests written by `mar` (``<output-dir>/<batch>/batch.json``, or
+``<output-dir>/batches/*.json`` for older runs) and each
 attempt's ``events.sqlite``. Every result is labelled by its fault (from the recorded
 base config) and recovery strategy (baseline = no recovery, full-restart, always-verify),
 so the output directories can be named freely. See eval/delegation_faults/README.md.
@@ -56,7 +57,9 @@ def fault_of(config):
 def load_manifests(directories):
     results = []
     for directory in directories:
-        for path in sorted(Path(directory).glob("batches/*.json")):
+        # Older runs: <dir>/batches/<id>.json; current runs: <dir>/<id>/batch.json.
+        paths = [*Path(directory).glob("batches/*.json"), *Path(directory).glob("*/batch.json")]
+        for path in sorted(paths):
             manifest = json.loads(path.read_text(encoding="utf-8"))
             for result in manifest.get("results", []):
                 if "attempts" in result or "status" in result:
