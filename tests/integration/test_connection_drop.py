@@ -94,7 +94,8 @@ async def execute(tmp_path, model_cls=None, **drop):
         for i in range(1, WORKERS + 1)
     ])
     model = (model_cls or ScriptedModel)()
-    config = RunConfig(output_dir=tmp_path, connection_drop=drop)
+    config = RunConfig(output_dir=tmp_path, connection_drop=drop,
+                       delegation_recovery={"enabled": False})
     result = await run_qa(
         "What is the value?", config, model, documents, reference_answer="42"
     )

@@ -51,6 +51,11 @@ result_timeout:
   select: last
   seed: 0
   persistent: false
+# No-recovery condition: baseline recovery is now on by default; full restart and
+# always verify turn it off themselves.
+delegation_recovery:
+  enabled: false
+  max_retries: 1
 max_lead_turns: 10
 max_worker_turns: 5
 max_worker_tool_calls: 15

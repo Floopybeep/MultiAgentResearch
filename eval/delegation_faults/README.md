@@ -17,6 +17,9 @@ Both are accidental faults. See `configs/README.md` for their full semantics.
   configs used. They equal the `configs/baseline.yaml` of commit ee665fc with one fault
   enabled. That baseline had `max_workers_per_batch: 6` (main now has 4); no batch in any
   run exceeded 4 assignments, so the cap never applied.
+  They also set `delegation_recovery.enabled: false`, so the no-recovery condition stays
+  unrecovered now that baseline recovery is on by default (full restart and always verify
+  turn it off themselves).
 - Conditions per fault, one run each: no recovery, `--full-restart`, `--always-verify`.
 - Clean reference: the per-question mean of the 3 clean repetitions in
   `eval/v2_screening_report.json`.
