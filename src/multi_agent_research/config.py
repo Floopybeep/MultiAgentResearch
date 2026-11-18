@@ -142,17 +142,16 @@ class ResultTimeoutConfig(ConnectionDropConfig):
 
 
 class DelegationRecoveryConfig(BaseModel):
-    """Baseline recovery at the Lead-Worker boundary, on by default in the baseline.
+    """Online recovery at the Lead-Worker boundary, off by default.
 
     Both rules react only to what the Lead observes, never to which fault was
     injected: an assignment that fails with a transport error before any Worker
     starts is sent again, and a failed delivery is replaced by the Worker's own
     completed result recorded in its `worker.finished` event. It is always off under
-    full_restart and always_verify. Disable it to observe delegation faults reaching
-    the Lead unrecovered.
+    full_restart and always_verify.
     """
     model_config = ConfigDict(extra="forbid")
-    enabled: bool = True
+    enabled: bool = False
     max_retries: int = Field(default=1, ge=0)
 
 
@@ -212,8 +211,8 @@ class RunConfig(BaseModel):
     def separate_strategies(self):
         if self.full_restart and self.always_verify:
             raise ValueError("full_restart and always_verify are mutually exclusive")
-        # Baseline recovery belongs to the baseline strategy only; the other strategies
-        # measure their own recovery from unrecovered faults.
+        # Off under full_restart and always_verify: those strategies measure their own
+        # recovery from unrecovered faults.
         if self.full_restart or self.always_verify:
             self.delegation_recovery.enabled = False
         return self

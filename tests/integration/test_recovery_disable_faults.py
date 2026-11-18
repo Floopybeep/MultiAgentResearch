@@ -72,8 +72,7 @@ async def faulted_attempt(tmp_path, fault):
                       url=f"https://example.org/{i}", text="The value is 42.")
         for i in range(1, WORKERS + 1)
     ])
-    config = RunConfig(output_dir=tmp_path / "runs", **{fault: settings},
-                       delegation_recovery={"enabled": False})
+    config = RunConfig(output_dir=tmp_path / "runs", **{fault: settings})
     result = await run_qa(
         "What is the value?", config, ScriptedModel(), documents, reference_answer="42"
     )

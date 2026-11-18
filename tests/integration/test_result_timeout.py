@@ -103,8 +103,7 @@ async def execute(tmp_path, model=None, **timeout):
     ])
     model = model or ScriptedModel()
     settings = {"timeout_seconds": TIMEOUT, **timeout}
-    config = RunConfig(output_dir=tmp_path, result_timeout=settings,
-                       delegation_recovery={"enabled": False})
+    config = RunConfig(output_dir=tmp_path, result_timeout=settings)
     result = await run_qa(
         "What is the value?", config, model, documents, reference_answer="42"
     )

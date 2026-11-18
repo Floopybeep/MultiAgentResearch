@@ -13,6 +13,7 @@ from multi_agent_research.runner import run_qa
 from multi_agent_research.tools.documents import LocalDocument, OracleDocuments
 
 WORKERS = 3
+ON = {"enabled": True}
 OFF = {"enabled": False}
 DROP = {"enabled": True, "num_delivered": 1}
 TIMEOUT = {"enabled": True, "num_delivered": 1, "timeout_seconds": 0.05}
@@ -61,6 +62,7 @@ async def run(tmp_path, model=None, **settings):
                       url=f"https://example.org/{i}", text="The value is 42.")
         for i in range(1, WORKERS + 1)
     ])
+    settings.setdefault("delegation_recovery", ON)
     config = RunConfig(output_dir=tmp_path / "runs", **settings)
     result = await run_qa("What is the value?", config, model or ScriptedModel(), documents,
                           reference_answer="42")
@@ -83,11 +85,12 @@ def delivered(run_dir):
     return {e["assignment_id"]: payload(run_dir, e) for e in events(run_dir, "worker.delivered")}
 
 
-def test_on_by_default():
+def test_off_by_default_and_under_other_strategies():
     config = RunConfig()
-    assert config.delegation_recovery.enabled is True
+    assert config.delegation_recovery.enabled is False
     assert config.strategy == "baseline"
-    # Only the baseline strategy recovers; the others always start from unrecovered faults.
+    assert RunConfig(delegation_recovery=ON).strategy == "baseline"
+    # Full restart and always verify always start from unrecovered faults.
     for other in ("full_restart", "always_verify"):
         assert RunConfig(**{other: True}).delegation_recovery.enabled is False
         assert RunConfig(delegation_recovery={"enabled": True},
@@ -118,7 +121,7 @@ async def test_dropped_assignments_are_retried_in_place(tmp_path):
 async def test_persistent_drops_exhaust_retries(tmp_path):
     result, run_dir = await run(
         tmp_path, connection_drop={**DROP, "persistent": True},
-        delegation_recovery={"max_retries": 2},
+        delegation_recovery={**ON, "max_retries": 2},
     )
     assert result["status"] == "completed"
     lost = WORKERS - 1
