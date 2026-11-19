@@ -34,7 +34,16 @@ def build(tmp_path, name="run", **fault):
         tool_failure=fault,
         output_dir=tmp_path / "runs",
     )
-    return Runtime(config, None, documents, root=tmp_path / name)
+    runtime = Runtime(config, None, documents, root=tmp_path / name)
+
+    # call_tool now indexes a pre-call checkpoint, which requires an enclosing
+    # resumable graph node. These are unit tests of fault mechanics called
+    # outside any graph; checkpointing is covered in tests/integration.
+    async def no_checkpoint(agent, kind, name, request):
+        return None
+
+    runtime.recovery.before_call = no_checkpoint
+    return runtime
 
 
 async def through_call_tool(runtime, agent, document_id, offset=0):
@@ -56,16 +65,20 @@ async def through_call_tool(runtime, agent, document_id, offset=0):
 
 def test_fault_is_disabled_by_default_and_old_configs_still_load():
     assert RunConfig().tool_failure.enabled is False
-    for path in ("configs/baseline.yaml", "configs/baseline-pinned.yaml"):
-        assert RunConfig.load(path).tool_failure.enabled is False
+    assert RunConfig.load("configs/baseline.yaml").tool_failure.enabled is False
     # The fault config must stay loadable in whichever experimental condition it
     # is parked in. Neither `enabled` nor `mode` is pinned here: both are the
     # knobs the smoke tests turn. The delta between conditions is asserted by
     # test_the_two_smoke_conditions_differ_only_in_enabled instead.
     smoke = RunConfig.load("configs/faults-tool-read-denial.yaml").tool_failure
     assert smoke.mode in ("immediate", "timeout")
-    assert smoke.document_ids and smoke.offsets      # a target is configured
-    assert smoke.max_failures == 1 and smoke.persistent is False
+    # The file is the template the sweep generator fills in: it pins the denial
+    # SHAPE (document-level, every page, never lifted, deterministic) and leaves
+    # document_ids for eval/tool_faults/make_fault_configs.py to substitute.
+    assert smoke.offsets == []                      # every page of the target
+    assert smoke.persistent is True
+    assert smoke.max_failures is None               # denial is never lifted
+    assert smoke.failure_probability == 1.0         # targeting, not sampling
 
 
 def test_the_two_smoke_conditions_differ_only_in_enabled():
@@ -75,6 +88,12 @@ def test_the_two_smoke_conditions_differ_only_in_enabled():
     import yaml
 
     raw = yaml.safe_load(open("configs/faults-tool-read-denial.yaml"))
+    # Substitute a concrete target the way the sweep generator does. The parked
+    # template leaves document_ids empty, which means ANY document and so trips
+    # config.py's require_total_denial_optin once enabled; the conditions that
+    # actually run always name their document. Both copies get the same target,
+    # so `enabled` stays the only field in flight.
+    raw["tool_failure"]["document_ids"] = ["doc1"]
     # Set both conditions explicitly, so the check holds whichever one the file
     # is currently parked in.
     clean_raw = copy.deepcopy(raw)
@@ -89,9 +108,9 @@ def test_the_two_smoke_conditions_differ_only_in_enabled():
         k for k in clean["tool_failure"]
         if clean["tool_failure"][k] != faulted["tool_failure"][k]
     ] == ["enabled"]
-    # And the clean condition is the pinned baseline plus an inert fault block.
-    pinned = RunConfig.load("configs/baseline-pinned.yaml").model_dump(mode="json")
-    assert [k for k in pinned if pinned[k] != clean[k]] == ["tool_failure"]
+    # And the clean condition is the baseline plus an inert fault block.
+    baseline = RunConfig.load("configs/baseline.yaml").model_dump(mode="json")
+    assert [k for k in baseline if baseline[k] != clean[k]] == ["tool_failure"]
 
 
 def test_timeout_margin_must_exceed_one_so_the_fault_cannot_be_disarmed():
@@ -568,15 +587,29 @@ async def test_a_read_that_is_not_denied_is_never_delayed(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_injection_check_and_increment_stay_atomic_under_concurrency(tmp_path):
-    """The teammate's single injection slot cannot be claimed twice concurrently."""
+async def test_injection_targets_documents_not_individual_reads(tmp_path):
+    """The teammate's injection is scoped to a frozen document set, not a read quota.
+
+    num_docs caps which documents are targeted (runtime.py freezes them in
+    catalog order at construction), so every read of a targeted document is
+    injected and reads of untargeted documents never are. This is the invariant
+    the tool-denial tests depend on: it must not vary with read order or
+    concurrency, because that would make a faulted page's content nondeterministic.
+    """
     runtime = build(tmp_path)
+    assert runtime.document_injection_ids == frozenset({"doc1"})  # default num_docs=1
     runtime.config.document_injection.enabled = True
-    runtime.config.document_injection.num_docs = 1
     runtime.config.document_injection.prompt = "MARK"
+    offsets = (0, 100, 200, 300)
     pages = await asyncio.gather(*(
-        runtime.read_document("doc1", offset) for offset in (0, 100, 200, 300)
+        runtime.read_document("doc1", offset) for offset in offsets
     ))
-    injected = [p for p in pages if p["text"].startswith("MARK")]
-    assert len(injected) == 1
-    assert runtime.document_injection_count == 1
+    assert all(p["text"].startswith("MARK") for p in pages)
+    # No increment is lost or double-counted when the reads interleave.
+    assert runtime.document_injection_count == len(offsets)
+
+    untargeted = await asyncio.gather(*(
+        runtime.read_document("doc2", offset) for offset in offsets
+    ))
+    assert not any(p["text"].startswith("MARK") for p in untargeted)
+    assert runtime.document_injection_count == len(offsets)
