@@ -38,6 +38,13 @@ def build_research(
         # Only explicit oracle events stop a completed node or joined worker batch.
         if (cfg.full_restart and runtime.attempt_number == 1 and runtime.injected_faults):
             return {**result, "status": "interrupted", "stop_reason": "fault_injected"}
+        # Stop at a tool fault without committing to a restart, so selective recovery can
+        # branch from the interrupted attempt. Narrowed to this fault class: injected_faults
+        # is run-global and also collects other owners' injections.
+        if (cfg.tool_failure.interrupt_on_fault != "never" and runtime.attempt_number == 1
+                and any(f["event_type"] == "tool.failure_injected"
+                        for f in runtime.injected_faults)):
+            return {**result, "status": "interrupted", "stop_reason": "fault_injected"}
         return result
 
     async def lead(state):
