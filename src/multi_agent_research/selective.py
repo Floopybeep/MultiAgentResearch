@@ -48,13 +48,38 @@ def assignment_digest(prompt: str) -> str:
 
 
 def _connect(root: Path):
-    return closing(sqlite3.connect(f"{(root / 'events.sqlite').as_uri()}?mode=ro", uri=True))
+    # mode=ro on a WAL database leaves -shm and -wal files beside it, which a read-only
+    # connection cannot remove. No -wal means the writer closed and checkpointed, so the
+    # main file is complete and immutable reads it with no sidecars; a live or crashed
+    # writer's -wal still gets an ordinary read-only open.
+    path = root / "events.sqlite"
+    sealed = not path.with_name(path.name + "-wal").exists()
+    return closing(sqlite3.connect(f"{path.as_uri()}?{'immutable=1' if sealed else 'mode=ro'}",
+                                   uri=True))
 
 
 def _events(root: Path) -> list[dict]:
     with _connect(root) as db:
         rows = db.execute("SELECT sequence, body FROM events ORDER BY sequence").fetchall()
     return [{**json.loads(body), "sequence": sequence} for sequence, body in rows]
+
+
+def own_events(run_dir, run_id: str) -> list[dict]:
+    """run_id's events alone, in sequence order.
+
+    recover() copies the source log into every branch, so an unfiltered count also
+    counts each event of the attempt the branch was taken from.
+    """
+    return [e for e in _events(Path(run_dir).resolve()) if e["run_id"] == run_id]
+
+
+def record(run_dir, key: str):
+    """One row of a run's records table, e.g. "run", "config" or "recovery_usage"."""
+    with _connect(Path(run_dir).resolve()) as db:
+        row = db.execute("SELECT body FROM records WHERE key=?", (key,)).fetchone()
+    if row is None:
+        raise ValueError(f"No {key!r} record in {run_dir}")
+    return json.loads(row[0])
 
 
 def _payload(root: Path, event: dict):
