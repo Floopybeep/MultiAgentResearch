@@ -221,7 +221,9 @@ class RunConfig(BaseModel):
     def strategy(self) -> str:
         if self.full_restart:
             return "full-restart"
-        return "always-verify" if self.always_verify else "baseline"
+        if self.always_verify:
+            return "always-verify"
+        return "delegation-recovery" if self.delegation_recovery.enabled else "baseline"
 
     @classmethod
     def load(cls, path: str | Path):

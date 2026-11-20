@@ -134,20 +134,22 @@ async def replay_question(question_dir, *, model=None, force=False):
     first_attempt = attempts[0] if attempts else first_run
     second_attempt = attempts[-1] if attempts else second_run
 
-    destination = question_dir / REPLAY_DIR
-    record = destination / "batch_replay.json"
+    existing = {1: question_dir / REPLAY_DIR} if (question_dir / REPLAY_DIR).exists() else {}
+    for path in question_dir.glob(f"{REPLAY_DIR}-*"):
+        suffix = path.name.removeprefix(f"{REPLAY_DIR}-")
+        if suffix.isdigit() and int(suffix) >= 2:
+            existing[int(suffix)] = path
+    latest = existing[max(existing)] if existing else question_dir / REPLAY_DIR
+    record = latest / "batch_replay.json"
     if record.is_file() and not force:
         previous = json.loads(record.read_text(encoding="utf-8"))
         # Reuse only finished replays; a failed one (e.g. a lost connection) is retried.
         if previous.get("replay_status") == "completed":
             return previous
-    if destination.exists():
-        # Forced, failed, or stopped before recording: never overwrite earlier output.
-        index = 2
-        while (question_dir / f"{REPLAY_DIR}-{index}").exists():
-            index += 1
-        destination = question_dir / f"{REPLAY_DIR}-{index}"
-        record = destination / "batch_replay.json"
+    # Forced, failed, or stopped before recording: never overwrite earlier output.
+    destination = (question_dir / f"{REPLAY_DIR}-{max(existing) + 1}"
+                   if existing else question_dir / REPLAY_DIR)
+    record = destination / "batch_replay.json"
 
     replay = await recover(first, point, model=model, output_dir=destination,
                            disable_faults=True)
@@ -160,6 +162,8 @@ async def replay_question(question_dir, *, model=None, force=False):
     # recover() restores the source attempt's usage, so subtract it to get the replay.
     replay_tokens = replay["usage"]["total_tokens"] - first_tokens
     judge_tokens = (graded.get("usage") or {}).get("total_tokens", 0)
+    grading_seconds = graded.get("duration_seconds", 0)
+    replay_seconds = replay["duration_seconds"] + grading_seconds
     first_seconds = first_attempt["elapsed_seconds"]
     preserved_seconds = (timestamp(events[checkpoint_index]) - timestamp(events[0])).total_seconds()
     restart_correct = second_attempt.get("correct")
@@ -185,9 +189,9 @@ async def replay_question(question_dir, *, model=None, force=False):
         "preserved_seconds": round(preserved_seconds, 1),
         "replay_wasted_seconds": round(first_seconds - preserved_seconds, 1),
         "restart_wasted_seconds": round(first_seconds, 1),
-        "replay_seconds": round(replay["duration_seconds"], 1),
+        "replay_seconds": round(replay_seconds, 1),
         "restart_seconds": round(second_attempt["elapsed_seconds"], 1),
-        "replay_total_seconds": round(first_seconds + replay["duration_seconds"], 1),
+        "replay_total_seconds": round(first_seconds + replay_seconds, 1),
         "restart_total_seconds": round(first_seconds + second_attempt["elapsed_seconds"], 1),
         "replay_dir": str(destination),
     }

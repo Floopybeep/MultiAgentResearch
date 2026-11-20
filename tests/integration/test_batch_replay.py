@@ -117,6 +117,7 @@ async def test_replays_are_reused_unless_forced(tmp_path):
     assert again == first
     forced = await batch_replay.replay_question(question, model=ScriptedModel(), force=True)
     assert forced["replay_dir"] != first["replay_dir"]
+    assert await batch_replay.replay_question(question, model=ScriptedModel()) == forced
 
 
 @pytest.mark.asyncio
@@ -137,3 +138,25 @@ async def test_failed_replays_are_retried(tmp_path):
     retried = await batch_replay.replay_question(question, model=ScriptedModel())
     assert retried["replay_status"] == "completed"
     assert retried["replay_dir"] != first["replay_dir"]
+    assert await batch_replay.replay_question(question, model=ScriptedModel()) == retried
+
+
+@pytest.mark.asyncio
+async def test_replay_duration_includes_grading(tmp_path, monkeypatch):
+    question = await restarted_run(tmp_path, "connection_drop")
+    original = batch_replay.recover
+
+    async def measured_recover(*args, **kwargs):
+        result = await original(*args, **kwargs)
+        return {**result, "duration_seconds": 2.0}
+
+    async def measured_grade(*args, **kwargs):
+        return {"correct": True, "method": "llm_judge",
+                "usage": {"total_tokens": 10}, "duration_seconds": 7.0}
+
+    monkeypatch.setattr(batch_replay, "recover", measured_recover)
+    monkeypatch.setattr(batch_replay, "grade", measured_grade)
+    row = await batch_replay.replay_question(question, model=ScriptedModel())
+    assert row["replay_seconds"] == 9.0
+    assert row["replay_total_seconds"] == pytest.approx(row["faulted_attempt_seconds"] + 9.0)
+    assert row["replay_tokens"] == (2 * WORKERS + 1) * CALL_TOKENS + 10

@@ -32,6 +32,10 @@ Recovery triggered as expected: every dropped assignment was resent (15 retries 
 
 ## Limitations
 
+- These are archived measurements from the original implementation. Its batch-replay
+  seconds excluded grading, while full-restart seconds included grading; the replay
+  timings above and in the CSV are therefore not directly comparable. The corrected
+  evaluator includes grading for new replays. These runs have not been repeated.
 - Online runs used a slower endpoint (median model call 3.8 s vs 1.9 s), so seconds are not
   comparable across strategies for assignment drop.
 - One run per condition; totals include Lead variance after recovery.

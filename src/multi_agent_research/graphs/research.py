@@ -162,7 +162,7 @@ def build_research(
                     def send(attempt):
                         # A non-persistent drop affects only the first send of the batch.
                         if position in dropped and (attempt == 0 or cfg.connection_drop.persistent):
-                            return runtime.event(
+                            runtime.event(
                                 "connection.dropped", "lead",
                                 {
                                     "assignment_id": agent,
@@ -173,35 +173,49 @@ def build_research(
                                 },
                                 [start], batch_id=batch, assignment_id=agent,
                             )
-                        return None
-
-                    retries = recovery.max_retries if recovery.enabled else 0
-                    for attempt in range(retries + 1):
-                        lost = send(attempt)
-                        if lost is None:
-                            break
-                        if attempt == retries:
                             raise ConnectionError(
                                 "Connection to worker lost; assignment was not delivered"
                             )
-                        # Safe to resend: the assignment never reached a Worker.
-                        runtime.event(
-                            "delegation.retried", "lead",
-                            {"assignment_id": agent, "retry": attempt + 1,
-                             "error": "ConnectionError"},
-                            [lost], batch_id=batch, assignment_id=agent,
-                        )
-                    runtime.observed[agent] = [start]
-                    decision = injector.decide(agent)
-                    fault_parent = injector.log_decision(runtime, agent, batch, start, decision)
-                    if decision["selected"] and cfg.pipeline_fault.fault_type == "dispatch_failure":
-                        value, event = injector.inject(runtime, agent, batch, fault_parent,
-                                                       worker_executed=False)
-                        delivery_parents[index] = [event]
-                        return value
-                    result = await run_worker(
-                        runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
-                    )
+
+                    retries = recovery.max_retries if recovery.enabled else 0
+                    for attempt in range(retries + 1):
+                        try:
+                            send(attempt)
+                            runtime.observed[agent] = [start]
+                            decision = injector.decide(agent)
+                            fault_parent = injector.log_decision(
+                                runtime, agent, batch, start, decision,
+                            )
+                            if (decision["selected"]
+                                    and cfg.pipeline_fault.fault_type == "dispatch_failure"):
+                                value, event = injector.inject(
+                                    runtime, agent, batch, fault_parent, worker_executed=False,
+                                )
+                                delivery_parents[index] = [event]
+                                return value
+                            result = await run_worker(
+                                runtime, agent, args.prompt, checkpointer,
+                                document_id=args.document_id,
+                            )
+                            break
+                        except (ConnectionError, TimeoutError) as exc:
+                            # Retry observed transport failures only when this run's
+                            # log confirms the assignment has not started executing.
+                            worker_started = runtime.db.connection.execute(
+                                "SELECT 1 FROM events WHERE "
+                                "json_extract(body, '$.event_type') = 'worker.started'"
+                                " AND json_extract(body, '$.agent_id') = ?"
+                                " AND json_extract(body, '$.run_id') = ? LIMIT 1",
+                                (agent, runtime.run_id),
+                            ).fetchone()
+                            if attempt == retries or worker_started:
+                                raise
+                            runtime.event(
+                                "delegation.retried", "lead",
+                                {"assignment_id": agent, "retry": attempt + 1,
+                                 "error": type(exc).__name__, "message": str(exc)},
+                                [start], batch_id=batch, assignment_id=agent,
+                            )
                     parents = [runtime.observed[agent][-1]]
                     if position in timed_out:
                         deadline = cfg.result_timeout.timeout_seconds
