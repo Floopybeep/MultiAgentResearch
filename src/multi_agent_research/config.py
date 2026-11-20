@@ -101,6 +101,10 @@ class ToolFailureConfig(BaseModel):
     timeout_margin: float = Field(default=1.5, gt=1.0)
     seed: int = 0
     allow_total_denial: bool = False
+    # "batch": let the faulted batch join, then stop the run before the Lead reassesses.
+    interrupt_on_fault: Literal["never", "batch"] = "never"
+    # selective.write_cache output; matching assignments reuse their result, not rerun.
+    replay_cache_path: str | None = None
 
     @field_validator("offsets")
     @classmethod

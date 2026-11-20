@@ -150,6 +150,7 @@ def _backup(source, destination):
 
 
 async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
+                  replay_cache_path: str | None = None,
                   output_dir: Path | None = None, disable_faults: bool = False) -> dict:
     """Replay a stopped attempt into a new directory; never overwrite its history.
 
@@ -187,6 +188,8 @@ async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
         config = RunConfig.model_validate(record("config"))
         if disable_faults:
             config = _build_clean_restart_config(config)
+        if replay_cache_path is not None:
+            config.tool_failure.replay_cache_path = replay_cache_path
         document_refs = record("recovery_documents")
         usage = record("recovery_usage")
     model = model if model is not None else OpenAIChatCompletionsAdapter()

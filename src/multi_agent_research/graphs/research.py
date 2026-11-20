@@ -9,6 +9,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from .. import selective
 from ..fault_injections import model_visible
 from ..faults.pipeline import PipelineFaultInjector
 from ..runtime import BudgetExceeded, Runtime
@@ -37,6 +38,13 @@ def build_research(
     def finish_node(result):
         # Only explicit oracle events stop a completed node or joined worker batch.
         if (cfg.full_restart and runtime.attempt_number == 1 and runtime.injected_faults):
+            return {**result, "status": "interrupted", "stop_reason": "fault_injected"}
+        # Stop at a tool fault without committing to a restart, so selective recovery can
+        # branch from the interrupted attempt. Narrowed to this fault class: injected_faults
+        # is run-global and also collects other owners' injections.
+        if (cfg.tool_failure.interrupt_on_fault != "never" and runtime.attempt_number == 1
+                and any(f["event_type"] == "tool.failure_injected"
+                        for f in runtime.injected_faults)):
             return {**result, "status": "interrupted", "stop_reason": "fault_injected"}
         return result
 
@@ -127,6 +135,9 @@ def build_research(
                 executable = min(len(delegated), cfg.max_workers_per_batch)
                 dropped = select_dropped(cfg.connection_drop, batch, executable)
                 timed_out = select_dropped(cfg.result_timeout, batch, executable)
+            # Validated once per batch; a None path never touches the filesystem.
+            replay_cache = (None if cfg.tool_failure.replay_cache_path is None
+                            else selective.load_cache(cfg.tool_failure.replay_cache_path))
             delivery_parents = {}
 
             async def dispatch(position: int, index: int, call: dict[str, Any]):
@@ -166,9 +177,22 @@ def build_research(
                                                        worker_executed=False)
                         delivery_parents[index] = [event]
                         return value
-                    result = await run_worker(
-                        runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
-                    )
+                    # A cache hit stands in for run_worker only. It sits after the drop and
+                    # dispatch-failure checks, since those assignments never reached a worker,
+                    # and the timeout and injection branches below still apply to its result.
+                    # Digests were taken from logged, so redacted, delegation.request payloads.
+                    cached = (None if replay_cache is None else selective.cache_lookup(
+                        replay_cache, args.document_id, runtime.log.redact(args.prompt),
+                    ))
+                    if cached is not None:
+                        # Emitted as the worker, so the delivery below is parented on it.
+                        result, reused = selective.reuse(cached, agent)
+                        runtime.event("worker.reused", agent, reused, [start],
+                                      batch_id=batch, assignment_id=agent)
+                    else:
+                        result = await run_worker(
+                            runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
+                        )
                     parents = [runtime.observed[agent][-1]]
                     if position in timed_out:
                         deadline = cfg.result_timeout.timeout_seconds
