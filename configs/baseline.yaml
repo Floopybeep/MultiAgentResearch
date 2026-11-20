@@ -55,6 +55,11 @@ result_timeout:
   select: last
   seed: 0
   persistent: false
+# Online recovery at the Lead-Worker boundary (off by default): resend assignments lost
+# before a Worker starts; recover failed deliveries from the Worker's completed result.
+delegation_recovery:
+  enabled: false
+  max_retries: 1
 # Worker budget faults. probability: how often each selected worker is affected.
 # max_output_tokens / max_tool_calls: how severe. target_workers: batchN-workerM; [] means all.
 worker_budget_faults:

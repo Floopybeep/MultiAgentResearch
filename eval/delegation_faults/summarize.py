@@ -1,8 +1,10 @@
 """Summarize delegation-fault recovery experiments (connection_drop, result_timeout).
 
-Reads the batch manifests written by `mar` (``<output-dir>/batches/*.json``) and each
+Reads the batch manifests written by `mar` (``<output-dir>/<batch>/batch.json``, or
+``<output-dir>/batches/*.json`` for older runs) and each
 attempt's ``events.sqlite``. Every result is labelled by its fault (from the recorded
-base config) and recovery strategy (baseline = no recovery, full-restart, always-verify),
+base config) and recovery strategy (baseline = no recovery, delegation-recovery,
+full-restart, always-verify),
 so the output directories can be named freely. See eval/delegation_faults/README.md.
 
 Usage:
@@ -38,7 +40,7 @@ from pathlib import Path
 
 FAULTS = ("connection_drop", "result_timeout")
 FAULT_EVENTS = {"connection.dropped": "connection_drop", "result.timed_out": "result_timeout"}
-STRATEGIES = ("baseline", "full-restart", "always-verify")
+STRATEGIES = ("baseline", "delegation-recovery", "full-restart", "always-verify")
 
 
 def fault_of(config):
@@ -56,7 +58,9 @@ def fault_of(config):
 def load_manifests(directories):
     results = []
     for directory in directories:
-        for path in sorted(Path(directory).glob("batches/*.json")):
+        # Older runs: <dir>/batches/<id>.json; current runs: <dir>/<id>/batch.json.
+        paths = [*Path(directory).glob("batches/*.json"), *Path(directory).glob("*/batch.json")]
+        for path in sorted(paths):
             manifest = json.loads(path.read_text(encoding="utf-8"))
             for result in manifest.get("results", []):
                 if "attempts" in result or "status" in result:
@@ -114,10 +118,12 @@ def attempt_metrics(root, attempt):
     for event in events:
         if event["event_type"] == "worker.finished":
             statuses[payload(event["payload_ref"]).get("status", "?")] += 1
-    # Tokens a withheld Worker spent before its result was lost (result_timeout only).
+    retrieved = {e["assignment_id"] for e in events if e["event_type"] == "result.retrieved"}
+    # Retrieved results are used by the Lead, so their Worker tokens are not wasted.
     wasted_worker_tokens = sum(
         agent_tokens(events, payload, e["assignment_id"])
         for e in injected if e["event_type"] == "result.timed_out"
+        and e["assignment_id"] not in retrieved
     )
     withheld_status = defaultdict(int)
     for event in injected:
@@ -150,10 +156,14 @@ def summarize_result(root, result):
     verifier = (result.get("usage_by_role") or {}).get("verifier") or {}
     grade = result.get("grade") or {}
     restarted = bool(result.get("restarted"))
+    strategy = result.get("strategy", "baseline")
+    # Early online-recovery runs were recorded as baseline; recognize their config.
+    if strategy == "baseline" and (config.get("delegation_recovery") or {}).get("enabled"):
+        strategy = "delegation-recovery"
     return {
         "question_id": result.get("question_id"),
         "fault": fault_of(config),
-        "strategy": result.get("strategy", "baseline"),
+        "strategy": strategy,
         "status": result.get("status"),
         "answered": bool(result.get("answer")),
         "correct": grade.get("correct"),
@@ -261,6 +271,8 @@ SHORT = {
     ("connection_drop", "always-verify"): "drop+V",
     ("result_timeout", "baseline"): "timeout", ("result_timeout", "full-restart"): "timeout+R",
     ("result_timeout", "always-verify"): "timeout+V",
+    ("connection_drop", "delegation-recovery"): "drop+D",
+    ("result_timeout", "delegation-recovery"): "timeout+D",
 }
 
 
@@ -483,12 +495,13 @@ def main(argv=None):
         reference_note = "Reference: clean baseline runs"
     notes = (
         f"{reference_note}. Ratios are summed over the paired questions. 'wasted tok' is the discarded first attempt for full-restart, otherwise "
-        "the tokens spent by Workers whose results were withheld (result_timeout). 'flagged' "
+        "the tokens spent by Workers whose results were withheld and not retrieved "
+        "(result_timeout). 'flagged' "
         "counts verifications with verified=false; 'verif err' counts verifier calls that "
         "failed.\n\nPer-question cells: ✓ correct, ✗ wrong, ∅ no answer, ? ungraded; then "
         "total tokens and seconds. inj = faults injected, R = restarted, re = Lead "
         "re-delegated after the fault, flag = verifier flags. +R = full-restart, "
-        "+V = always-verify."
+        "+V = always-verify, +D = delegation-recovery."
     )
     report = "\n\n".join([
         "## By condition", condition_table(rows, reference_label),

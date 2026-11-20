@@ -411,3 +411,63 @@ async def test_lookup_hashes_the_redacted_prompt(tmp_path, monkeypatch):
     assert sorted(e["assignment_id"] for e in of_type(events, "worker.reused")) == sorted(
         [*HEALTHY, FAULTED])
     assert not of_type(events, "worker.started")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("persistent,max_retries", [(False, 1), (True, 2), (False, 0)])
+async def test_cached_delegations_preserve_retry_policy(tmp_path, persistent, max_retries):
+    clean = await execute(tmp_path, name="clean")
+    cache = selective.sibling_cache(clean["output_dir"], batch=1, exclude="none")
+    cache_path = tmp_path / "cache.json"
+    selective.write_cache(cache_path, cache)
+
+    result = await execute(
+        tmp_path, tool_failure={"replay_cache_path": str(cache_path)},
+        connection_drop={"enabled": True, "num_delivered": 1, "persistent": persistent},
+        delegation_recovery={"enabled": True, "max_retries": max_retries},
+    )
+    events = read_events(result["output_dir"])
+    succeeds = not persistent and max_retries > 0
+    reused = {e["assignment_id"] for e in of_type(events, "worker.reused")}
+    assert reused == (set(cache) if succeeds else {"batch1-worker1"})
+    assert len(of_type(events, "delegation.retried")) == 2 * max_retries
+    assert len(of_type(events, "connection.dropped")) == 2 * (
+        max_retries + 1 if persistent else 1)
+    assert not of_type(events, "worker.started")
+    assert not [e for e in of_type(events, "model.request")
+                if e["agent_id"].startswith("batch")]
+    for event in of_type(events, "worker.delivered"):
+        assert payload(result["output_dir"], event) == cache[event["assignment_id"]]["delivery"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("enabled", [False, True])
+async def test_cached_results_recovered_after_delivery_timeout(tmp_path, enabled):
+    clean = await execute(tmp_path, name="clean")
+    cache = selective.sibling_cache(clean["output_dir"], batch=1, exclude="none")
+    cache_path = tmp_path / "cache.json"
+    selective.write_cache(cache_path, cache)
+
+    result = await execute(
+        tmp_path, tool_failure={"replay_cache_path": str(cache_path)},
+        result_timeout={"enabled": True, "num_delivered": 1, "timeout_seconds": 0.05},
+        delegation_recovery={"enabled": enabled},
+    )
+    events = read_events(result["output_dir"])
+    assert len(of_type(events, "result.timed_out")) == 2
+    reused = {e["event_id"]: e for e in of_type(events, "worker.reused")}
+    assert len(reused) == 3
+    assert not of_type(events, "worker.started")
+    assert not of_type(events, "worker.finished")
+    retrieved = of_type(events, "result.retrieved")
+    assert len(retrieved) == (2 if enabled else 0)
+    for event in retrieved:
+        source = reused[payload(result["output_dir"], event)["worker_reused_event"]]
+        assert source["assignment_id"] == event["assignment_id"]
+        assert source["event_id"] in event["parent_event_ids"]
+    for event in of_type(events, "worker.delivered"):
+        delivery = payload(result["output_dir"], event)
+        if enabled or event["assignment_id"] == "batch1-worker1":
+            assert delivery == cache[event["assignment_id"]]["delivery"]
+        else:
+            assert delivery["status"] == "failed"
