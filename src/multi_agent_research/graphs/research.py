@@ -33,6 +33,21 @@ def build_research(
 ) -> CompiledStateGraph:
     cfg = runtime.config
     injector = PipelineFaultInjector(cfg.pipeline_fault)
+    recovery = cfg.delegation_recovery
+
+    def finished_result(agent):
+        """The Worker's latest completed `worker.finished` record in this run, if any."""
+        row = runtime.db.connection.execute(
+            "SELECT body FROM events WHERE json_extract(body, '$.event_type') = 'worker.finished'"
+            " AND json_extract(body, '$.agent_id') = ? AND json_extract(body, '$.run_id') = ?"
+            " ORDER BY sequence DESC LIMIT 1",
+            (agent, runtime.run_id),
+        ).fetchone()
+        if row is None:
+            return None
+        event = json.loads(row[0])
+        result = WorkerResult.model_validate(runtime.artifacts.get(event["payload_ref"]))
+        return (event["event_id"], result) if result.status == "completed" else None
 
     def finish_node(result):
         # Only explicit oracle events stop a completed node or joined worker batch.
@@ -143,32 +158,64 @@ def build_research(
                         )
                     args = run_blocking_subagent.model_validate(call["args"])
                     agent = f"batch{batch}-worker{position + 1}"
-                    if position in dropped:
-                        runtime.event(
-                            "connection.dropped", "lead",
-                            {
-                                "assignment_id": agent,
-                                "document_id": args.document_id,
-                                "position": position + 1,
-                                "drop_number": dropped.index(position) + 1,
-                                "assignment": args.prompt,
-                            },
-                            [start], batch_id=batch, assignment_id=agent,
-                        )
-                        raise ConnectionError(
-                            "Connection to worker lost; assignment was not delivered"
-                        )
-                    runtime.observed[agent] = [start]
-                    decision = injector.decide(agent)
-                    fault_parent = injector.log_decision(runtime, agent, batch, start, decision)
-                    if decision["selected"] and cfg.pipeline_fault.fault_type == "dispatch_failure":
-                        value, event = injector.inject(runtime, agent, batch, fault_parent,
-                                                       worker_executed=False)
-                        delivery_parents[index] = [event]
-                        return value
-                    result = await run_worker(
-                        runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
-                    )
+
+                    def send(attempt):
+                        # A non-persistent drop affects only the first send of the batch.
+                        if position in dropped and (attempt == 0 or cfg.connection_drop.persistent):
+                            runtime.event(
+                                "connection.dropped", "lead",
+                                {
+                                    "assignment_id": agent,
+                                    "document_id": args.document_id,
+                                    "position": position + 1,
+                                    "drop_number": dropped.index(position) + 1,
+                                    "assignment": args.prompt,
+                                },
+                                [start], batch_id=batch, assignment_id=agent,
+                            )
+                            raise ConnectionError(
+                                "Connection to worker lost; assignment was not delivered"
+                            )
+
+                    retries = recovery.max_retries if recovery.enabled else 0
+                    for attempt in range(retries + 1):
+                        try:
+                            send(attempt)
+                            runtime.observed[agent] = [start]
+                            decision = injector.decide(agent)
+                            fault_parent = injector.log_decision(
+                                runtime, agent, batch, start, decision,
+                            )
+                            if (decision["selected"]
+                                    and cfg.pipeline_fault.fault_type == "dispatch_failure"):
+                                value, event = injector.inject(
+                                    runtime, agent, batch, fault_parent, worker_executed=False,
+                                )
+                                delivery_parents[index] = [event]
+                                return value
+                            result = await run_worker(
+                                runtime, agent, args.prompt, checkpointer,
+                                document_id=args.document_id,
+                            )
+                            break
+                        except (ConnectionError, TimeoutError) as exc:
+                            # Retry observed transport failures only when this run's
+                            # log confirms the assignment has not started executing.
+                            worker_started = runtime.db.connection.execute(
+                                "SELECT 1 FROM events WHERE "
+                                "json_extract(body, '$.event_type') = 'worker.started'"
+                                " AND json_extract(body, '$.agent_id') = ?"
+                                " AND json_extract(body, '$.run_id') = ? LIMIT 1",
+                                (agent, runtime.run_id),
+                            ).fetchone()
+                            if attempt == retries or worker_started:
+                                raise
+                            runtime.event(
+                                "delegation.retried", "lead",
+                                {"assignment_id": agent, "retry": attempt + 1,
+                                 "error": type(exc).__name__, "message": str(exc)},
+                                [start], batch_id=batch, assignment_id=agent,
+                            )
                     parents = [runtime.observed[agent][-1]]
                     if position in timed_out:
                         deadline = cfg.result_timeout.timeout_seconds
@@ -196,6 +243,18 @@ def build_research(
                         result = WorkerResult(
                             assignment_id=agent, status="failed", stop_reason="TimeoutError: ",
                         )
+                    if recovery.enabled and result.status != "completed":
+                        # The Worker records its own result before delivery; a failed
+                        # delivery of a completed Worker is recovered from that record.
+                        retrieved = finished_result(agent)
+                        if retrieved is not None:
+                            finished, result = retrieved
+                            parents.append(runtime.event(
+                                "result.retrieved", "lead",
+                                {"assignment_id": agent, "worker_finished_event": finished},
+                                list(dict.fromkeys([finished, *parents])),
+                                batch_id=batch, assignment_id=agent,
+                            ))
                     delivery = result.model_dump()
                     if decision["selected"] and result.status == "completed":
                         delivery, event = injector.inject(

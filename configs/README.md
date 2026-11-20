@@ -135,6 +135,25 @@ rewrite results or restart. The two strategies are mutually exclusive, including
 when configured in YAML. Configure the `verifier` model using the same fields as
 `judge`; its default model is `glm-5.3-flash`.
 
+Set `delegation_recovery: {enabled: true}` to recover at the Lead-Worker boundary while
+the run continues. It is off by default. Its two rules react only to what the Lead
+observes, never to which fault was injected:
+
+- An assignment that fails with a transport error before any Worker starts is sent
+  again, up to `max_retries` (default 1) times, recorded as `delegation.retried`.
+  The retry policy handles `ConnectionError` and `TimeoutError` and checks this run's
+  `worker.started` records before resending, including for non-injected errors. A
+  non-persistent `connection_drop` affects only the first send; a persistent one also
+  drops every retry.
+- A failed delivery is replaced by the Worker's own result when its `worker.finished`
+  event in this run is `completed`, recorded as `result.retrieved`. Workers that fail
+  themselves (errors, budgets) are never retrieved.
+
+Other faults never trigger these rules. It is always off under `full_restart` and
+`always_verify`. Enabled runs are recorded as strategy `delegation-recovery`, distinct
+from the no-recovery `baseline` in evaluation summaries. Retrieved Worker results
+are not counted as wasted work.
+
 ## Usage and cost fields
 
 Input tokens include cached input. Given the endpoint's returned usage:

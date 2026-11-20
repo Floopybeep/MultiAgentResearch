@@ -141,6 +141,20 @@ class ResultTimeoutConfig(ConnectionDropConfig):
     timeout_seconds: float = Field(default=180, gt=0)
 
 
+class DelegationRecoveryConfig(BaseModel):
+    """Online recovery at the Lead-Worker boundary, off by default.
+
+    Both rules react only to what the Lead observes, never to which fault was
+    injected: an assignment that fails with a transport error before any Worker
+    starts is sent again, and a failed delivery is replaced by the Worker's own
+    completed result recorded in its `worker.finished` event. It is always off under
+    full_restart and always_verify.
+    """
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    max_retries: int = Field(default=1, ge=0)
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     lead: ModelConfig = Field(
@@ -171,6 +185,9 @@ class RunConfig(BaseModel):
     tool_failure: ToolFailureConfig = Field(default_factory=ToolFailureConfig)
     connection_drop: ConnectionDropConfig = Field(default_factory=ConnectionDropConfig)
     result_timeout: ResultTimeoutConfig = Field(default_factory=ResultTimeoutConfig)
+    delegation_recovery: DelegationRecoveryConfig = Field(
+        default_factory=DelegationRecoveryConfig
+    )
     output_dir: Path = Path("runs")
 
     @model_validator(mode="after")
@@ -194,13 +211,19 @@ class RunConfig(BaseModel):
     def separate_strategies(self):
         if self.full_restart and self.always_verify:
             raise ValueError("full_restart and always_verify are mutually exclusive")
+        # Off under full_restart and always_verify: those strategies measure their own
+        # recovery from unrecovered faults.
+        if self.full_restart or self.always_verify:
+            self.delegation_recovery.enabled = False
         return self
 
     @property
     def strategy(self) -> str:
         if self.full_restart:
             return "full-restart"
-        return "always-verify" if self.always_verify else "baseline"
+        if self.always_verify:
+            return "always-verify"
+        return "delegation-recovery" if self.delegation_recovery.enabled else "baseline"
 
     @classmethod
     def load(cls, path: str | Path):
