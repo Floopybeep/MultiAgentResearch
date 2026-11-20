@@ -1,7 +1,8 @@
 """Read-only lookups from a recorded attempt to the checkpoints selective recovery uses.
 
 Covers the read_document tool fault (`tool.failure_injected`) only. Nothing here
-writes: events.sqlite is opened with mode=ro and artifacts are only read.
+writes to a run: events.sqlite is opened with mode=ro and artifacts are only read.
+The one write is write_cache, to a path the caller names.
 """
 
 import hashlib
@@ -16,6 +17,8 @@ from .schemas import WorkerResult
 
 FAILURE_INJECTED = "tool.failure_injected"
 WORKER_AGENT = re.compile(r"batch(\d+)-worker(\d+)")  # graphs/research.py names workers so
+DIGEST = re.compile(r"[0-9a-f]{64}")
+ORIGINS = frozenset({"sibling", "recovered"})
 
 
 class FaultSite(TypedDict):
@@ -186,3 +189,95 @@ def earliest_lead_point(run_dir) -> str:
     if len(rows) != 1:
         raise ValueError(f"Expected one lead call_seq=1 recovery point, found {len(rows)}")
     return rows[0][0]
+
+
+def earliest_fault_by_agent(sites: list[FaultSite]) -> dict[str, FaultSite]:
+    """Each faulted agent's first fault site, the one whose checkpoint predates the rest.
+
+    Sites are run-scoped and interleave agents, so group before choosing. Order by
+    event_sequence, never failure_number: that counter is run-wide, so an agent's
+    first failure need not be number 1.
+    """
+    first: dict[str, FaultSite] = {}
+    for site in sites:
+        held = first.get(site["agent_id"])
+        if held is None or site["event_sequence"] < held["event_sequence"]:
+            first[site["agent_id"]] = site
+    return first
+
+
+def _valid_entry(key, entry) -> ReplayEntry:
+    if not isinstance(entry, dict) or set(entry) != set(ReplayEntry.__annotations__):
+        raise ValueError(f"Cache entry {key!r} does not have exactly the ReplayEntry keys")
+    for name in ("assignment_id", "document_id", "assignment_digest", "origin",
+                 "source_run_id", "source_event_id"):
+        if not isinstance(entry[name], str) or not entry[name]:
+            raise ValueError(f"Cache entry {key!r} has a non-string or empty {name}")
+    if key != entry["assignment_id"]:
+        raise ValueError(f"Cache entry {key!r} is filed under the wrong assignment_id")
+    if entry["origin"] not in ORIGINS:
+        raise ValueError(f"Cache entry {key!r} has unknown origin {entry['origin']!r}")
+    if not DIGEST.fullmatch(entry["assignment_digest"]):
+        raise ValueError(f"Cache entry {key!r} digest is not 64 lowercase hex characters")
+    delivery = _plain(entry["delivery"])
+    if delivery["status"] != "completed":
+        raise ValueError(f"Cache entry {key!r} delivery did not complete")
+    if delivery["assignment_id"] != entry["assignment_id"]:
+        raise ValueError(f"Cache entry {key!r} delivery belongs to {delivery['assignment_id']}")
+    return entry
+
+
+def _valid_cache(cache) -> dict[str, ReplayEntry]:
+    if not isinstance(cache, dict):
+        raise ValueError("Replay cache must be a JSON object of ReplayEntry records")
+    seen = set()
+    for key, entry in cache.items():
+        _valid_entry(key, entry)
+        # cache_lookup would raise on a duplicate at dispatch; refuse it at load instead.
+        identity = (entry["document_id"], entry["assignment_digest"])
+        if identity in seen:
+            raise ValueError(f"Duplicate (document_id, assignment_digest) at {key!r}")
+        seen.add(identity)
+    return cache
+
+
+def write_cache(path, entries: dict[str, ReplayEntry]) -> None:
+    """Serialize a validated replay cache; nothing is written if any entry is invalid."""
+    text = json.dumps(_valid_cache(entries), indent=2, sort_keys=True, ensure_ascii=False)
+    Path(path).write_text(text, encoding="utf-8")
+
+
+def load_cache(path) -> dict[str, ReplayEntry]:
+    """Read a replay cache, raising ValueError on any entry write_cache would refuse."""
+    return _valid_cache(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def cache_lookup(cache: dict[str, ReplayEntry], document_id: str,
+                 prompt: str) -> ReplayEntry | None:
+    """The entry for this assignment, matched on (document_id, digest of prompt).
+
+    Not on agent name: worker names are positional and can shift between attempts,
+    the assignment cannot. `prompt` must be redacted the way EventLogger stored it,
+    since cached digests were computed from the logged delegation.request.
+    """
+    digest = assignment_digest(prompt)
+    matches = [e for e in cache.values()
+               if e["document_id"] == document_id and e["assignment_digest"] == digest]
+    if len(matches) > 1:
+        raise ValueError(f"{len(matches)} cache entries match {document_id} / {digest}")
+    return matches[0] if matches else None
+
+
+def reuse(entry: ReplayEntry, assignment_id: str) -> tuple[WorkerResult, dict]:
+    """The cached result re-addressed to `assignment_id`, and its worker.reused payload.
+
+    A result delivered at batch1-worker3 must say batch1-worker3, or the Lead files it
+    under the wrong worker. The payload is then the only record of the source position.
+    """
+    result = WorkerResult.model_validate({**entry["delivery"], "assignment_id": assignment_id})
+    return result, {
+        "assignment_id": assignment_id, "source_assignment_id": entry["assignment_id"],
+        "document_id": entry["document_id"], "assignment_digest": entry["assignment_digest"],
+        "origin": entry["origin"], "source_run_id": entry["source_run_id"],
+        "source_event_id": entry["source_event_id"],
+    }
