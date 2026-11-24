@@ -9,7 +9,6 @@ from uuid import uuid4
 
 from .frames import DEFAULT_CORPUS, load_frames, prepare_documents, select_examples
 from .observability.events import Redactor
-from .observability.usage import sum_usage
 from .runner import run_qa
 from .viewer_export import atomic_write, install_html, publish_manifest
 
@@ -45,9 +44,6 @@ def summarize(results):
             for r in results for a in r.get("attempts", [r])
         ),
         "elapsed_seconds": sum(r.get("elapsed_seconds", 0) for r in results),
-        "verifier_usage": sum_usage(
-            r["usage_by_role"]["verifier"] for r in results if "usage_by_role" in r
-        ),
     }
 
 

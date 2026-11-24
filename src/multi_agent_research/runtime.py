@@ -17,18 +17,10 @@ from .observability.events import EventLogger
 from .observability.usage import Usage
 from .storage.artifacts import ArtifactStore
 from .storage.database import Database
-from .tools import tool_failures
 from .tools.memory import PlanMemory
-from .tools.prompt_injection import inject_document_prompt
 from .viewer_export import ViewerExport
 
 logger = logging.getLogger(__name__)
-
-# Explicit events emitted by the implemented fault hooks.
-INJECTION_EVENTS = frozenset({
-    "document.injected", "connection.dropped", "result.timed_out", "tool.failure_injected",
-    "fault.injected", "fault.budget.exhausted",
-})
 
 
 class BudgetExceeded(RuntimeError):
@@ -41,22 +33,8 @@ class ModelCallTimeout(RuntimeError):
 
 class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None,
-                 viewer_root: Path | None = None, *, budget_question_key: str = "",
-                 restore: bool = False):
+                 viewer_root: Path | None = None, *, restore: bool = False):
         self.config, self.model, self.documents = config, model, documents
-        self.budget_question_key = budget_question_key
-        self.document_injection_count = 0
-        # Freeze targets in catalog order; slicing caps N at the catalog size.
-        self.document_injection_ids = frozenset(
-            list(documents.documents)[:config.document_injection.num_docs]
-        )
-        self.tool_failure_state = tool_failures.ToolFailureState()
-        self.question_key = tool_failures.question_key(documents.documents)
-        self.attempt_number = 1
-        self.faults_enabled: bool = True
-        self.injected_faults: list[dict[str, Any]] = []
-        self.model_inputs: dict[str, list[dict[str, Any]]] = {}
-        self.verifications: list[dict[str, Any]] = []
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
         self.prompt_context = prompts.context(config, now.date().isoformat())
@@ -68,7 +46,7 @@ class Runtime:
         self.log = EventLogger(self.db, self.artifacts, self.run_id)
         self.memory = PlanMemory(self.db, self.artifacts)
         self.usage = Usage()
-        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge", "verifier")}
+        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge")}
         self.usage.by_role = self.usage_by_role
         self.observed = {}
         from .recovery import RecoveryPoints
@@ -88,12 +66,6 @@ class Runtime:
     def event(self, kind, agent, payload, parents=(), **metadata):
         event = self.log.emit(kind, agent, payload, parents, **metadata)
         self.observed.setdefault(agent, []).append(event)
-        # Ordinary errors, timeouts and low budgets are never injection signals.
-        if kind in INJECTION_EVENTS:
-            self.injected_faults.append({
-                "run_id": self.run_id, "event_id": event,
-                "event_type": kind, "agent": agent, "payload": self.log.redact(payload),
-            })
         if kind == "model.request":
             logger.info("[%s] Calling model...", agent)
         elif kind == "model.error":
@@ -102,17 +74,10 @@ class Runtime:
             logger.info("[%s] Worker %s.", agent, payload["status"])
         elif kind == "grade.finished":
             logger.info("[judge] Grading finished (%s).", payload["method"])
-        elif kind == "verification":
-            logger.info("[%s] %s verification finished (verified=%s).",
-                        agent, payload["boundary"], payload["verified"])
-        elif kind == "attempt.interrupted":
-            logger.info("Injected fault recorded: current node finished; ending Attempt 1.")
-        elif kind == "recovery.restart":
-            logger.info("Full restart: scheduling clean Attempt 2.")
         return event
 
     async def call_model(self, role, agent, messages, tools, *, model_config=None):
-        if role in ("judge", "verifier"):
+        if role == "judge":
             if tools:
                 raise ValueError("Auxiliary model replay supports tool-free requests")
             return await self.recovery.auxiliary_model(
@@ -131,10 +96,6 @@ class Runtime:
             "tools": [t.model_json_schema() for t in tools],
             "model_config": config.model_dump(mode="json"),
         })
-        if self.config.always_verify and role in ("lead", "worker"):
-            # These are the messages actually passed to this model call, including
-            # delivered ToolMessages. Never reconstruct them from clean documents.
-            self.model_inputs[agent] = visible_messages
         start = time.monotonic()
         request = self.event(
             "model.request",
@@ -237,34 +198,14 @@ class Runtime:
         return snapshots
 
     def recovery_snapshot(self):
-        failure = self.tool_failure_state
-        return {
-            "plan_ref": self.memory.ref, "prompt_context": self.prompt_context,
-            "budget_question_key": self.budget_question_key,
-            "attempt_number": self.attempt_number, "faults_enabled": self.faults_enabled,
-            "document_injection_count": self.document_injection_count,
-            "injected_faults": self.injected_faults, "observed": self.observed,
-            "model_inputs": self.model_inputs, "verifications": self.verifications,
-            "tool_failures": {
-                "failures": failure.failures, "denied": sorted(failure.denied),
-                "attempts": [[*key, count] for key, count in failure.attempts.items()],
-            },
-        }
+        return {"plan_ref": self.memory.ref, "prompt_context": self.prompt_context,
+                "observed": self.observed}
 
     def restore_recovery_snapshot(self, snapshot):
         self.memory.ref = snapshot["plan_ref"]
         self.db.record("plan", {"artifact_ref": self.memory.ref})
-        for name in (
-            "prompt_context", "budget_question_key", "attempt_number", "faults_enabled",
-            "document_injection_count", "injected_faults", "observed", "model_inputs",
-            "verifications",
-        ):
-            setattr(self, name, snapshot[name])
-        failure = snapshot["tool_failures"]
-        self.tool_failure_state = tool_failures.ToolFailureState(
-            failures=failure["failures"], denied={tuple(key) for key in failure["denied"]},
-            attempts={(doc, offset): count for doc, offset, count in failure["attempts"]},
-        )
+        self.prompt_context = snapshot["prompt_context"]
+        self.observed = snapshot["observed"]
 
     def save_usage(self):
         self.db.record("recovery_usage", {
@@ -281,81 +222,8 @@ class Runtime:
                 setattr(self.usage_by_role[role], key, value)
         self.save_usage()
 
-    async def deny_document(
-        self, document_id: str, offset: int, agent: str, original: dict[str, Any],
-    ) -> None:
-        """Fail an eligible read, immediately or by outlasting the tool timeout.
-
-        The slot is reserved and the event emitted before any delay: if the
-        worker's own timeout cancels the call mid-sleep, the trace must still
-        show the fault triggered.
-
-        Invariant, relied on by the caller: this either returns without ever
-        suspending, when no fault applies, or raises. It must never await and
-        then let the read succeed, which would delay a page without denying it.
-        """
-        config = self.config.tool_failure
-        decision = tool_failures.decide(
-            config, self.tool_failure_state,
-            key=self.question_key, document_id=document_id, offset=offset,
-        )
-        if not decision.fail:
-            return
-        number = self.tool_failure_state.reserve(document_id, offset)
-        delay = tool_failures.delay_seconds(config, self.config.call_timeout_seconds)
-        self.event(
-            "tool.failure_injected", agent,
-            {
-                "tool": tool_failures.TOOL_NAME,
-                "mode": config.mode,
-                "document_id": document_id,
-                "offset": offset,
-                "agent": agent,
-                "failure_number": number,
-                "attempt": decision.attempt,
-                "delay_seconds": delay if config.mode == "timeout" else None,
-                "persistent": config.persistent,
-                "original_artifact_ref": self.artifacts.put(self.log.redact(original)),
-            },
-            self.observed.get(agent, []).copy(),
-        )
-        if config.mode == "timeout":
-            await asyncio.sleep(delay)
-        # A timeout_margin above 1.0 means call_tool cancels the sleep first, so
-        # this raise is the guarantee that a denied page is never returned.
-        raise tool_failures.ToolUnavailableError(tool_failures.UNAVAILABLE_MESSAGE)
-
-    async def read_document(
-        self, document_id: str, offset: int, *, agent: str = "worker",
-    ) -> dict[str, Any]:
-        """Read a page, unless a configured accidental fault denies it.
-
-        Injection targets are fixed for this question run, shared by all workers
-        and pages. Denial does not change those targets. `deny_document` either
-        returns without suspending or raises, so an allowed read is never delayed.
-        """
-        original = self.documents.read(document_id, offset, self.config.max_document_chars)
-        if self.faults_enabled and self.config.tool_failure.enabled:
-            await self.deny_document(document_id, offset, agent, original)
-        injection = self.config.document_injection
-        if (self.faults_enabled and injection.enabled
-                and document_id in self.document_injection_ids):
-            injected = inject_document_prompt(original, injection)
-            # Count delivered injections for auditing, including repeated reads.
-            self.document_injection_count += 1
-            self.event(
-                "document.injected", agent,
-                {
-                    "document_id": document_id,
-                    "offset": offset,
-                    "injection_number": self.document_injection_count,
-                    "original_artifact_ref": self.artifacts.put(self.log.redact(original)),
-                    "injected_artifact_ref": self.artifacts.put(self.log.redact(injected)),
-                },
-                self.observed.get(agent, []).copy(),
-            )
-            return injected
-        return original
+    async def read_document(self, document_id: str, offset: int) -> dict[str, Any]:
+        return self.documents.read(document_id, offset, self.config.max_document_chars)
 
     def close(self):
         try:

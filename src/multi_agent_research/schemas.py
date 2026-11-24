@@ -61,7 +61,6 @@ class WorkerResult(Contract):
 class AgentState(TypedDict, total=False):
     messages: list[Any]
     turns: int
-    output_tokens: int
     tool_calls: int
     batches: int
     results: dict[str, dict]
@@ -73,7 +72,6 @@ class AgentState(TypedDict, total=False):
     pending_tools: list[dict]
     tool_index: int
     tool_outputs: dict[str, Any]
-    plan_diagnostic: dict | None
 
 
 def merge_results(left: dict, right: dict) -> dict:

@@ -14,8 +14,7 @@ synthetic/demo or fixed-example modes.
 Keep unresolved design decisions in README and mark existing entries with TODOs;
 do not expand them into frameworks. General fault coverage and propagation metrics
 remain open design work. Manual
-call-indexed checkpoint replay, full restart and inter-agent verification are
-implemented. See README.md, "Per-call checkpoints and manual recovery", for the
+call-indexed checkpoint replay is implemented. See README.md, "Per-call checkpoints and manual recovery", for the
 recovery API, IDs and scope. Automatic rollback selection/detection and downstream
 result replacement remain out of scope. Acceptance is the user's real full run and
 trace inspection. **Do not run
