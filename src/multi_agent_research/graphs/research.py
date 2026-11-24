@@ -9,6 +9,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from ..faults.base import Call
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
@@ -64,7 +65,7 @@ def build_research(
                 return {"completed": submit_answer.model_validate(call["args"]).model_dump()}
             raise ValueError("Unknown lead tool")
 
-        output = await runtime.call_tool("lead", call, handler)
+        output = await runtime.call_tool("lead", "lead", call, handler)
         if "completed" in output:
             answer = output["completed"]["answer"]
             runtime.event("answer.submitted", "lead", {"answer": answer},
@@ -111,8 +112,16 @@ def build_research(
                     args = run_blocking_subagent.model_validate(call["args"])
                     agent = f"batch{batch}-worker{position + 1}"
                     runtime.observed[agent] = [start]
-                    result = await run_worker(
-                        runtime, agent, args.prompt, checkpointer, document_id=args.document_id,
+                    delegation = Call(agent, "lead", call["name"], {
+                        "prompt": args.prompt, "document_id": args.document_id,
+                        "batch": batch, "position": position,
+                        "batch_size": min(len(delegated), cfg.max_workers_per_batch),
+                    })
+                    result = await runtime.faults.run(
+                        "delegation", delegation, lambda c: run_worker(
+                            runtime, agent, c.args["prompt"], checkpointer,
+                            document_id=c.args["document_id"],
+                        ),
                     )
                     delivery_parents[index] = [runtime.observed[agent][-1]]
                     return result.model_dump()

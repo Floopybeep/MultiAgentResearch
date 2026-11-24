@@ -50,6 +50,7 @@ class RunConfig(BaseModel):
     call_timeout_seconds: float = Field(default=60, gt=0)
     max_document_chars: int = Field(default=24000, gt=0)
     output_dir: Path = Path("runs")
+    faults: list[dict[str, Any]] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_worker_limits(self):

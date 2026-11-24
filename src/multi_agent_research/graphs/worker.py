@@ -60,7 +60,7 @@ def build_worker(runtime, agent, checkpointer, *, document_id: str):
                 args = read_document.model_validate(call["args"])
                 if args.document_id != document_id:
                     raise PermissionError("Document is not assigned to this worker")
-                return await runtime.read_document(args.document_id, args.offset)
+                return await runtime.read_document(args.document_id, args.offset, agent=agent)
             if call["name"] == "complete_task":
                 if len(calls) != 1:
                     raise ValueError("complete_task must be the only call")
@@ -70,7 +70,7 @@ def build_worker(runtime, agent, checkpointer, *, document_id: str):
                 return {"completed": args.model_dump()}
             raise ValueError("Unknown worker tool")
 
-        output = await runtime.call_tool(agent, call, handler)
+        output = await runtime.call_tool("worker", agent, call, handler)
         update = {"tool_calls": used + 1, "tool_index": index + 1}
         if isinstance(output, dict) and "completed" in output:
             args = output["completed"]

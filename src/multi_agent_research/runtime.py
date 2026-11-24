@@ -13,6 +13,8 @@ from uuid import uuid4
 from langchain_core.messages import messages_to_dict
 
 from . import prompts
+from .faults.base import Call
+from .faults.manager import FaultManager
 from .observability.events import EventLogger
 from .observability.usage import Usage
 from .storage.artifacts import ArtifactStore
@@ -49,6 +51,8 @@ class Runtime:
         self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge")}
         self.usage.by_role = self.usage_by_role
         self.observed = {}
+        self.faults = FaultManager(self, config.faults)
+        self.faults_enabled = True
         from .recovery import RecoveryPoints
         self.recovery = RecoveryPoints(self)
         self.db.record("execution_status", "running")
@@ -111,28 +115,39 @@ class Runtime:
             recovery_point_id=recovery_point,
         )
         response = None
+        invoked = False
+
+        # Usage is recorded before fault `after` hooks; a fault that raises in `before`
+        # made no model call, so it adds no usage.
+        async def invoke(call):
+            nonlocal response, invoked
+            invoked = True
+            response = await self.model.invoke(
+                role, agent, call.args["messages"], tools, call.args["model_config"])
+            self.usage.add(response.usage_metadata, config)
+            self.usage_by_role[role].add(response.usage_metadata, config)
+            return response
+
         try:
             try:
-                response = await asyncio.wait_for(
-                    self.model.invoke(role, agent, messages, tools, config),
-                    self.config.call_timeout_seconds,
+                call = Call(agent, role, config.model, {"messages": messages, "model_config": config})
+                result = await asyncio.wait_for(
+                    self.faults.run("model_call", call, invoke), self.config.call_timeout_seconds,
                 )
             except TimeoutError as exc:
                 raise ModelCallTimeout(
                     f"{agent}: model call timed out (limit: {self.config.call_timeout_seconds:g}s)"
                 ) from exc
-            self.usage.add(response.usage_metadata, config)
-            self.usage_by_role[role].add(response.usage_metadata, config)
             self.event(
                 "model.response",
                 agent,
-                response.model_dump(mode="json"),
+                result.model_dump(mode="json"),
                 [request],
                 duration_seconds=time.monotonic() - start,
             )
-            return response
+            return result
         except BaseException as exc:
-            if response is None:
+            if invoked and response is None:
                 self.usage.add(None, config)
                 self.usage_by_role[role].add(None, config)
             self.event(
@@ -149,7 +164,7 @@ class Runtime:
             self.usage_by_role[role].duration_seconds += elapsed
             self.save_usage()
 
-    async def call_tool(self, agent, call, handler):
+    async def call_tool(self, role, agent, call, handler):
         recovery_point = await self.recovery.before_call(agent, "tool", call["name"], call)
         start = time.monotonic()
         request = self.event(
@@ -161,7 +176,11 @@ class Runtime:
             recovery_point_id=recovery_point,
         )
         try:
-            result = await asyncio.wait_for(handler(), self.config.call_timeout_seconds)
+            result = await asyncio.wait_for(
+                self.faults.run("tool_call", Call(agent, role, call["name"], call["args"]),
+                                lambda c: handler()),
+                self.config.call_timeout_seconds,
+            )
             self.event(
                 "tool.result",
                 agent,
@@ -199,13 +218,14 @@ class Runtime:
 
     def recovery_snapshot(self):
         return {"plan_ref": self.memory.ref, "prompt_context": self.prompt_context,
-                "observed": self.observed}
+                "observed": self.observed, "faults": self.faults.snapshot_state()}
 
     def restore_recovery_snapshot(self, snapshot):
         self.memory.ref = snapshot["plan_ref"]
         self.db.record("plan", {"artifact_ref": self.memory.ref})
         self.prompt_context = snapshot["prompt_context"]
         self.observed = snapshot["observed"]
+        self.faults.restore_state(snapshot.get("faults", []))
 
     def save_usage(self):
         self.db.record("recovery_usage", {
@@ -222,8 +242,14 @@ class Runtime:
                 setattr(self.usage_by_role[role], key, value)
         self.save_usage()
 
-    async def read_document(self, document_id: str, offset: int) -> dict[str, Any]:
-        return self.documents.read(document_id, offset, self.config.max_document_chars)
+    async def read_document(self, document_id: str, offset: int, *, agent: str) -> dict[str, Any]:
+        async def read(call):
+            return self.documents.read(call.args["document_id"], call.args["offset"],
+                                       self.config.max_document_chars)
+
+        return await self.faults.run(
+            "read_document", Call(agent, "worker", "read_document",
+                                  {"document_id": document_id, "offset": offset}), read)
 
     def close(self):
         try:
