@@ -42,7 +42,8 @@ worker_timeout_seconds: 180
 call_timeout_seconds: 60
 max_document_chars: 24000
 output_dir: runs
-
+recovery: none
+detect_after: 0
 # Each entry: `type` is a class name in faults/manager.py; other keys are its fields
 # (unknown keys are errors). Uncomment a block by deleting the "# " after its indent.
 # `before` hooks run in list order, `after` hooks in reverse; for read_document faults

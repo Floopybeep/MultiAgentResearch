@@ -159,7 +159,7 @@ def publish_manifest(root, summary):
 def _attempt_metadata(result, directory, run_directories=None):
     metadata = {
         key: result[key]
-        for key in ("strategy", "selected_attempt", "restarted", "clean_slate_reset")
+        for key in ("strategy", "selected_attempt", "restarted")
         if key in result
     }
     metadata.update(intervention_summary([result]))

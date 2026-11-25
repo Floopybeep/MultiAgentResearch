@@ -74,7 +74,7 @@ details use the ordinary input rate for that response and set aggregate
 | `max_batches` | 6 | Delegation rounds per question |
 | `max_workers_per_batch` | 4 | Parallel Workers; excess assignments return errors |
 | `minimum_worker` | 1 | Lead instruction to spawn at least this many Workers in each delegation batch |
-| `max_run_tokens` | 200000 | Reported input + output, all roles including judge |
+| `max_run_tokens` | 200000 | Reported input + output, all roles including judge, per attempt |
 | `run_timeout_seconds` | 900 | Lead/Worker graph timeout, excluding grading |
 | `worker_timeout_seconds` | 180 | Individual Worker graph timeout |
 | `call_timeout_seconds` | 60 | Individual model/local tool call timeout |
@@ -89,6 +89,23 @@ The token limit is checked before model calls against accumulated returned usage
 In-flight parallel calls can exceed the limit. A failed judge call records
 `method: judge_error` and `correct: null`.
 
+## Recovery
+
+| Field | Default | Semantics |
+| --- | --- | --- |
+| `recovery` | `none` | Recovery strategy: `none` never stops an attempt; `full_restart` reruns the question from scratch with faults off |
+| `detect_after` | 0 | Batches to wait after the first faulted batch before triggering recovery |
+
+Detection uses the `fault.fired` events of the current attempt. With
+`full_restart`, the Lead stops early with status `interrupted` and stop reason
+`fault_detected` at the end of a Lead node: at the first batch join where
+`detect_after` batches have joined after the first faulted one, before it submits
+an answer after any fault, or right after the node in which a fault outside any
+batch fired. Whenever a fault fired, however attempt 1 ended, it is not graded and
+attempt 2 starts from scratch in `attempt-2/` with the same config, faults off and
+a fresh `max_run_tokens` budget; attempt 2 is graded and selected. The question
+result lists every attempt and sums usage and time over them.
+
 ## CLI settings
 
 | Flag | Default | Meaning |
@@ -99,6 +116,8 @@ In-flight parallel calls can exceed the limit. A failed judge call records
 | `--sample-size` | 10 | Number of sampled questions |
 | `--seed` | 42 | Local question-sampling seed |
 | `--question-ids` | unset | Explicit unique TSV row IDs, overriding sampling |
+| `--recovery` | configured value | Recovery strategy, `none` or `full_restart` |
+| `--detect-after` | configured value | Batches to wait after the first faulted batch before triggering recovery |
 
 The dataset contains 822 questions with original IDs. `index.json` maps questions
 to document IDs and documents to titles, URLs and Markdown filenames. Each

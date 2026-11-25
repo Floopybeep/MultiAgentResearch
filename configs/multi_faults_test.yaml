@@ -42,7 +42,8 @@ worker_timeout_seconds: 180
 call_timeout_seconds: 60
 max_document_chars: 24000
 output_dir: runs
-
+recovery: none
+detect_after: 0
 # `before` hooks run in list order, `after` hooks in reverse; for read_document faults
 # list PromptInjectionFault before SilentTruncationFault, and ToolFailureFault last.
 faults:

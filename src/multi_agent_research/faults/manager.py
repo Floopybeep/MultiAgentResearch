@@ -18,6 +18,7 @@ class FaultManager:
     def __init__(self, runtime, specs: list[dict]):
         self.runtime = runtime
         self.faults = []
+        self.fired: list[dict[str, Any]] = []  # this run's fault.fired events; not in snapshots
         for spec in specs:
             options = dict(spec)
             self.faults.append(FAULTS[options.pop("type")](**options))
@@ -33,12 +34,14 @@ class FaultManager:
 
     def fire(self, fault: Fault, call: Call, payload: dict) -> str:
         runtime = self.runtime
-        return runtime.event("fault.fired", call.agent, {"fault": type(fault).__name__, **payload},
-                             runtime.observed.get(call.agent, []).copy())
+        event = runtime.event("fault.fired", call.agent, {"fault": type(fault).__name__, **payload},
+                              runtime.observed.get(call.agent, []).copy())
+        self.fired.append({"agent": call.agent, "fault": type(fault).__name__, "event_id": event})
+        return event
 
     def snapshot_state(self) -> list[dict]:
         return [deepcopy(fault._state) for fault in self.faults]
 
     def restore_state(self, states: list[dict]) -> None:
-        for fault, state in zip(self.faults, states):
+        for fault, state in zip(self.faults, states, strict=True):
             fault._state = deepcopy(state)

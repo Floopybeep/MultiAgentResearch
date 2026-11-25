@@ -1,7 +1,7 @@
 """Validated, credential-free run settings."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -32,7 +32,7 @@ class ModelConfig(BaseModel):
 
 
 class RunConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)  # CLI flags assign fields
     lead: ModelConfig = Field(default_factory=ModelConfig)
     worker: ModelConfig = Field(default_factory=ModelConfig)
     judge: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=1024))
@@ -51,6 +51,8 @@ class RunConfig(BaseModel):
     max_document_chars: int = Field(default=24000, gt=0)
     output_dir: Path = Path("runs")
     faults: list[dict[str, Any]] = Field(default_factory=list)
+    recovery: Literal["none", "full_restart"] = "none"  # strategy after a detected fault
+    detect_after: int = Field(default=0, ge=0)  # batches to wait after the first faulted batch
 
     @model_validator(mode="after")
     def validate_worker_limits(self):

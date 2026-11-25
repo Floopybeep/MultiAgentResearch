@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from dataclasses import asdict
 from typing import Any
 
 from langchain_core.messages import HumanMessage, ToolMessage
@@ -9,6 +10,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from .. import strategies
 from ..faults.base import Call
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
@@ -28,6 +30,28 @@ def build_research(
     runtime: Runtime, checkpointer: BaseCheckpointSaver | None,
 ) -> CompiledStateGraph:
     cfg = runtime.config
+
+    def fault_detected(batches_done, submitting=False):
+        """The interrupted final state once the recovery strategy detects a fault, else None."""
+        if not strategies.detected(runtime, batches_done, submitting):
+            return None
+        found = strategies.sites(runtime)
+        runtime.event("fault.detected", "lead", {
+            "sites": [asdict(site) for site in found], "batches_done": batches_done,
+            "submitting": submitting,
+        }, [site.event_id for site in found])
+        return {"status": "interrupted", "stop_reason": "fault_detected"}
+
+    def detecting(node):
+        """Run a Lead node, then stop the attempt there if a fault is detected. Worker faults
+        are counted at batch joins; a fault outside any batch stops the node it fired in."""
+        async def wrapped(state):
+            update = await node(state)
+            if update.get("status"):
+                return update
+            stop = fault_detected(update.get("batches", state.get("batches", 0)))
+            return {**update, **stop} if stop else update
+        return wrapped
 
     async def lead(state):
         if state.get("turns", 0) >= cfg.max_lead_turns:
@@ -65,6 +89,10 @@ def build_research(
                 return {"completed": submit_answer.model_validate(call["args"]).model_dump()}
             raise ValueError("Unknown lead tool")
 
+        if call["name"] == "submit_answer":
+            stop = fault_detected(state.get("batches", 0), submitting=True)
+            if stop:
+                return stop
         output = await runtime.call_tool("lead", "lead", call, handler)
         if "completed" in output:
             answer = output["completed"]["answer"]
@@ -168,10 +196,12 @@ def build_research(
 
     graph = StateGraph(AgentState)
     descriptor = {"kind": "lead", "scope": "agent"}
-    graph.add_node("lead", runtime.recovery.node(lead, checkpointer, descriptor))
-    graph.add_node("lead_tools", runtime.recovery.node(local_tool, checkpointer, descriptor))
+    graph.add_node("lead", runtime.recovery.node(detecting(lead), checkpointer, descriptor))
+    graph.add_node("lead_tools", runtime.recovery.node(
+        detecting(local_tool), checkpointer, descriptor,
+    ))
     graph.add_node("dispatch_batch", runtime.recovery.node(
-        tools, checkpointer, {"kind": "lead", "scope": "delegation_batch"},
+        detecting(tools), checkpointer, {"kind": "lead", "scope": "delegation_batch"},
     ))
 
     def after_local(state):

@@ -35,8 +35,9 @@ class ModelCallTimeout(RuntimeError):
 
 class Runtime:
     def __init__(self, config, model, documents, root: Path | None = None,
-                 viewer_root: Path | None = None, *, restore: bool = False):
+                 viewer_root: Path | None = None, *, restore: bool = False, prior_tokens: int = 0):
         self.config, self.model, self.documents = config, model, documents
+        self.prior_tokens = prior_tokens  # spent by earlier attempts of the same question
         self.run_id = uuid4().hex
         now = datetime.now(timezone.utc)
         self.prompt_context = prompts.context(config, now.date().isoformat())
@@ -91,7 +92,8 @@ class Runtime:
         return await self._call_model(role, agent, messages, tools, model_config=model_config)
 
     async def _call_model(self, role, agent, messages, tools, *, model_config=None):
-        if self.usage.input_tokens + self.usage.output_tokens >= self.config.max_run_tokens:
+        spent = self.prior_tokens + self.usage.input_tokens + self.usage.output_tokens
+        if spent >= self.config.max_run_tokens:
             raise BudgetExceeded("run_token_budget")
         config = model_config if model_config is not None else getattr(self.config, role)
         visible_messages = messages_to_dict(messages)
@@ -232,9 +234,11 @@ class Runtime:
             "total": {k: v for k, v in vars(self.usage).items() if k != "by_role"},
             "roles": {role: {k: v for k, v in vars(usage).items() if k != "by_role"}
                       for role, usage in self.usage_by_role.items()},
+            "prior_tokens": self.prior_tokens,
         })
 
     def restore_usage(self, saved):
+        self.prior_tokens = saved.get("prior_tokens", 0)
         for key, value in saved["total"].items():
             setattr(self.usage, key, value)
         for role, values in saved["roles"].items():
