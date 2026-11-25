@@ -21,6 +21,7 @@ from ..schemas import (
     run_blocking_subagent,
     submit_answer,
 )
+from ..verification import verify_boundary
 from .worker import run_worker
 
 TOOLS = [memory_read, memory_write, run_blocking_subagent, submit_answer]
@@ -30,6 +31,7 @@ def build_research(
     runtime: Runtime, checkpointer: BaseCheckpointSaver | None,
 ) -> CompiledStateGraph:
     cfg = runtime.config
+    verify = cfg.recovery == "always_verify"
 
     def fault_detected(batches_done, submitting=False):
         """The interrupted final state once the recovery strategy detects a fault, else None."""
@@ -61,9 +63,22 @@ def build_research(
             return {
                 "messages": state["messages"] + [response], "turns": state.get("turns", 0) + 1,
                 "pending_tools": response.tool_calls, "tool_index": 0, "tool_outputs": {},
+                "plan_diagnostic": None,
             }
         except BudgetExceeded as exc:
             return {"status": "budget_exhausted", "stop_reason": str(exc)}
+
+    async def prepare_batch(state):
+        """always_verify: check the Lead's plan after its local tools, before dispatch."""
+        calls = state.get("pending_tools", [])
+        if not any(c["name"] == "run_blocking_subagent" for c in calls):
+            return {}
+        record = await verify_boundary(
+            runtime, "lead", "lead_plan",
+            {"content": state["messages"][-1].content, "tool_calls": calls},
+            parents=runtime.observed.get("lead", []).copy(),
+        )
+        return {"plan_diagnostic": record}
 
     async def local_tool(state):
         calls = state.get("pending_tools", [])
@@ -112,10 +127,13 @@ def build_research(
                 content="Use the provided tools; submit your final {answer} via submit_answer."
             )]}
         outputs = {int(index): value for index, value in state.get("tool_outputs", {}).items()}
+        plan_diagnostic = state.get("plan_diagnostic")
         delegated = [(i, c) for i, c in enumerate(calls) if c["name"] == "run_blocking_subagent"]
         if delegated:
             batch = batches + 1
             lead_dependencies = runtime.observed.get("lead", []).copy()
+            if plan_diagnostic is not None:
+                lead_dependencies.append(plan_diagnostic["event_id"])
             # All parallel delegations start from the same consistent batch state.
             # Index them before dispatching any worker or mutating shared runtime state.
             recovery_points = {}
@@ -152,7 +170,16 @@ def build_research(
                         ),
                     )
                     delivery_parents[index] = [runtime.observed[agent][-1]]
-                    return result.model_dump()
+                    delivery = result.model_dump()
+                    if verify:
+                        # Verify exactly what will be delivered, after any fault acted on it.
+                        record = await verify_boundary(
+                            runtime, agent, "worker_result", delivery,
+                            parents=delivery_parents[index].copy(),
+                        )
+                        delivery = {**delivery, "verification": record}
+                        delivery_parents[index].append(record["event_id"])
+                    return delivery
 
                 # Delegation is bounded by the worker timeout, not the shorter tool timeout.
                 started = asyncio.get_running_loop().time()
@@ -192,6 +219,11 @@ def build_research(
             messages.append(
                 ToolMessage(content=json.dumps(outputs[index]), tool_call_id=call["id"])
             )
+        if plan_diagnostic is not None:
+            # One batch-level diagnostic, after all matching tool responses.
+            messages.append(HumanMessage(content=json.dumps({
+                "batch_id": batch, "plan_verification": plan_diagnostic,
+            })))
         return {"messages": messages, "results": results, "batches": batches}
 
     graph = StateGraph(AgentState)
@@ -203,12 +235,17 @@ def build_research(
     graph.add_node("dispatch_batch", runtime.recovery.node(
         detecting(tools), checkpointer, {"kind": "lead", "scope": "delegation_batch"},
     ))
+    batch_node = "dispatch_batch"
+    if verify:
+        graph.add_node("prepare_batch", runtime.recovery.node(prepare_batch, checkpointer, descriptor))
+        graph.add_edge("prepare_batch", "dispatch_batch")
+        batch_node = "prepare_batch"
 
     def after_local(state):
         if state.get("status"):
             return END
         count = sum(c["name"] != "run_blocking_subagent" for c in state.get("pending_tools", []))
-        return "lead_tools" if state.get("tool_index", 0) < count else "dispatch_batch"
+        return "lead_tools" if state.get("tool_index", 0) < count else batch_node
 
     graph.add_edge(START, "lead")
     graph.add_conditional_edges("lead", lambda s: END if s.get("status") else "lead_tools")

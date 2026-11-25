@@ -6,7 +6,7 @@ flag, Python defaults apply. Relative paths resolve from the working directory;
 
 ## Models
 
-`lead`, `worker`, and `judge` each accept:
+`lead`, `worker`, `judge`, and `verifier` each accept:
 
 | Field | Python default | Meaning |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ It uses async Chat Completions with `use_responses_api=False` and `max_retries=0
 `lead_prompt` and `worker_prompt` are optional top-level file paths. Omit them or
 set them to `null` to use the bundled `lead.md` and `worker.md`. Relative paths
 resolve from the working directory, not the config file's directory. Each role
-can be selected independently; the judge prompt remains bundled.
+can be selected independently; the judge and verifier prompts remain bundled.
 
 Selected files replace the role's system prompt text; runtime limits are still
 appended for compatibility with prompts that omit limit placeholders. Both bundled
@@ -93,7 +93,7 @@ In-flight parallel calls can exceed the limit. A failed judge call records
 
 | Field | Default | Semantics |
 | --- | --- | --- |
-| `recovery` | `none` | Recovery strategy: `none` never stops an attempt; `full_restart` reruns the question from scratch with faults off |
+| `recovery` | `none` | Recovery strategy: `none` never stops an attempt; `full_restart` reruns the question from scratch with faults off; `always_verify` checks Lead plans and Worker results and reports the verdicts to the Lead |
 | `detect_after` | 0 | Batches to wait after the first faulted batch before triggering recovery |
 
 Detection uses the `fault.fired` events of the current attempt. With
@@ -106,6 +106,21 @@ attempt 2 starts from scratch in `attempt-2/` with the same config, faults off a
 a fresh `max_run_tokens` budget; attempt 2 is graded and selected. The question
 result lists every attempt and sums usage and time over them.
 
+With `always_verify`, the `verifier` model checks two boundaries in a single
+attempt and never stops, retries or restarts anything:
+
+- `lead_plan`: after the Lead's local tools and before its workers are dispatched,
+  whenever the Lead delegates. The Lead receives the verdict after that batch's tool
+  results, as `{"batch_id": N, "plan_verification": {...}}`.
+- `worker_result`: each delivered Worker result, after faults have acted, including
+  failed, timed-out and dropped results. The verdict is attached to the result as
+  `verification`. Assignments that never reach a Worker are not checked.
+
+Each check sees the agent's latest model input and its output, and returns
+`verified` (true, false, or null when no verdict was obtained) and a `diagnostic`.
+Verifier calls use their own usage role, count toward `max_run_tokens`, and are
+replayable like judge calls.
+
 ## CLI settings
 
 | Flag | Default | Meaning |
@@ -116,7 +131,7 @@ result lists every attempt and sums usage and time over them.
 | `--sample-size` | 10 | Number of sampled questions |
 | `--seed` | 42 | Local question-sampling seed |
 | `--question-ids` | unset | Explicit unique TSV row IDs, overriding sampling |
-| `--recovery` | configured value | Recovery strategy, `none` or `full_restart` |
+| `--recovery` | configured value | Recovery strategy: `none`, `full_restart` or `always_verify` |
 | `--detect-after` | configured value | Batches to wait after the first faulted batch before triggering recovery |
 
 The dataset contains 822 questions with original IDs. `index.json` maps questions

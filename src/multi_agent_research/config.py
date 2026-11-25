@@ -36,6 +36,7 @@ class RunConfig(BaseModel):
     lead: ModelConfig = Field(default_factory=ModelConfig)
     worker: ModelConfig = Field(default_factory=ModelConfig)
     judge: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=1024))
+    verifier: ModelConfig = Field(default_factory=lambda: ModelConfig(max_output_tokens=4096))
     lead_prompt: Path | None = None
     worker_prompt: Path | None = None
     max_lead_turns: int = Field(default=20, gt=0)
@@ -51,7 +52,7 @@ class RunConfig(BaseModel):
     max_document_chars: int = Field(default=24000, gt=0)
     output_dir: Path = Path("runs")
     faults: list[dict[str, Any]] = Field(default_factory=list)
-    recovery: Literal["none", "full_restart"] = "none"  # strategy after a detected fault
+    recovery: Literal["none", "full_restart", "always_verify"] = "none"
     detect_after: int = Field(default=0, ge=0)  # batches to wait after the first faulted batch
 
     @model_validator(mode="after")

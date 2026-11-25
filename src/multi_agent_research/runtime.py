@@ -49,7 +49,7 @@ class Runtime:
         self.log = EventLogger(self.db, self.artifacts, self.run_id)
         self.memory = PlanMemory(self.db, self.artifacts)
         self.usage = Usage()
-        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge")}
+        self.usage_by_role = {role: Usage() for role in ("lead", "worker", "judge", "verifier")}
         self.usage.by_role = self.usage_by_role
         self.observed = {}
         self.faults = FaultManager(self, config.faults)
@@ -79,10 +79,13 @@ class Runtime:
             logger.info("[%s] Worker %s.", agent, payload["status"])
         elif kind == "grade.finished":
             logger.info("[judge] Grading finished (%s).", payload["method"])
+        elif kind == "verification":
+            logger.info("[%s] %s verification finished (verified=%s).",
+                        agent, payload["boundary"], payload["verified"])
         return event
 
     async def call_model(self, role, agent, messages, tools, *, model_config=None):
-        if role == "judge":
+        if role in ("judge", "verifier"):
             if tools:
                 raise ValueError("Auxiliary model replay supports tool-free requests")
             return await self.recovery.auxiliary_model(

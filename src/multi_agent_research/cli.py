@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--question-ids", nargs="+", help="Explicit TSV row IDs, overriding sampling")
     parser.add_argument("--config", type=Path)
     parser.add_argument("--output-dir", type=Path)
-    parser.add_argument("--recovery", choices=["none", "full_restart"], help="Recovery strategy after a detected fault")
+    parser.add_argument("--recovery", choices=["none", "full_restart", "always_verify"], help="Recovery strategy")
     parser.add_argument("--detect-after", type=int, help="Batches to wait after the first faulted batch before triggering recovery")
     args = parser.parse_args()
     logging.basicConfig(format="%(message)s")

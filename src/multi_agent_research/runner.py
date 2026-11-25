@@ -19,6 +19,7 @@ from .observability.usage import sum_usage
 from .runtime import Runtime
 from .storage.checkpoints import checkpoint_store
 from .tools.documents import OracleDocuments
+from .verification import recorded_verifications
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ async def _solve(
     """Run the Lead graph from a fresh state to its final state."""
     config = runtime.config
     started = time.monotonic()
-    prompt_hashes = prompts.hashes(config)
+    prompt_hashes = prompts.hashes(config, include_verifier=config.recovery == "always_verify")
     runtime.db.record("prompts", prompt_hashes)
     runtime.event("run.started", "lead", {
         "task_type": "frames_qa", "query": question, "metadata": metadata or {},
@@ -120,6 +121,7 @@ async def _finish_attempt(
         status=state.get("status", "failed"), stop_reason=state.get("stop_reason"),
         answer=state.get("answer"), grade=grade, correct=grade.get("correct") if grade else None,
         worker_results=state.get("results", {}),
+        verifications=recorded_verifications(runtime),
         usage=runtime.usage.as_dict(),
         usage_by_role={k: v.as_dict() for k, v in runtime.usage_by_role.items()},
         solve_duration_seconds=solved["solve_seconds"], duration_seconds=elapsed,

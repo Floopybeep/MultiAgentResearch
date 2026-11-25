@@ -144,8 +144,11 @@ async function loadRun(name, snapshot=null){
  }
  return data;
 }
-// Labels for the `strategy` recorded on multi-attempt runs.
-const RECOVERY={full_restart:{label:'Full Restart',boundary:'discard previous execution state · begin a fresh attempt with faults off'}};
+// Labels for the `strategy` (config `recovery`) recorded on runs.
+const RECOVERY={
+ full_restart:{label:'Full Restart',boundary:'discard previous execution state · begin a fresh attempt with faults off'},
+ always_verify:{label:'Always Verify',boundary:'continue in a new attempt'},
+};
 const recovery=data=>RECOVERY[data.strategy]||{label:'Recovery',boundary:'continue in a new attempt'};
 function showError(e){$('#error').textContent=e.message}
 function visibleRuns(){

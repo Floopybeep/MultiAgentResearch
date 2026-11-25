@@ -25,8 +25,8 @@ def sites(runtime) -> list[Site]:
 
 def detected(runtime, batches_done: int, submitting: bool) -> bool:
     """True once `detect_after` batches have joined after the first faulted batch,
-    or as soon as the Lead submits after any fault."""
-    if runtime.config.recovery == "none":
+    or as soon as the Lead submits after any fault. Only full_restart detects faults."""
+    if runtime.config.recovery != "full_restart":
         return False
     batches = [site.batch for site in sites(runtime)]
     if not batches:

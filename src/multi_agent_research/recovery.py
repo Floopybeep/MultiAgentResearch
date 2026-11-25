@@ -76,7 +76,7 @@ class RecoveryPoints:
             locator = {"configurable": {
                 "thread_id": configurable["thread_id"], "checkpoint_ns": namespace,
                 "checkpoint_id": checkpoint_id,
-            # Judge one-call graphs are invoked without a recursion_limit.
+            # Judge/verifier one-call graphs are invoked without a recursion_limit.
             }, "recursion_limit": config.get("recursion_limit", 25)}
             token = _boundary.set((saver, locator, descriptor))
             try:
@@ -119,7 +119,7 @@ class RecoveryPoints:
         return point_id
 
     async def auxiliary_model(self, role, agent, messages, model_config):
-        # Judge calls are independent operations, outside the QA state
+        # Judge/verifier calls are independent operations, outside the QA state
         # machine. They have their own resumable one-call graph.
         async with checkpoint_store(self.runtime.root / "calls.sqlite") as saver:
             graph = build_model_call(self.runtime, saver)
