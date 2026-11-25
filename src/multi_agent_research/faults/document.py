@@ -79,7 +79,9 @@ class DocMisroutingFault(Fault):
         if self._index is None:
             index = json.loads((self.corpus_dir / "index.json").read_text(encoding="utf-8"))
             self._index = index["documents"]
-        others = sorted(set(self._index) - set(catalog))
+        # By URL: catalog IDs may be relabeled visible IDs, not corpus IDs.
+        urls = {doc.url for doc in runtime.documents.documents.values()}
+        others = sorted(key for key, entry in self._index.items() if entry["url"] not in urls)
         served = (self.overrides.get(requested)
                   or random.Random(f"{self.seed}:{requested}").choice(others))
         text = (self.corpus_dir / self._index[served]["file"]).read_text(encoding="utf-8")

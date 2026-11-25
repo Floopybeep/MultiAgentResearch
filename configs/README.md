@@ -89,6 +89,26 @@ The token limit is checked before model calls against accumulated returned usage
 In-flight parallel calls can exceed the limit. A failed judge call records
 `method: judge_error` and `correct: null`.
 
+## Distractors
+
+| Field | Default | Semantics |
+| --- | --- | --- |
+| `distractors.enabled` | false | Add similar corpus articles to each question's documents |
+| `distractors.min_per_oracle` | 1 | Fewest distractors targeted per oracle document |
+| `distractors.max_per_oracle` | 4 | Most distractors targeted per oracle document |
+| `distractors.top_m` | 10 | Nearest non-oracle candidates per oracle document |
+| `distractors.max_total_docs` | 10 | Document cap; all oracle documents are always kept |
+| `distractors.seed` | 0 | Sampling seed, combined with the question ID |
+
+When enabled, a TF-IDF cosine index over every corpus document is built once per
+batch. Each oracle document draws a target in `[min_per_oracle, max_per_oracle]` and
+a shuffled list of its `top_m` neighbors; distractors are taken round-robin, one per
+oracle per round, until the cap, the targets or the candidates run out. The combined
+list is shuffled and relabeled `doc_01`, `doc_02`, ... in catalog order, so agents see
+distractors exactly like oracle documents. The question metadata records these visible
+IDs as `oracle_doc_ids` and `distractor_doc_ids`, and `corpus_doc_ids` maps each to its
+corpus ID.
+
 ## Recovery
 
 | Field | Default | Semantics |

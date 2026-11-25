@@ -1,4 +1,4 @@
-# Fault playground. Non-fault settings are a copy of configs/baseline.yaml.
+# Fault playground. 
 # Run: uv run mar --config configs/multi_faults_test.yaml --question-ids 610
 lead:
   model: api-glm-5.3-flash
@@ -50,6 +50,15 @@ max_document_chars: 24000
 output_dir: runs
 recovery: none
 detect_after: 0
+
+distractors:
+  enabled: true               # true: mix similar corpus articles into each question's catalog
+  min_per_oracle: 1           # >= 0; fewest distractors targeted per oracle document
+  max_per_oracle: 4           # >= min_per_oracle; most distractors targeted per oracle document
+  top_m: 10                   # >= 1; nearest non-oracle candidates per oracle document
+  max_total_docs: 10          # >= 1; document cap (all oracle documents are always kept)
+  seed: 0                     # deterministic sampling seed, combined with question_id
+
 # `before` hooks run in list order, `after` hooks in reverse; for read_document faults
 # list PromptInjectionFault before SilentTruncationFault, and ToolFailureFault last.
 faults:

@@ -31,6 +31,22 @@ class ModelConfig(BaseModel):
         return value
 
 
+class DistractorConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+    min_per_oracle: int = Field(default=1, ge=0)
+    max_per_oracle: int = Field(default=4, ge=0)
+    top_m: int = Field(default=10, ge=1)  # nearest non-oracle candidates per oracle document
+    max_total_docs: int = Field(default=10, ge=1)  # oracle documents are always kept
+    seed: int = 0
+
+    @model_validator(mode="after")
+    def validate_range(self):
+        if self.min_per_oracle > self.max_per_oracle:
+            raise ValueError("min_per_oracle must not exceed max_per_oracle")
+        return self
+
+
 class RunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", validate_assignment=True)  # CLI flags assign fields
     lead: ModelConfig = Field(default_factory=ModelConfig)
@@ -54,6 +70,7 @@ class RunConfig(BaseModel):
     faults: list[dict[str, Any]] = Field(default_factory=list)
     recovery: Literal["none", "full_restart", "always_verify", "selective"] = "none"
     detect_after: int = Field(default=0, ge=0)  # batches to wait after the first faulted batch
+    distractors: DistractorConfig = Field(default_factory=DistractorConfig)
 
     @model_validator(mode="after")
     def validate_worker_limits(self):

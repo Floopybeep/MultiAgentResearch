@@ -10,6 +10,7 @@ from uuid import uuid4
 from .frames import DEFAULT_CORPUS, load_frames, prepare_documents, select_examples
 from .observability.events import Redactor
 from .runner import run_qa
+from .tools.distractors import DistractorIndex
 from .viewer_export import atomic_write, install_html, publish_manifest
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ async def run_frames(config, model, *, corpus_dir=DEFAULT_CORPUS, size=10, seed=
                      question_ids=None):
     examples, provenance, document_index = load_frames(corpus_dir)
     selected = select_examples(examples, size, seed, question_ids)
+    distractors = DistractorIndex(corpus_dir, document_index) if config.distractors.enabled else None
     timestamp = datetime.now(timezone.utc).strftime("%y%m%d_%H%M%S")
     batch_id = f"{timestamp}_{uuid4().hex}"
     run_root = config.output_dir / batch_id
@@ -86,7 +88,12 @@ async def run_frames(config, model, *, corpus_dir=DEFAULT_CORPUS, size=10, seed=
                     index, len(selected), example.question_id, len(example.document_ids))
         preparation_started = time.monotonic()
         try:
-            documents = prepare_documents(example, corpus_dir, document_index)
+            if distractors is None:
+                documents = prepare_documents(example.document_ids, corpus_dir, document_index)
+                extra = {}
+            else:
+                documents, extra = distractors.documents(
+                    example.document_ids, example.question_id, config.distractors)
         except Exception as exc:
             logger.info("Question %s: document preparation failed (%s).",
                         example.question_id, type(exc).__name__)
@@ -104,7 +111,7 @@ async def run_frames(config, model, *, corpus_dir=DEFAULT_CORPUS, size=10, seed=
             metadata={
                 "batch_id": batch_id, "question_id": example.question_id,
                 "dataset": provenance, "reasoning_types": example.reasoning_types,
-                "original_wikipedia_urls": example.original_wikipedia_urls,
+                "original_wikipedia_urls": example.original_wikipedia_urls, **extra,
             },
         )
         result["question_id"] = example.question_id
