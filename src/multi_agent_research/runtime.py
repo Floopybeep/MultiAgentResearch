@@ -54,6 +54,7 @@ class Runtime:
         self.observed = {}
         self.faults = FaultManager(self, config.faults)
         self.faults_enabled = True
+        self.reuse = {}  # selective recovery: Worker results to serve once instead of rerunning
         from .recovery import RecoveryPoints
         self.recovery = RecoveryPoints(self)
         self.db.record("execution_status", "running")
@@ -77,6 +78,8 @@ class Runtime:
             logger.info("[%s] Model call failed: %s.", agent, payload["type"])
         elif kind == "worker.finished":
             logger.info("[%s] Worker %s.", agent, payload["status"])
+        elif kind == "worker.reused":
+            logger.info("[%s] Reused %s's result.", agent, payload["source_assignment_id"])
         elif kind == "grade.finished":
             logger.info("[judge] Grading finished (%s).", payload["method"])
         elif kind == "verification":

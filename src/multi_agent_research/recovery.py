@@ -149,17 +149,11 @@ def _backup(source, destination):
             src.backup(dst)
 
 
-async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
-                  output_dir: Path | None = None) -> dict:
-    """Replay a stopped attempt into a new directory; never overwrite its history.
-
-    Lead points resume the Lead chain. Worker points resume only that worker.
-    Parallel delegation points resume the whole batch. Judge points replay only
-    their model request. No automatic downstream result replacement.
-    """
+def open_branch(run_dir: Path, recovery_point_id: str, *, model=None,
+                output_dir: Path | None = None, viewer_root: Path | None = None):
+    """Copy a stopped attempt into a new directory and restore the point's runtime state.
+    Returns the branch Runtime (usage at zero), the point and the source's saved usage."""
     from .config import RunConfig
-    from .graphs.research import build_research
-    from .graphs.worker import build_worker
     from .models.adapter import OpenAIChatCompletionsAdapter
     from .runtime import Runtime
     from .tools.documents import LocalDocument, OracleDocuments
@@ -199,20 +193,41 @@ async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
     artifacts = ArtifactStore(destination / "artifacts")
     documents = OracleDocuments([LocalDocument.model_validate(artifacts.get(ref))
                                  for ref in document_refs])
-    runtime = Runtime(config, model, documents,
-                      root=destination, restore=True)
+    runtime = Runtime(config, model, documents, root=destination, restore=True,
+                      viewer_root=Path(viewer_root).resolve() if viewer_root else None)
     runtime.recovery.lineage_id = point["lineage_id"]
     runtime.recovery.branch_id = branch
+    try:
+        runtime.restore_recovery_snapshot(artifacts.get(point["runtime_snapshot_ref"]))
+        runtime.event("recovery.started", "system", {
+            "source_dir": str(source), "source_recovery_point": recovery_point_id,
+            "branch_id": branch, "scope": point["graph"],
+        })
+    except BaseException:
+        runtime.close()
+        raise
+    return runtime, point, usage
+
+
+async def recover(run_dir: Path, recovery_point_id: str, *, model=None,
+                  output_dir: Path | None = None) -> dict:
+    """Replay a stopped attempt into a new directory; never overwrite its history.
+
+    Lead points resume the Lead chain. Worker points resume only that worker.
+    Parallel delegation points resume the whole batch. Judge points replay only
+    their model request. No automatic downstream result replacement.
+    """
+    from .graphs.research import build_research
+    from .graphs.worker import build_worker
+
+    runtime, point, usage = open_branch(run_dir, recovery_point_id, model=model,
+                                        output_dir=output_dir)
+    config, destination, branch = runtime.config, runtime.root, runtime.recovery.branch_id
     descriptor = point["graph"]
     started = asyncio.get_running_loop().time()
     result = None
     try:
-        runtime.restore_recovery_snapshot(artifacts.get(point["runtime_snapshot_ref"]))
         runtime.restore_usage(usage)
-        runtime.event("recovery.started", "system", {
-            "source_dir": str(source), "source_recovery_point": recovery_point_id,
-            "branch_id": branch, "scope": descriptor,
-        })
         async with checkpoint_store(destination / point["checkpoint_file"]) as saver:
             if descriptor["kind"] == "lead":
                 graph = build_research(runtime, saver)

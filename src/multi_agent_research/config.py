@@ -52,7 +52,7 @@ class RunConfig(BaseModel):
     max_document_chars: int = Field(default=24000, gt=0)
     output_dir: Path = Path("runs")
     faults: list[dict[str, Any]] = Field(default_factory=list)
-    recovery: Literal["none", "full_restart", "always_verify"] = "none"
+    recovery: Literal["none", "full_restart", "always_verify", "selective"] = "none"
     detect_after: int = Field(default=0, ge=0)  # batches to wait after the first faulted batch
 
     @model_validator(mode="after")

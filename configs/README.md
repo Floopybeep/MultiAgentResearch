@@ -93,18 +93,23 @@ In-flight parallel calls can exceed the limit. A failed judge call records
 
 | Field | Default | Semantics |
 | --- | --- | --- |
-| `recovery` | `none` | Recovery strategy: `none` never stops an attempt; `full_restart` reruns the question from scratch with faults off; `always_verify` checks Lead plans and Worker results and reports the verdicts to the Lead |
+| `recovery` | `none` | Recovery strategy: `none` never stops an attempt; `full_restart` reruns the question from scratch with faults off; `always_verify` checks Lead plans and Worker results and reports the verdicts to the Lead; `selective` replays attempt 1 from its earliest faulted checkpoint with faults off, reusing unfaulted Worker results |
 | `detect_after` | 0 | Batches to wait after the first faulted batch before triggering recovery |
 
 Detection uses the `fault.fired` events of the current attempt. With
-`full_restart`, the Lead stops early with status `interrupted` and stop reason
-`fault_detected` at the end of a Lead node: at the first batch join where
+`full_restart` or `selective`, the Lead stops early with status `interrupted` and
+stop reason `fault_detected` at the end of a Lead node: at the first batch join where
 `detect_after` batches have joined after the first faulted one, before it submits
 an answer after any fault, or right after the node in which a fault outside any
 batch fired. Whenever a fault fired, however attempt 1 ended, it is not graded and
 attempt 2 starts from scratch in `attempt-2/` with the same config, faults off and
 a fresh `max_run_tokens` budget; attempt 2 is graded and selected. The question
 result lists every attempt and sums usage and time over them.
+
+Under `selective`, attempt 2 instead resumes a copy of attempt 1 from the Lead
+checkpoint before the earliest fault (before its batch, for a Worker fault), records
+it as `recovered_from`, and reuses that batch's completed unfaulted Worker results
+(`worker.reused`). Without such a checkpoint it falls back to a full restart.
 
 With `always_verify`, the `verifier` model checks two boundaries in a single
 attempt and never stops, retries or restarts anything:
@@ -131,7 +136,7 @@ replayable like judge calls.
 | `--sample-size` | 10 | Number of sampled questions |
 | `--seed` | 42 | Local question-sampling seed |
 | `--question-ids` | unset | Explicit unique TSV row IDs, overriding sampling |
-| `--recovery` | configured value | Recovery strategy: `none`, `full_restart` or `always_verify` |
+| `--recovery` | configured value | Recovery strategy: `none`, `full_restart`, `always_verify` or `selective` |
 | `--detect-after` | configured value | Batches to wait after the first faulted batch before triggering recovery |
 
 The dataset contains 822 questions with original IDs. `index.json` maps questions

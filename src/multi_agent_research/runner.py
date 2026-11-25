@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import shutil
 import time
 from contextlib import AsyncExitStack
 from pathlib import Path
@@ -16,6 +17,7 @@ from .grading import grade_answer
 from .graphs.research import build_research
 from .models.adapter import ModelAdapter
 from .observability.usage import sum_usage
+from .recovery import open_branch
 from .runtime import Runtime
 from .storage.checkpoints import checkpoint_store
 from .tools.documents import OracleDocuments
@@ -26,18 +28,22 @@ logger = logging.getLogger(__name__)
 
 async def _solve(
     runtime: Runtime, question: str, metadata: dict[str, Any] | None, attempt_number: int,
+    point: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run the Lead graph from a fresh state to its final state."""
+    """Run the Lead graph from a fresh state, or from recovery `point`, to its final state."""
     config = runtime.config
     started = time.monotonic()
-    prompt_hashes = prompts.hashes(config, include_verifier=config.recovery == "always_verify")
-    runtime.db.record("prompts", prompt_hashes)
-    runtime.event("run.started", "lead", {
-        "task_type": "frames_qa", "query": question, "metadata": metadata or {},
-        "prompt_hashes": prompt_hashes, "attempt_number": attempt_number,
-        "faults_enabled": runtime.faults_enabled,
-    })
-    snapshots = runtime.snapshot_documents()
+    if point is None:
+        prompt_hashes = prompts.hashes(config, include_verifier=config.recovery == "always_verify")
+        runtime.db.record("prompts", prompt_hashes)
+        runtime.event("run.started", "lead", {
+            "task_type": "frames_qa", "query": question, "metadata": metadata or {},
+            "prompt_hashes": prompt_hashes, "attempt_number": attempt_number,
+            "faults_enabled": runtime.faults_enabled,
+        })
+        snapshots = runtime.snapshot_documents()
+    else:  # the copied log already started the run and listed the documents
+        snapshots = json.loads((runtime.root / "documents.json").read_text(encoding="utf-8"))
     async with AsyncExitStack() as stack:
         saver = await stack.enter_async_context(
             checkpoint_store(runtime.root / "checkpoints.sqlite")
@@ -64,6 +70,8 @@ async def _solve(
             ],
             "results": {}, "batches": 0, "turns": 0,
         }
+        if point is not None:  # continue the copied Lead thread from the point's checkpoint
+            initial_state, invocation_config = None, point["graph_config"]
         graph = build_research(runtime, saver)
         try:
             state = await asyncio.wait_for(
@@ -77,7 +85,8 @@ async def _solve(
                 "status": "failed",
                 "stop_reason": f"{type(exc).__name__}: {runtime.log.redact(str(exc))}",
             }
-        snapshot = await graph.aget_state(invocation_config)
+        thread = {"configurable": {"thread_id": invocation_config["configurable"]["thread_id"]}}
+        snapshot = await graph.aget_state(thread)  # latest, not the resumed point
         if snapshot.values:
             state = {**snapshot.values, **state}
         checkpoint_id = (
@@ -90,7 +99,8 @@ async def _solve(
         "answer": state.get("answer"), "stop_reason": state.get("stop_reason"),
     }, [ids[-1] for ids in runtime.observed.values() if ids])
     return {"state": state, "checkpoint_id": checkpoint_id, "snapshots": snapshots,
-            "started": started, "solve_seconds": solve_seconds}
+            "started": started, "solve_seconds": solve_seconds,
+            "recovered_from": point["recovery_point_id"] if point else None}
 
 
 async def _finish_attempt(
@@ -126,6 +136,7 @@ async def _finish_attempt(
         usage_by_role={k: v.as_dict() for k, v in runtime.usage_by_role.items()},
         solve_duration_seconds=solved["solve_seconds"], duration_seconds=elapsed,
         elapsed_seconds=elapsed, checkpoint_id=solved["checkpoint_id"],
+        recovered_from=solved["recovered_from"],
     )
     if state.get("answer"):
         path = runtime.root / "answer.txt"
@@ -164,21 +175,30 @@ async def run_qa(
     if not question.strip():
         raise ValueError("Question cannot be empty")
     attempts = []
+    rollback = None  # selective: (recovery point ID, reusable Worker results)
     while True:
         number = len(attempts) + 1
-        runtime = Runtime(
-            config, model, documents,
-            root=question_root / f"attempt-{number}" if question_root else None,
-            viewer_root=config.output_dir if question_root else None,
-        )
+        root = question_root / f"attempt-{number}" if question_root else None
+        viewer_root = config.output_dir if question_root else None
+        point = None
+        if rollback is None:
+            runtime = Runtime(config, model, documents, root=root, viewer_root=viewer_root)
+        else:
+            source = Path(attempts[0]["output_dir"])
+            runtime, point, _ = open_branch(source, rollback[0], model=model, output_dir=root,
+                                            viewer_root=viewer_root)
+            shutil.copy(source / "documents.json", runtime.root)
+            runtime.reuse = rollback[1]
         # Faults are injected in the first attempt only; a restart reruns the same config
         # with a fresh token budget.
         runtime.faults_enabled = number == 1
         try:
-            solved = await _solve(runtime, question, metadata, number)
+            solved = await _solve(runtime, question, metadata, number, point)
             # Restart after any fault, however the attempt ended; `interrupted` only stops
             # a faulted attempt early.
-            restart = config.recovery == "full_restart" and bool(strategies.sites(runtime))
+            restart = config.recovery in strategies.RESTARTS and bool(strategies.sites(runtime))
+            rollback = (strategies.rollback(runtime)
+                        if restart and config.recovery == "selective" else None)
             attempt = await _finish_attempt(
                 runtime, number, question, reference_answer, metadata, solved, graded=not restart,
             )
@@ -193,4 +213,5 @@ async def run_qa(
         if not restart:
             logger.info("Run finished (%s).", result["status"])
             return result
-        logger.info("Fault injected; restarting with faults off (attempt %d).", number + 1)
+        logger.info("Fault injected; %s with faults off (attempt %d).",
+                    f"replaying from {rollback[0]}" if rollback else "restarting", number + 1)

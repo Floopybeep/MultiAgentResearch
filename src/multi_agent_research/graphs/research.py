@@ -15,6 +15,7 @@ from ..faults.base import Call
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
+    WorkerResult,
     memory_read,
     memory_write,
     merge_results,
@@ -163,12 +164,20 @@ def build_research(
                         "batch": batch, "position": position,
                         "batch_size": min(len(delegated), cfg.max_workers_per_batch),
                     })
-                    result = await runtime.faults.run(
-                        "delegation", delegation, lambda c: run_worker(
-                            runtime, agent, c.args["prompt"], checkpointer,
-                            document_id=c.args["document_id"],
-                        ),
-                    )
+                    async def execute(c):
+                        entry = runtime.reuse.pop(strategies.reuse_key(
+                            agent, c.args["document_id"], runtime.log.redact(c.args["prompt"]),
+                        ), None)
+                        if entry is None:
+                            return await run_worker(runtime, agent, c.args["prompt"], checkpointer,
+                                                    document_id=c.args["document_id"])
+                        source, delivery = entry
+                        runtime.event("worker.reused", agent, {"assignment_id": agent, **source},
+                                      runtime.observed[agent].copy(), batch_id=batch,
+                                      assignment_id=agent)
+                        return WorkerResult.model_validate(delivery)
+
+                    result = await runtime.faults.run("delegation", delegation, execute)
                     delivery_parents[index] = [runtime.observed[agent][-1]]
                     delivery = result.model_dump()
                     if verify:

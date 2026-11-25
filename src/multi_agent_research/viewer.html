@@ -148,6 +148,7 @@ async function loadRun(name, snapshot=null){
 const RECOVERY={
  full_restart:{label:'Full Restart',boundary:'discard previous execution state · begin a fresh attempt with faults off'},
  always_verify:{label:'Always Verify',boundary:'continue in a new attempt'},
+ selective:{label:'Selective Recovery',boundary:'replay from the earliest faulted checkpoint (or restart if none) · reuse unfaulted worker results · faults off'},
 };
 const recovery=data=>RECOVERY[data.strategy]||{label:'Recovery',boundary:'continue in a new attempt'};
 function showError(e){$('#error').textContent=e.message}
@@ -501,7 +502,7 @@ function renderFlow(data){
  const flow=$('#flow');flow.replaceChildren();stageElements=[];
  for(const [index,trace] of (data.attempt_runs||[data]).entries()){
   if(data.attempt_runs){
-   if(index)flow.append(el('div','restart-boundary','↓ '+recovery(data).label+' · '+recovery(data).boundary+' ↓'));
+   if(index)flow.append(el('div','restart-boundary','↓ '+recovery(data).label+' · '+recovery(data).boundary+(trace.attempt?.recovered_from?' · from '+trace.attempt.recovered_from:'')+' ↓'));
    const heading=el('section','attempt-heading'),attempt=trace.attempt;
    heading.append(el('h2','','Attempt '+attempt.attempt_number+' · '+attempt.status+(attempt.attempt_number===data.selected_attempt?' · selected result':'')),el('p','',trace.directory+' · injection '+(attempt.faults_enabled?'enabled':'disabled')));
    for(const warning of trace.warnings||[])heading.append(el('p','notice',warning));
