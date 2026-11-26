@@ -72,8 +72,9 @@ class ToolFailureFault(Fault):
             return True
         if self.failure_probability <= 0.0:
             return False
-        # The sorted catalog stands in for the question; SHA-256 keeps draws reproducible.
-        question = hashlib.sha256("|".join(sorted(runtime.documents.documents)).encode()).hexdigest()
+        # The sorted catalog URLs stand in for the question (IDs may be relabeled);
+        urls = sorted(doc.url for doc in runtime.documents.documents.values())
+        question = hashlib.sha256("|".join(urls).encode()).hexdigest()
         parts = [str(self.seed), question, document_id, str(offset)]
         if not self.persistent:
             parts.append(str(attempt))
