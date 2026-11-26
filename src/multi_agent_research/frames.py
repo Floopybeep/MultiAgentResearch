@@ -57,9 +57,9 @@ def select_examples(examples: list[FramesExample], size=10, seed=42, question_id
     return random.Random(seed).sample(examples, size)
 
 
-def prepare_documents(example: FramesExample, corpus_dir, document_index):
+def prepare_documents(document_ids: list[str], corpus_dir, document_index):
     documents = []
-    for key in example.document_ids:
+    for key in document_ids:
         entry = document_index[key]
         documents.append(LocalDocument(
             document_id=key, title=entry["title"], url=entry["url"],

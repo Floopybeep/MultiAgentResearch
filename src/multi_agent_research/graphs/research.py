@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from dataclasses import asdict
 from typing import Any
 
 from langchain_core.messages import HumanMessage, ToolMessage
@@ -9,8 +10,8 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from ..fault_injections import model_visible
-from ..faults.pipeline import PipelineFaultInjector
+from .. import strategies
+from ..faults.base import Call
 from ..runtime import BudgetExceeded, Runtime
 from ..schemas import (
     AgentState,
@@ -21,7 +22,6 @@ from ..schemas import (
     run_blocking_subagent,
     submit_answer,
 )
-from ..tools.connection_drop import select_dropped
 from ..verification import verify_boundary
 from .worker import run_worker
 
@@ -32,41 +32,54 @@ def build_research(
     runtime: Runtime, checkpointer: BaseCheckpointSaver | None,
 ) -> CompiledStateGraph:
     cfg = runtime.config
-    injector = PipelineFaultInjector(cfg.pipeline_fault)
-    recovery = cfg.delegation_recovery
+    verify = cfg.recovery == "always_verify"
 
-    def finished_result(agent):
-        """The Worker's latest completed `worker.finished` record in this run, if any."""
-        row = runtime.db.connection.execute(
-            "SELECT body FROM events WHERE json_extract(body, '$.event_type') = 'worker.finished'"
-            " AND json_extract(body, '$.agent_id') = ? AND json_extract(body, '$.run_id') = ?"
-            " ORDER BY sequence DESC LIMIT 1",
-            (agent, runtime.run_id),
-        ).fetchone()
-        if row is None:
+    def fault_detected(batches_done, submitting=False):
+        """The interrupted final state once the recovery strategy detects a fault, else None."""
+        if not strategies.detected(runtime, batches_done, submitting):
             return None
-        event = json.loads(row[0])
-        result = WorkerResult.model_validate(runtime.artifacts.get(event["payload_ref"]))
-        return (event["event_id"], result) if result.status == "completed" else None
+        found = strategies.sites(runtime)
+        runtime.event("fault.detected", "lead", {
+            "sites": [asdict(site) for site in found], "batches_done": batches_done,
+            "submitting": submitting,
+        }, [site.event_id for site in found])
+        return {"status": "interrupted", "stop_reason": "fault_detected"}
 
-    def finish_node(result):
-        # Only explicit oracle events stop a completed node or joined worker batch.
-        if (cfg.full_restart and runtime.attempt_number == 1 and runtime.injected_faults):
-            return {**result, "status": "interrupted", "stop_reason": "fault_injected"}
-        return result
+    def detecting(node):
+        """Run a Lead node, then stop the attempt there if a fault is detected. Worker faults
+        are counted at batch joins; a fault outside any batch stops the node it fired in."""
+        async def wrapped(state):
+            update = await node(state)
+            if update.get("status"):
+                return update
+            stop = fault_detected(update.get("batches", state.get("batches", 0)))
+            return {**update, **stop} if stop else update
+        return wrapped
 
     async def lead(state):
         if state.get("turns", 0) >= cfg.max_lead_turns:
-            return finish_node({"status": "budget_exhausted", "stop_reason": "lead_turn_limit"})
+            return {"status": "budget_exhausted", "stop_reason": "lead_turn_limit"}
         try:
             response = await runtime.call_model("lead", "lead", state["messages"], TOOLS)
-            return finish_node({
+            return {
                 "messages": state["messages"] + [response], "turns": state.get("turns", 0) + 1,
                 "pending_tools": response.tool_calls, "tool_index": 0, "tool_outputs": {},
                 "plan_diagnostic": None,
-            })
+            }
         except BudgetExceeded as exc:
-            return finish_node({"status": "budget_exhausted", "stop_reason": str(exc)})
+            return {"status": "budget_exhausted", "stop_reason": str(exc)}
+
+    async def prepare_batch(state):
+        """always_verify: check the Lead's plan after its local tools, before dispatch."""
+        calls = state.get("pending_tools", [])
+        if not any(c["name"] == "run_blocking_subagent" for c in calls):
+            return {}
+        record = await verify_boundary(
+            runtime, "lead", "lead_plan",
+            {"content": state["messages"][-1].content, "tool_calls": calls},
+            parents=runtime.observed.get("lead", []).copy(),
+        )
+        return {"plan_diagnostic": record}
 
     async def local_tool(state):
         calls = state.get("pending_tools", [])
@@ -92,26 +105,18 @@ def build_research(
                 return {"completed": submit_answer.model_validate(call["args"]).model_dump()}
             raise ValueError("Unknown lead tool")
 
-        output = await runtime.call_tool("lead", call, handler)
+        if call["name"] == "submit_answer":
+            stop = fault_detected(state.get("batches", 0), submitting=True)
+            if stop:
+                return stop
+        output = await runtime.call_tool("lead", "lead", call, handler)
         if "completed" in output:
             answer = output["completed"]["answer"]
             runtime.event("answer.submitted", "lead", {"answer": answer},
                           runtime.observed["lead"].copy())
-            return finish_node({"answer": answer, "status": "completed",
-                                "stop_reason": "submit_answer"})
+            return {"answer": answer, "status": "completed", "stop_reason": "submit_answer"}
         return {"tool_index": cursor + 1,
                 "tool_outputs": {**state.get("tool_outputs", {}), str(index): output}}
-
-    async def prepare_batch(state):
-        calls = state.get("pending_tools", [])
-        if cfg.always_verify and any(c["name"] == "run_blocking_subagent" for c in calls):
-            diagnostic = await verify_boundary(
-                runtime, "lead", "lead_plan", runtime.model_inputs.get("lead", []),
-                {"content": state["messages"][-1].content, "tool_calls": calls},
-                parents=runtime.observed.get("lead", []).copy(),
-            )
-            return {"plan_diagnostic": diagnostic}
-        return {}
 
     async def tools(state):
         calls = state.get("pending_tools", [])
@@ -137,11 +142,6 @@ def build_research(
                 recovery_points[index] = await runtime.recovery.before_call(
                     "lead", "tool", call["name"], call,
                 )
-            dropped, timed_out = [], []
-            if (runtime.faults_enabled and runtime.memory.ref and batch <= cfg.max_batches):
-                executable = min(len(delegated), cfg.max_workers_per_batch)
-                dropped = select_dropped(cfg.connection_drop, batch, executable)
-                timed_out = select_dropped(cfg.result_timeout, batch, executable)
             delivery_parents = {}
 
             async def dispatch(position: int, index: int, call: dict[str, Any]):
@@ -158,119 +158,36 @@ def build_research(
                         )
                     args = run_blocking_subagent.model_validate(call["args"])
                     agent = f"batch{batch}-worker{position + 1}"
+                    runtime.observed[agent] = [start]
+                    delegation = Call(agent, "lead", call["name"], {
+                        "prompt": args.prompt, "document_id": args.document_id,
+                        "batch": batch, "position": position,
+                        "batch_size": min(len(delegated), cfg.max_workers_per_batch),
+                    })
+                    async def execute(c):
+                        entry = runtime.reuse.pop(strategies.reuse_key(
+                            agent, c.args["document_id"], runtime.log.redact(c.args["prompt"]),
+                        ), None)
+                        if entry is None:
+                            return await run_worker(runtime, agent, c.args["prompt"], checkpointer,
+                                                    document_id=c.args["document_id"])
+                        source, delivery = entry
+                        runtime.event("worker.reused", agent, {"assignment_id": agent, **source},
+                                      runtime.observed[agent].copy(), batch_id=batch,
+                                      assignment_id=agent)
+                        return WorkerResult.model_validate(delivery)
 
-                    def send(attempt):
-                        # A non-persistent drop affects only the first send of the batch.
-                        if position in dropped and (attempt == 0 or cfg.connection_drop.persistent):
-                            runtime.event(
-                                "connection.dropped", "lead",
-                                {
-                                    "assignment_id": agent,
-                                    "document_id": args.document_id,
-                                    "position": position + 1,
-                                    "drop_number": dropped.index(position) + 1,
-                                    "assignment": args.prompt,
-                                },
-                                [start], batch_id=batch, assignment_id=agent,
-                            )
-                            raise ConnectionError(
-                                "Connection to worker lost; assignment was not delivered"
-                            )
-
-                    retries = recovery.max_retries if recovery.enabled else 0
-                    for attempt in range(retries + 1):
-                        try:
-                            send(attempt)
-                            runtime.observed[agent] = [start]
-                            decision = injector.decide(agent)
-                            fault_parent = injector.log_decision(
-                                runtime, agent, batch, start, decision,
-                            )
-                            if (decision["selected"]
-                                    and cfg.pipeline_fault.fault_type == "dispatch_failure"):
-                                value, event = injector.inject(
-                                    runtime, agent, batch, fault_parent, worker_executed=False,
-                                )
-                                delivery_parents[index] = [event]
-                                return value
-                            result = await run_worker(
-                                runtime, agent, args.prompt, checkpointer,
-                                document_id=args.document_id,
-                            )
-                            break
-                        except (ConnectionError, TimeoutError) as exc:
-                            # Retry observed transport failures only when this run's
-                            # log confirms the assignment has not started executing.
-                            worker_started = runtime.db.connection.execute(
-                                "SELECT 1 FROM events WHERE "
-                                "json_extract(body, '$.event_type') = 'worker.started'"
-                                " AND json_extract(body, '$.agent_id') = ?"
-                                " AND json_extract(body, '$.run_id') = ? LIMIT 1",
-                                (agent, runtime.run_id),
-                            ).fetchone()
-                            if attempt == retries or worker_started:
-                                raise
-                            runtime.event(
-                                "delegation.retried", "lead",
-                                {"assignment_id": agent, "retry": attempt + 1,
-                                 "error": type(exc).__name__, "message": str(exc)},
-                                [start], batch_id=batch, assignment_id=agent,
-                            )
-                    parents = [runtime.observed[agent][-1]]
-                    if position in timed_out:
-                        deadline = cfg.result_timeout.timeout_seconds
-                        elapsed = asyncio.get_running_loop().time() - started
-                        injected = runtime.event(
-                            "result.timed_out", "lead",
-                            {
-                                "assignment_id": agent,
-                                "document_id": args.document_id,
-                                "position": position + 1,
-                                "timeout_number": timed_out.index(position) + 1,
-                                "timeout_seconds": deadline,
-                                "late": elapsed > deadline,
-                                "worker_status": result.status,
-                                "original_result_ref": runtime.artifacts.put(
-                                    runtime.log.redact(result.model_dump())
-                                ),
-                            },
-                            parents, batch_id=batch, assignment_id=agent,
-                        )
-                        parents.append(injected)
-                        await asyncio.sleep(max(
-                            deadline - (asyncio.get_running_loop().time() - started), 0,
-                        ))
-                        result = WorkerResult(
-                            assignment_id=agent, status="failed", stop_reason="TimeoutError: ",
-                        )
-                    if recovery.enabled and result.status != "completed":
-                        # The Worker records its own result before delivery; a failed
-                        # delivery of a completed Worker is recovered from that record.
-                        retrieved = finished_result(agent)
-                        if retrieved is not None:
-                            finished, result = retrieved
-                            parents.append(runtime.event(
-                                "result.retrieved", "lead",
-                                {"assignment_id": agent, "worker_finished_event": finished},
-                                list(dict.fromkeys([finished, *parents])),
-                                batch_id=batch, assignment_id=agent,
-                            ))
+                    result = await runtime.faults.run("delegation", delegation, execute)
+                    delivery_parents[index] = [runtime.observed[agent][-1]]
                     delivery = result.model_dump()
-                    if decision["selected"] and result.status == "completed":
-                        delivery, event = injector.inject(
-                            runtime, agent, batch, parents[-1], worker_executed=True,
-                            original=delivery, decision_event=fault_parent,
+                    if verify:
+                        # Verify exactly what will be delivered, after any fault acted on it.
+                        record = await verify_boundary(
+                            runtime, agent, "worker_result", delivery,
+                            parents=delivery_parents[index].copy(),
                         )
-                        parents = [event]
-                    # Verify exactly what will be delivered, never the withheld artifact.
-                    if cfg.always_verify:
-                        diagnostic = await verify_boundary(
-                            runtime, agent, "worker_result", runtime.model_inputs.get(agent, []),
-                            model_visible(delivery), parents=parents,
-                        )
-                        delivery = {**delivery, "verification": diagnostic}
-                        parents.append(diagnostic["event_id"])
-                    delivery_parents[index] = parents
+                        delivery = {**delivery, "verification": record}
+                        delivery_parents[index].append(record["event_id"])
                     return delivery
 
                 # Delegation is bounded by the worker timeout, not the shorter tool timeout.
@@ -309,34 +226,38 @@ def build_research(
             batches = batch
         for index, call in enumerate(calls):
             messages.append(
-                ToolMessage(content=json.dumps(model_visible(outputs[index])),
-                            tool_call_id=call["id"])
+                ToolMessage(content=json.dumps(outputs[index]), tool_call_id=call["id"])
             )
         if plan_diagnostic is not None:
             # One batch-level diagnostic, after all matching tool responses.
             messages.append(HumanMessage(content=json.dumps({
                 "batch_id": batch, "plan_verification": plan_diagnostic,
             })))
-        return finish_node({"messages": messages, "results": results, "batches": batches})
+        return {"messages": messages, "results": results, "batches": batches}
 
     graph = StateGraph(AgentState)
     descriptor = {"kind": "lead", "scope": "agent"}
-    graph.add_node("lead", runtime.recovery.node(lead, checkpointer, descriptor))
-    graph.add_node("lead_tools", runtime.recovery.node(local_tool, checkpointer, descriptor))
-    graph.add_node("prepare_batch", runtime.recovery.node(prepare_batch, checkpointer, descriptor))
-    graph.add_node("dispatch_batch", runtime.recovery.node(
-        tools, checkpointer, {"kind": "lead", "scope": "delegation_batch"},
+    graph.add_node("lead", runtime.recovery.node(detecting(lead), checkpointer, descriptor))
+    graph.add_node("lead_tools", runtime.recovery.node(
+        detecting(local_tool), checkpointer, descriptor,
     ))
+    graph.add_node("dispatch_batch", runtime.recovery.node(
+        detecting(tools), checkpointer, {"kind": "lead", "scope": "delegation_batch"},
+    ))
+    batch_node = "dispatch_batch"
+    if verify:
+        graph.add_node("prepare_batch", runtime.recovery.node(prepare_batch, checkpointer, descriptor))
+        graph.add_edge("prepare_batch", "dispatch_batch")
+        batch_node = "prepare_batch"
 
     def after_local(state):
         if state.get("status"):
             return END
         count = sum(c["name"] != "run_blocking_subagent" for c in state.get("pending_tools", []))
-        return "lead_tools" if state.get("tool_index", 0) < count else "prepare_batch"
+        return "lead_tools" if state.get("tool_index", 0) < count else batch_node
 
     graph.add_edge(START, "lead")
     graph.add_conditional_edges("lead", lambda s: END if s.get("status") else "lead_tools")
     graph.add_conditional_edges("lead_tools", after_local)
-    graph.add_edge("prepare_batch", "dispatch_batch")
     graph.add_conditional_edges("dispatch_batch", lambda s: END if s.get("status") else "lead")
     return graph.compile(checkpointer=checkpointer)

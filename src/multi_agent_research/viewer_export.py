@@ -159,7 +159,7 @@ def publish_manifest(root, summary):
 def _attempt_metadata(result, directory, run_directories=None):
     metadata = {
         key: result[key]
-        for key in ("strategy", "selected_attempt", "restarted", "clean_slate_reset")
+        for key in ("strategy", "selected_attempt", "restarted")
         if key in result
     }
     metadata.update(intervention_summary([result]))
@@ -171,7 +171,7 @@ def _attempt_metadata(result, directory, run_directories=None):
         metadata["attempts"].append({
             **{key: attempt.get(key) for key in (
                 "attempt_number", "run_id", "status", "faults_enabled", "fault_injected",
-                "elapsed_seconds",
+                "elapsed_seconds", "recovered_from",
             )},
             "directory": (run_directories or {}).get(attempt.get("run_id"),
                 directory if attempt.get("run_id") == result.get("run_id") else
@@ -237,6 +237,8 @@ class ViewerExport:
         self.data["updated_at"] = event["timestamp"]
         if kind == "run.started":
             self.data.update(query=payload.get("query", ""), started_at=event["timestamp"])
+        elif kind == "recovery.started":
+            self.data["started_at"] = event["timestamp"]
         elif kind == "model.response":
             usage = payload.get("usage_metadata") or {}
             self.data["usage"]["model_calls"] += 1
@@ -244,6 +246,7 @@ class ViewerExport:
                 self.data["usage"][key] += usage.get(key, 0)
         elif kind == "run.finished":
             self.data.update(_attempt_metadata(payload, self.name))
+            self.data["query"] = self.data["query"] or payload.get("question", "")
             for key in ("status", "stop_reason", "usage", "correct"):
                 if key in payload:
                     self.data[key] = payload[key]

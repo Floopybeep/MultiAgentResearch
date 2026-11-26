@@ -1,58 +1,50 @@
-"""QA attempts, oracle-triggered full restart and combined accounting."""
+"""One QA run: solve, grade and write the final files."""
 
 import asyncio
 import json
 import logging
+import shutil
 import time
 from contextlib import AsyncExitStack
-from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from . import prompts
+from . import prompts, strategies
 from .config import RunConfig
 from .grading import grade_answer
 from .graphs.research import build_research
 from .models.adapter import ModelAdapter
 from .observability.usage import sum_usage
+from .recovery import open_branch
 from .runtime import Runtime
 from .storage.checkpoints import checkpoint_store
 from .tools.documents import OracleDocuments
+from .verification import recorded_verifications
 
 logger = logging.getLogger(__name__)
 
 
-def _build_clean_restart_config(base_config: RunConfig) -> RunConfig:
-    """Copy the saved experimental baseline without normalizing any resource limits."""
-    clean = base_config.model_copy(deep=True)
-    for name in (
-        "document_injection", "pipeline_fault", "connection_drop", "result_timeout", "tool_failure",
-    ):
-        getattr(clean, name).enabled = False
-    clean.worker_budget_faults.generation_budget.enabled = False
-    clean.worker_budget_faults.tool_call_budget.enabled = False
-    return clean
-
-
-async def _run_attempt(
-    runtime: Runtime, question: str, reference_answer: str | None,
-    metadata: dict[str, Any] | None, attempt_number: int, previous_run_id: str | None,
+async def _solve(
+    runtime: Runtime, question: str, metadata: dict[str, Any] | None, attempt_number: int,
+    point: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Run the Lead graph from a fresh state, or from recovery `point`, to its final state."""
     config = runtime.config
     started = time.monotonic()
-    prompt_hashes = prompts.hashes(config, include_verifier=config.always_verify)
-    runtime.db.record("prompts", prompt_hashes)
-    runtime.event("run.started", "lead", {
-        "task_type": "frames_qa", "query": question, "metadata": metadata or {},
-        "prompt_hashes": prompt_hashes, "attempt_number": attempt_number,
-        "previous_run_id": previous_run_id, "strategy": config.strategy,
-        "faults_enabled": runtime.faults_enabled,
-    })
-    snapshots = runtime.snapshot_documents()
+    if point is None:
+        prompt_hashes = prompts.hashes(config, include_verifier=config.recovery == "always_verify")
+        runtime.db.record("prompts", prompt_hashes)
+        runtime.event("run.started", "lead", {
+            "task_type": "frames_qa", "query": question, "metadata": metadata or {},
+            "prompt_hashes": prompt_hashes, "attempt_number": attempt_number,
+            "faults_enabled": runtime.faults_enabled,
+        })
+        snapshots = runtime.snapshot_documents()
+    else:  # the copied log already started the run and listed the documents
+        snapshots = json.loads((runtime.root / "documents.json").read_text(encoding="utf-8"))
     async with AsyncExitStack() as stack:
-        # Each restart attempt owns a new, empty checkpointer, not a resumed checkpoint.
         saver = await stack.enter_async_context(
             checkpoint_store(runtime.root / "checkpoints.sqlite")
         )
@@ -78,31 +70,10 @@ async def _run_attempt(
             ],
             "results": {}, "batches": 0, "turns": 0,
         }
-        reset_audit = {
-            "previous_run_id": previous_run_id,
-            "previous_runtime_closed": previous_run_id is not None,
-            "thread_id": runtime.run_id, "checkpointer_type": type(saver).__name__,
-            "empty_checkpointer": await saver.aget_tuple(invocation_config) is None,
-            "initial_plan_ref": runtime.memory.ref,
-            "initial_message_count": len(initial_state["messages"]),
-            "initial_worker_results": len(initial_state["results"]),
-            "initial_lead_turns": initial_state["turns"],
-            "initial_batches": initial_state["batches"],
-            "initial_model_inputs": len(runtime.model_inputs),
-            "initial_verifications": len(runtime.verifications),
-            "initial_model_calls": runtime.usage.calls,
-            "initial_document_injection_count": runtime.document_injection_count,
-            "initial_tool_failure_count": runtime.tool_failure_state.failures,
-            "initial_tool_failure_attempts": len(runtime.tool_failure_state.attempts),
-            "initial_denied_pages": len(runtime.tool_failure_state.denied),
-            "initial_injected_faults": len(runtime.injected_faults),
-            "faults_enabled": runtime.faults_enabled,
-        }
-        runtime.event("attempt.started", "system", reset_audit)
+        if point is not None:  # continue the copied Lead thread from the point's checkpoint
+            initial_state, invocation_config = None, point["graph_config"]
         graph = build_research(runtime, saver)
         try:
-            # Fault events never cancel calls. The graph stops at a completed node/batch.
-            # Ordinary configured deadlines still apply and produce native failures.
             state = await asyncio.wait_for(
                 graph.ainvoke(initial_state, invocation_config, durability="sync"),
                 config.run_timeout_seconds,
@@ -114,12 +85,8 @@ async def _run_attempt(
                 "status": "failed",
                 "stop_reason": f"{type(exc).__name__}: {runtime.log.redact(str(exc))}",
             }
-        if state.get("status") == "interrupted":
-            runtime.event("attempt.interrupted", "system", {
-                "reason": "fault_injected", "injected_faults": runtime.injected_faults.copy(),
-                "active_calls_cancelled": False,
-            }, [ids[-1] for ids in runtime.observed.values() if ids])
-        snapshot = await graph.aget_state(invocation_config)
+        thread = {"configurable": {"thread_id": invocation_config["configurable"]["thread_id"]}}
+        snapshot = await graph.aget_state(thread)  # latest, not the resumed point
         if snapshot.values:
             state = {**snapshot.values, **state}
         checkpoint_id = (
@@ -131,9 +98,20 @@ async def _run_attempt(
         "status": state.get("status", "failed"), "duration_seconds": solve_seconds,
         "answer": state.get("answer"), "stop_reason": state.get("stop_reason"),
     }, [ids[-1] for ids in runtime.observed.values() if ids])
+    return {"state": state, "checkpoint_id": checkpoint_id, "snapshots": snapshots,
+            "started": started, "solve_seconds": solve_seconds,
+            "recovered_from": point["recovery_point_id"] if point else None}
+
+
+async def _finish_attempt(
+    runtime: Runtime, attempt_number: int, question: str, reference_answer: str | None,
+    metadata: dict[str, Any] | None, solved: dict[str, Any], *, graded: bool,
+) -> dict[str, Any]:
+    """Grade the attempt if `graded` (not when it will be restarted), and write its files."""
+    config = runtime.config
+    state = solved["state"]
     grade = None
-    will_restart = config.full_restart and attempt_number == 1 and bool(runtime.injected_faults)
-    if reference_answer is not None and not will_restart:
+    if reference_answer is not None and graded:
         if state.get("answer"):
             grade = await grade_answer(runtime, question, reference_answer, state["answer"])
         else:
@@ -143,32 +121,50 @@ async def _run_attempt(
                 "duration_seconds": 0, "usage": runtime.usage_by_role["judge"].as_dict(),
             }
             runtime.event("grade.finished", "judge", grade)
-    elapsed = time.monotonic() - started
+    elapsed = time.monotonic() - solved["started"]
     result = dict(
         run_id=runtime.run_id, output_dir=str(runtime.root), task_type="frames_qa",
-        attempt_number=attempt_number, strategy=config.strategy,
+        attempt_number=attempt_number, strategy=config.recovery,
+        faults_enabled=runtime.faults_enabled, fault_injected=bool(runtime.faults.fired),
         config=config.model_dump(mode="json"),
-        faults_enabled=runtime.faults_enabled,
-        fault_injected=bool(runtime.injected_faults),
-        injected_faults=runtime.injected_faults.copy(),
-        document_injection_count=runtime.document_injection_count, state_reset=reset_audit,
         reference_answer=reference_answer, question=question, metadata=metadata or {},
         status=state.get("status", "failed"), stop_reason=state.get("stop_reason"),
         answer=state.get("answer"), grade=grade, correct=grade.get("correct") if grade else None,
-        worker_results=state.get("results", {}), verifications=runtime.verifications,
+        worker_results=state.get("results", {}),
+        verifications=recorded_verifications(runtime),
         usage=runtime.usage.as_dict(),
         usage_by_role={k: v.as_dict() for k, v in runtime.usage_by_role.items()},
-        solve_duration_seconds=solve_seconds, duration_seconds=elapsed, elapsed_seconds=elapsed,
-        checkpoint_id=checkpoint_id,
+        solve_duration_seconds=solved["solve_seconds"], duration_seconds=elapsed,
+        elapsed_seconds=elapsed, checkpoint_id=solved["checkpoint_id"],
+        recovered_from=solved["recovered_from"],
     )
     if state.get("answer"):
         path = runtime.root / "answer.txt"
         path.write_text(runtime.log.redact(state["answer"]), encoding="utf-8")
         result["answer_path"] = str(path)
     (runtime.root / "documents.json").write_text(
-        json.dumps(runtime.log.redact(snapshots), indent=2), encoding="utf-8"
+        json.dumps(runtime.log.redact(solved["snapshots"]), indent=2), encoding="utf-8"
     )
     return runtime.log.redact(result)
+
+
+def _question_result(attempts: list[dict[str, Any]]) -> dict[str, Any]:
+    """The question result: the selected (last) attempt, every attempt's summary, and usage
+    and time summed over all attempts."""
+    final = attempts[-1]
+    return {
+        **final,
+        "attempts": [{k: v for k, v in a.items() if k not in (
+            "config", "question", "reference_answer", "metadata", "worker_results",
+        )} for a in attempts],
+        "selected_attempt": final["attempt_number"],
+        "restarted": len(attempts) > 1,
+        "usage": sum_usage(a["usage"] for a in attempts),
+        "usage_by_role": {role: sum_usage(a["usage_by_role"][role] for a in attempts)
+                          for role in final["usage_by_role"]},
+        **{key: sum(a[key] for a in attempts)
+           for key in ("solve_duration_seconds", "duration_seconds", "elapsed_seconds")},
+    }
 
 
 async def run_qa(
@@ -178,84 +174,44 @@ async def run_qa(
 ) -> dict[str, Any]:
     if not question.strip():
         raise ValueError("Question cannot be empty")
-    # Save the experimental baseline before any injector can mutate attempt settings.
-    base_config = config.model_copy(deep=True)
-    clean_config = _build_clean_restart_config(base_config)
     attempts = []
-    wall_started = time.monotonic()
-    for number in (1, 2):
-        attempt_config = (base_config if number == 1 else clean_config).model_copy(deep=True)
-        # Reuse only immutable inputs and the stateless transport, never graph state.
-        runtime = Runtime(
-            attempt_config, model, deepcopy(documents),
-            root=question_root / f"attempt-{number}" if question_root else None,
-            viewer_root=config.output_dir if question_root else None,
-            budget_question_key=str((metadata or {}).get("question_id", question)),
-        )
-        runtime.attempt_number = number
+    rollback = None  # selective: (recovery point ID, reusable Worker results)
+    while True:
+        number = len(attempts) + 1
+        root = question_root / f"attempt-{number}" if question_root else None
+        viewer_root = config.output_dir if question_root else None
+        point = None
+        if rollback is None:
+            runtime = Runtime(config, model, documents, root=root, viewer_root=viewer_root)
+        else:
+            source = Path(attempts[0]["output_dir"])
+            runtime, point, _ = open_branch(source, rollback[0], model=model, output_dir=root,
+                                            viewer_root=viewer_root)
+            shutil.copy(source / "documents.json", runtime.root)
+            runtime.reuse = rollback[1]
+        # Faults are injected in the first attempt only; a restart reruns the same config
+        # with a fresh token budget.
         runtime.faults_enabled = number == 1
-        previous_run_id = attempts[-1]["run_id"] if attempts else None
-        logger.info("Attempt %d: starting (strategy=%s).", number, config.strategy)
         try:
-            attempt = await _run_attempt(
-                runtime, question, reference_answer, metadata, number, previous_run_id,
+            solved = await _solve(runtime, question, metadata, number, point)
+            # Restart after any fault, however the attempt ended; `interrupted` only stops
+            # a faulted attempt early.
+            restart = config.recovery in strategies.RESTARTS and bool(strategies.sites(runtime))
+            rollback = (strategies.rollback(runtime)
+                        if restart and config.recovery == "selective" else None)
+            attempt = await _finish_attempt(
+                runtime, number, question, reference_answer, metadata, solved, graded=not restart,
             )
             attempts.append(attempt)
-            runtime.event("attempt.finished", "system", attempt,
-                          [ids[-1] for ids in runtime.observed.values() if ids])
-            should_restart = base_config.full_restart and number == 1 and attempt["fault_injected"]
-            restarted = number == 2
-            result = dict(attempt)
-            # TODO: Derive propagation/adoption and wasted-work metrics from paired traces.
-            combined_usage = sum_usage(a["usage"] for a in attempts)
-            result.update(
-                attempts=attempts.copy(), selected_attempt=number, restarted=restarted,
-                base_config=base_config.model_dump(mode="json"),
-                fault_injected=any(a["fault_injected"] for a in attempts),
-                injected_faults=[fault for a in attempts for fault in a["injected_faults"]],
-                restart_reason="fault_injected" if restarted or should_restart else None,
-                clean_slate_reset=(
-                    attempts[0]["run_id"] != attempt["run_id"]
-                    and attempt["state_reset"]["empty_checkpointer"]
-                    and attempt["state_reset"]["initial_plan_ref"] is None
-                    and attempt["state_reset"]["checkpointer_type"] == "AsyncSqliteSaver"
-                    and attempt["state_reset"]["previous_runtime_closed"]
-                    and attempt["state_reset"]["initial_message_count"] == 2
-                    and attempt["state_reset"]["initial_model_calls"] == 0
-                    and attempt["state_reset"]["initial_worker_results"] == 0
-                    and attempt["state_reset"]["initial_model_inputs"] == 0
-                    and attempt["state_reset"]["initial_verifications"] == 0
-                    and attempt["state_reset"]["initial_lead_turns"] == 0
-                    and attempt["state_reset"]["initial_batches"] == 0
-                    and attempt["state_reset"]["initial_document_injection_count"] == 0
-                    and attempt["state_reset"]["initial_tool_failure_count"] == 0
-                    and attempt["state_reset"]["initial_tool_failure_attempts"] == 0
-                    and attempt["state_reset"]["initial_denied_pages"] == 0
-                    and attempt["state_reset"]["initial_injected_faults"] == 0
-                    and not attempt["faults_enabled"]
-                    and not attempt["fault_injected"]
-                ) if restarted else None,
-                usage=combined_usage, usage_by_role=combined_usage["by_role"],
-                solve_duration_seconds=sum(a["solve_duration_seconds"] for a in attempts),
-                elapsed_seconds=sum(a["elapsed_seconds"] for a in attempts),
-                wall_duration_seconds=time.monotonic() - wall_started,
-            )
-            result["duration_seconds"] = result["elapsed_seconds"]
-            result["total_tokens"] = result["usage"]["total_tokens"]
-            result["total_cost"] = result["usage"]["estimated_cost_usd"]
-            if should_restart:
-                runtime.event("recovery.restart", "system", {
-                    "reason": "fault_injected", "injected_faults": attempt["injected_faults"],
-                    "next_attempt": 2, "clean_config": clean_config.model_dump(mode="json"),
-                }, runtime.observed.get("system", [])[-1:])
+            result = attempt if restart else _question_result(attempts)
             runtime.event("run.finished", "system", result,
                           [ids[-1] for ids in runtime.observed.values() if ids])
             runtime.db.record("run", result)
             (runtime.root / "run.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
         finally:
             runtime.close()
-            del runtime
-        logger.info("Attempt %d: finished (%s).", number, attempt["status"])
-        if not should_restart:
-            break
-    return result
+        if not restart:
+            logger.info("Run finished (%s).", result["status"])
+            return result
+        logger.info("Fault injected; %s with faults off (attempt %d).",
+                    f"replaying from {rollback[0]}" if rollback else "restarting", number + 1)

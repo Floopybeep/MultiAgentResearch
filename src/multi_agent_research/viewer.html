@@ -144,6 +144,13 @@ async function loadRun(name, snapshot=null){
  }
  return data;
 }
+// Labels for the `strategy` (config `recovery`) recorded on runs.
+const RECOVERY={
+ full_restart:{label:'Full Restart',boundary:'discard previous execution state · begin a fresh attempt with faults off'},
+ always_verify:{label:'Always Verify',boundary:'continue in a new attempt'},
+ selective:{label:'Selective Recovery',boundary:'replay from the earliest faulted checkpoint (or restart if none) · reuse unfaulted worker results · faults off'},
+};
+const recovery=data=>RECOVERY[data.strategy]||{label:'Recovery',boundary:'continue in a new attempt'};
 function showError(e){$('#error').textContent=e.message}
 function visibleRuns(){
  const hidden=new Set();
@@ -157,7 +164,7 @@ function drawList(){
  for(const run of visible){
   const b=el('button','run'+(selected===run.directory?' selected':''));
   b.append(el('strong','',run.started_at?new Date(run.started_at).toLocaleString():run.directory),
-   el('small','',run.status+((run.attempts||[]).length>1?' · Full Restart · '+run.attempts.length+' attempts':'')),el('small','',run.directory),
+   el('small','',run.status+((run.attempts||[]).length>1?' · '+recovery(run).label+' · '+run.attempts.length+' attempts':'')),el('small','',run.directory),
    el('div','query',(run.query||run.error||'No query recorded').slice(0,180)));
   b.onclick=()=>selectRun(run.directory);list.append(b);
  }
@@ -277,8 +284,7 @@ function renderReport(data){
   const badge=(text,tone='')=>badges.append(el('span','qa-badge '+tone,text));
   badge('Execution: '+(qa.final?.status||data.status||'In progress'));
   if((data.attempts||[]).length>1){
-   badge('Full Restart · '+data.attempts.length+' attempts · selected: '+data.selected_attempt);
-   badge('Clean state reset: '+(data.clean_slate_reset===true?'yes':data.clean_slate_reset===false?'no':'not recorded'),data.clean_slate_reset===true?'qa-good':'qa-warn');
+   badge(recovery(data).label+' · '+data.attempts.length+' attempts · selected: '+data.selected_attempt);
   }
   if(g){
    badge(g.correct===true?'Correct':g.correct===false?'Incorrect':'Unresolved',g.correct===true?'qa-good':g.correct===false?'qa-bad':'qa-warn');
@@ -309,7 +315,7 @@ function renderReport(data){
     for(const value of [attempt.attempt_number+(attempt.attempt_number===data.selected_attempt?' (selected)':''),attempt.status,injection+(attempt.fault_injected?' · injected':''),number(attempt.model_calls),number(attempt.total_tokens),seconds(attempt.elapsed_seconds),money(attempt.estimated_cost_usd)])row.append(el('td','',value));
     body.append(row);
    }
-   table.append(body);details.append(el('summary','','Attempts · totals above include both attempts'),table);panel.append(details);
+   table.append(body);details.append(el('summary','','Attempts · totals above include all attempts'),table);panel.append(details);
   }
   if(g?.error)panel.append(el('p','notice',g.error));
   if(g?.judge_reason){
@@ -408,7 +414,7 @@ function renderRunSummary(entry,data){
   ['Correct after retry',count(retry.correct)],['Incorrect after retry',count(retry.incorrect)],
   ['Ungraded after retry',count(retry.ungraded)],...usageItems(retry),
  ]);
- panel.append(el('p','report-note','Re-try means full-restart attempts after the initial attempt; usage and time cover only those extra attempts. Verifier statistics cover all attempts. These are breakdowns of the overall totals, not additional charges. Verifier time sums check durations, which can overlap across parallel workers.'));
+ panel.append(el('p','report-note','Re-try means the recovery attempts after the initial attempt; usage and time cover only those extra attempts. Verifier statistics cover all attempts. These are breakdowns of the overall totals, not additional charges. Verifier time sums check durations, which can overlap across parallel workers.'));
  if(!s.verifier_statistics||!s.retry_statistics)panel.append(el('p','report-note','For older runs, rebuild viewer exports to populate recorded verifier and retry statistics.'));
  metrics('Timing',[
   ['Total question time',seconds(s.elapsed_seconds)],['Average per question',seconds(s.average_duration_seconds)],
@@ -496,7 +502,7 @@ function renderFlow(data){
  const flow=$('#flow');flow.replaceChildren();stageElements=[];
  for(const [index,trace] of (data.attempt_runs||[data]).entries()){
   if(data.attempt_runs){
-   if(index)flow.append(el('div','restart-boundary','↓ Full Restart · discard previous execution state · begin a fresh attempt ↓'));
+   if(index)flow.append(el('div','restart-boundary','↓ '+recovery(data).label+' · '+recovery(data).boundary+(trace.attempt?.recovered_from?' · from '+trace.attempt.recovered_from:'')+' ↓'));
    const heading=el('section','attempt-heading'),attempt=trace.attempt;
    heading.append(el('h2','','Attempt '+attempt.attempt_number+' · '+attempt.status+(attempt.attempt_number===data.selected_attempt?' · selected result':'')),el('p','',trace.directory+' · injection '+(attempt.faults_enabled?'enabled':'disabled')));
    for(const warning of trace.warnings||[])heading.append(el('p','notice',warning));
@@ -588,10 +594,10 @@ async function selectRun(name, questionId=null){
    };
   }else{selectedQuestion=null;drawQuestions(null);data=await loadRun(name,entry)}
   if(version!==requestVersion)return;
-  $('#title').textContent=(data.attempt_runs?'Full Restart · ':'')+name+(selectedQuestion?' · Question '+selectedQuestion:'');$('#title').dataset.questionTitle=$('#title').textContent;const summary=$('#summary');summary.replaceChildren();
+  $('#title').textContent=(data.attempt_runs?recovery(data).label+' · ':'')+name+(selectedQuestion?' · Question '+selectedQuestion:'');$('#title').dataset.questionTitle=$('#title').textContent;const summary=$('#summary');summary.replaceChildren();
   summary.append(el('h2','',data.query||'No query recorded'));
   const u=data.usage;summary.append(el('p','stats',`Status: ${data.status} · ${u.model_calls||0} model calls · ${(u.input_tokens||0).toLocaleString()} input / ${(u.output_tokens||0).toLocaleString()} output tokens`));
-  if(data.attempt_runs)summary.append(el('p','stats',data.attempt_runs.length+' attempts · selected result: Attempt '+data.selected_attempt+' · usage totals include both attempts'));
+  if(data.attempt_runs)summary.append(el('p','stats',data.attempt_runs.length+' attempts · selected result: Attempt '+data.selected_attempt+' · usage totals include all attempts'));
   if(data.stop_reason)summary.append(el('p','notice','Stop reason: '+data.stop_reason));
   if(data.status==='pending')summary.append(el('p','notice','This question has not started yet.'));
   if(data.status==='unfinished')summary.append(el('p','notice','No final run event: this run may be active or interrupted.'));

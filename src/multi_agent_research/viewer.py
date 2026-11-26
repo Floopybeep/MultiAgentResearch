@@ -51,6 +51,9 @@ def read_run(root, name, include_events=True):
         }
     finally:
         connection.close()
+    # A recovery branch keeps only its own events after the copied source log.
+    events = events[max((i for i, e in enumerate(events)
+                         if e["event_type"] == "recovery.started"), default=0):]
     warnings = []
     for event in events:
         if not include_events and event["event_type"] not in {
@@ -85,8 +88,8 @@ def read_run(root, name, include_events=True):
     result = {
         "directory": name,
         "run_id": finished.get("run_id", started.get("run_id")),
-        "query": started.get("payload", {}).get("query", ""),
-        "started_at": started.get("timestamp"),
+        "query": started.get("payload", {}).get("query", "") or finished.get("question", ""),
+        "started_at": started.get("timestamp") or (events[0]["timestamp"] if events else None),
         "updated_at": events[-1]["timestamp"] if events else None,
         # Absence of a finish event cannot distinguish a running job from an interruption.
         "status": finished.get("status", "unfinished"),

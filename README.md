@@ -126,17 +126,9 @@ export OPENAI_BASE_URL='your-provider-base-url'
 # Live research: export OPENAI_API_KEY, OPENAI_BASE_URL, and TAVILY_API_KEY first.
 uv run mar "What are the trade-offs of prefix caching for LLM serving?" --config configs/baseline.yaml
 
-# Local validation.
-uv run pytest -q
-uv run ruff check src tests
+# Lint.
+uv run ruff check src
 ```
-
-Two mutually exclusive recovery options can be added to the CLI:
-- `--full-restart`: retry once from fresh agent state with faults disabled after an explicit injection event.
-- `--always-verify`: attach diagnostic checks of Lead plans and delivered Worker results.
-
-Recorded examples: open [`examples/runs/index.html`](examples/runs/index.html) locally.
-See [the example index](examples/README.md) for the included runs.
 
 Defaults: 10 questions sampled with seed 42. Use `--sample-size N` to change the
 count, `--seed N` to change the sample, or `--question-ids ID...` to select original
@@ -178,7 +170,7 @@ judge whether claims are factually supported. Failed citation validation never p
 ### Per-call checkpoints and manual recovery
 
 Every executed Lead/Worker model call and tool call has a pre-call recovery point.
-Judge and verifier model calls are also checkpointed. Calls rejected by a budget
+Judge model calls are also checkpointed. Calls rejected by a budget
 check before execution do not create a recovery point. This applies to new runs;
 older runs do not have the required index or graph layout.
 
@@ -227,24 +219,14 @@ result = await recover(attempt, recovery_point_id=points[0]["recovery_point_id"]
 `recovery-br<random-id>/` directory. `--output-dir` (or the Python `output_dir`
 argument) can select a different **new** directory outside the source attempt.
 The source is never overwritten. Run credentials still come from the environment.
-Recovery preserves the saved model choices, fault settings and execution limits;
-it is not the fault-disabled `--full-restart` strategy. Because the runtime snapshot
-restores the fault state, replaying a faulted batch normally injects the same fault
-again. Add `--disable-faults` (Python: `disable_faults=True`) to replay with every
-fault disabled, using the same fault-free config as `--full-restart`; this models a
-transient fault, such as a dropped connection, that does not recur on retry:
-
-```bash
-uv run mar-recover runs/<batch>/questions/<question-id>/attempt-1 \
-  --checkpoint '<original-run-id>/br00/lead/call0005' --disable-faults
-```
+Recovery preserves the saved model choices and execution limits.
 
 | Selected call | What resumes |
 | --- | --- |
 | Lead model or local tool | That call, then the remaining Lead chain and subsequent worker batches. Earlier local tools in the same turn are retained. |
 | Worker model or tool | That call, then the remainder of that worker only. Its result is written to `recovery.json`. |
 | `run_blocking_subagent` | The whole parallel delegation batch, then the Lead chain. Calls in that batch have distinct readable IDs pointing to the same pre-batch graph checkpoint. |
-| Judge or verifier model | Only the saved model request; its response is written to `recovery.json`. Existing grades/diagnostics are not replaced. |
+| Judge model | Only the saved model request; its response is written to `recovery.json`. Existing grades are not replaced. |
 
 Worker recovery does **not** deliver a replacement result into a completed Lead
 execution. To recompute the final answer, select the Lead's delegation checkpoint
@@ -257,15 +239,14 @@ same model response.
 Storage and agent implementation reference:
 
 - `checkpoints.sqlite` stores Lead/Worker LangGraph state; `calls.sqlite` stores
-  independent judge/verifier graphs. All executions use `durability="sync"`.
-  Full-restart attempts also use separate, initially empty SQLite stores.
+  independent judge graphs. All executions use `durability="sync"`.
 - `events.sqlite` contains a searchable `recovery_points` table. Each row maps the
   readable ID to the exact graph checkpoint, graph type, request artifact, and
   runtime snapshot. Request events carry `recovery_point_id`; `checkpoint.saved`
   events expose the corresponding record in the trace.
 - Graph state retains the current tool list, cursor, completed tool outputs, and
-  conversation. Runtime snapshots retain the active plan reference, fault counters,
-  prompt context, dependency IDs and verification context. The index is committed
+  conversation. Runtime snapshots retain the active plan reference, prompt context
+  and dependency IDs. The index is committed
   before the actual call starts. For parallel delegation, every call is indexed
   before dispatch begins.
 - `Runtime.call_model`, `Runtime.call_tool`, and the delegation boundary create
@@ -296,17 +277,15 @@ Open **`runs/index.html`** in a browser:
 - **Agent Output Graph**: agent activity, model messages, tool payloads and handoffs.
 - **Run Summary**: cumulative input/output tokens, cached input tokens, model calls,
   estimated cost, question outcomes, and total/average/median question time, plus
-  solve, grading, and wall-clock time. Verifier and re-try rows break out check
-  outcomes and extra full-restart attempts, including their tokens, cost, and time.
-  These costs are already included in the overall totals. Batch totals cover finalized questions and
-  include restart attempts. Unknown costs remain unavailable. Refresh the run to
+  solve, grading, and wall-clock time. Batch totals cover finalized questions.
+  Unknown costs remain unavailable. Refresh the run to
   update; rebuild older exports to populate the additional timing statistics.
 
 Each invocation creates one `runs/<timestamp_run-id>/` directory. Its `batch.json`
 stores the selected questions and aggregate results, updated as questions finish.
 Per-question outputs are under `questions/<question-id>/attempt-1/`: `run.json`,
 the submitted answer, document snapshots, SQLite events, payload artifacts and
-checkpoints. A full restart stores its clean attempt in `attempt-2/` beside it.
+checkpoints. Each question has a single `attempt-1/` directory.
 
 For multiple-question runs, select an original question ID in the horizontal strip
 below the view tabs. Yellow means pending/running, green means correct, red means
@@ -347,8 +326,7 @@ This rebuilds derived viewer files from the saved traces; it does not rerun ques
   siblings. Manual checkpoint replay is available through `mar-recover`; see the recovery scope above.
 - Estimated model cost is `null` unless input/output rates are configured per role; search costs
   are excluded and cache-specific pricing is not modeled. Provider usage is retained in events.
-- The CLI exits nonzero on failure or budget exhaustion. Scripted tests require no credentials;
-  live runs are explicitly initiated by invoking the CLI without `--demo`.
+- The CLI exits nonzero on failure or budget exhaustion.
 
 
 ### Directory structure
@@ -394,9 +372,6 @@ MultiAgentResearch/
 |   `-- observability/
 |       |-- events.py               # Structured model/tool/agent events
 |       `-- usage.py                # Token, latency, and cost accounting
-|-- tests/
-|   |-- unit/                       # Schemas, storage, and citation validation
-|   `-- integration/                # Scripted model/tool graph tests
 |-- runs/
 |   |-- index.html                  # Open directly in browser (tracked)
 |   |-- viewer-manifest.js          # Generated run list (gitignored)
@@ -416,7 +391,7 @@ MultiAgentResearch/
 - Keep immutable evidence and report artifacts on disk. Use SQLite for run/event metadata and persistent LangGraph checkpoints; expose plan memory separately from execution checkpoints.
 - Log model/tool requests and responses, agent and assignment IDs, timestamps, input/output artifact dependencies, token usage, estimated cost, errors, and retry attempts. Exclude credentials from logs.
 - Apply explicit concurrency, tool-call, token, and time limits. Record completion, failure, and budget exhaustion distinctly; preserve successful worker results when a sibling fails.
-- Keep model/tool execution behind observable, checkpointed boundaries. Pipeline dispatch/delivery fault injection and manual call-indexed replay are implemented; automatic checkpoint selection and downstream repair remain TODOs.
+- Keep model/tool execution behind observable, checkpointed boundaries. Manual call-indexed replay is implemented; automatic checkpoint selection and downstream repair remain TODOs.
 
 
 ## Phase 1 handoff
@@ -427,10 +402,10 @@ English `# TODO:` comments mark the extension points below. Paths are relative t
 | Area and entry point | Current interface | Design work |
 |---|---|---|
 | Grading — `grading.py:grade_answer` | Extract the contents of one nonempty, unnested `\boxed{...}` answer; normalize Unicode, case and whitespace; exact match followed by an LLM judge. Missing, multiple or malformed boxes go to the judge. Store correctness and format validity separately. | Answer aliases, numbers/units, multi-part answers, partial credit, judge rubric/model and error handling. |
-| Tool → Worker injection — `runtime.py:read_document` | Optional `document_injection` config selects the first `num_docs` catalog document IDs (capped at catalog size) per question run and prepends a literal prompt on every successful read of those IDs; events retain original/injected artifact references. See [config documentation](configs/README.md#document-prompt-injection). | TODO: Target text or table fields; select timing and additional fault types. |
-| Worker → Lead injection — `graphs/research.py:build_research` | Structured findings, document IDs and uncertainties at the delivery boundary. | Implemented opt-in dropped results, dispatch failure and communication timeout; see [configuration examples](configs/README.md#pipeline-fault-injection). TODO: content corruption, stale results and paired clean/fault runs. |
+| Tool → Worker faults — `runtime.py:read_document` | Plain paged read of an assigned document. | TODO: Fault injection on document reads. |
+| Worker → Lead faults — `graphs/research.py:build_research` | Structured findings, document IDs and uncertainties at the delivery boundary. | TODO: Fault injection at the delivery boundary. |
 | Propagation metrics — `runner.py:run_qa` result construction | Event IDs, parent dependencies, handoff payloads, task outcome, usage and timing. | Exposure, adoption and answer impact; affected stages, wasted work and attribution method. |
-| Recovery — `runner.py:run_qa`, `recovery.py:recover` | Oracle-triggered full restart, diagnostic verification, and manual call-indexed replay into separate branches, with cumulative usage. | TODO: Automatic checkpoint selection, downstream result replacement, regrading and recovery viewer controls. |
+| Recovery — `recovery.py:recover` | Manual call-indexed replay into separate branches, with cumulative usage. | TODO: Automatic checkpoint selection, downstream result replacement, regrading and recovery viewer controls. |
 
 The experiment protocol also needs subset selection, repeats/seeds, fault
 frequencies and result aggregation rules.
@@ -443,5 +418,3 @@ frequencies and result aggregation rules.
 - [Anthropic Cookbook: research agent prompts](https://github.com/anthropics/claude-cookbooks/tree/main/patterns/agents/prompts)
 - [LangChain Open Deep Research](https://github.com/langchain-ai/open_deep_research)
 
-
-Pipeline fault controls and audit semantics are documented in [configs/README.md](configs/README.md#pipeline-fault-injection). Faults are disabled by default.

@@ -29,5 +29,12 @@ class Database:
             )
         return cursor.lastrowid
 
+    def run_events(self, run_id):
+        rows = self.connection.execute(
+            "SELECT body FROM events WHERE json_extract(body, '$.run_id') = ? ORDER BY sequence",
+            (run_id,),
+        )
+        return [json.loads(body) for (body,) in rows]
+
     def close(self):
         self.connection.close()

@@ -1,4 +1,4 @@
-"""Unprivileged, diagnostic-only checks of actual boundary inputs and outputs."""
+"""Diagnostic-only checks of the actual inputs and outputs at Lead and Worker boundaries."""
 
 import json
 import time
@@ -8,7 +8,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, ConfigDict, StrictBool
 
 from . import prompts
-from .runtime import Runtime
 
 
 class VerificationDecision(BaseModel):
@@ -17,11 +16,23 @@ class VerificationDecision(BaseModel):
     diagnostic: str
 
 
+def latest_model_input(runtime, agent: str) -> list[dict[str, Any]]:
+    """The messages of the agent's latest model call in this run, from its model.request event."""
+    row = runtime.db.connection.execute(
+        "SELECT body FROM events WHERE json_extract(body, '$.event_type') = 'model.request'"
+        " AND json_extract(body, '$.agent_id') = ? AND json_extract(body, '$.run_id') = ?"
+        " ORDER BY sequence DESC LIMIT 1",
+        (agent, runtime.run_id),
+    ).fetchone()
+    if row is None:
+        return []
+    return runtime.artifacts.get(json.loads(row[0])["payload_ref"])["messages"]
+
+
 async def verify_boundary(
-    runtime: Runtime, agent: str, boundary: str, actual_input: Any, actual_output: Any,
-    *, parents: list[str],
+    runtime, agent: str, boundary: str, actual_output: Any, *, parents: list[str],
 ) -> dict[str, Any]:
-    """Return diagnostics only; callers supply observed data, never hidden source state."""
+    """Check `actual_output` against the agent's actual latest model input; diagnosis only."""
     verifier = f"{agent}-{boundary}-verifier"
     started = time.monotonic()
     runtime.event("verification.started", verifier, {"boundary": boundary}, parents)
@@ -30,7 +41,7 @@ async def verify_boundary(
         response = await runtime.call_model("verifier", verifier, [
             SystemMessage(content=prompts.load("verifier")),
             HumanMessage(content=json.dumps({
-                "boundary": boundary, "actual_input": actual_input,
+                "boundary": boundary, "actual_input": latest_model_input(runtime, agent),
                 "actual_output": actual_output,
             })),
         ], [])
@@ -47,12 +58,27 @@ async def verify_boundary(
         diagnostic["error"] = runtime.log.redact(f"{type(exc).__name__}: {exc}")
         diagnostic["diagnostic"] = "Verification unavailable; no consistency verdict was obtained."
     elapsed = time.monotonic() - started
-    event = runtime.event("verification", verifier, {
-        "boundary": boundary, **diagnostic,
-    }, [*parents, *runtime.observed.get(verifier, [])], duration_seconds=elapsed)
-    record = {
-        "boundary": boundary, "agent": agent, **diagnostic,
-        "duration_seconds": elapsed, "event_id": event,
-    }
-    runtime.verifications.append(record)
-    return record
+    event = runtime.event("verification", verifier, {"boundary": boundary, **diagnostic},
+                          [*parents, *runtime.observed.get(verifier, [])],
+                          duration_seconds=elapsed)
+    return {"boundary": boundary, "agent": agent, **diagnostic,
+            "duration_seconds": elapsed, "event_id": event}
+
+
+def recorded_verifications(runtime) -> list[dict[str, Any]]:
+    """Every verification record of this run, rebuilt from its `verification` events."""
+    records = []
+    for (body,) in runtime.db.connection.execute(
+        "SELECT body FROM events WHERE json_extract(body, '$.event_type') = 'verification'"
+        " AND json_extract(body, '$.run_id') = ? ORDER BY sequence", (runtime.run_id,),
+    ):
+        event = json.loads(body)
+        payload = runtime.artifacts.get(event["payload_ref"])
+        records.append({
+            "boundary": payload["boundary"],
+            "agent": event["agent_id"].removesuffix(f"-{payload['boundary']}-verifier"),
+            "verified": payload["verified"], "diagnostic": payload["diagnostic"],
+            "error": payload["error"], "duration_seconds": event["duration_seconds"],
+            "event_id": event["event_id"],
+        })
+    return records

@@ -18,11 +18,8 @@ def main():
     parser.add_argument("--question-ids", nargs="+", help="Explicit TSV row IDs, overriding sampling")
     parser.add_argument("--config", type=Path)
     parser.add_argument("--output-dir", type=Path)
-    strategy = parser.add_mutually_exclusive_group()
-    strategy.add_argument("--full-restart", action="store_true",
-                          help="Restart once after an explicit injection, with the saved baseline and fresh state")
-    strategy.add_argument("--always-verify", action="store_true",
-                          help="Diagnose actual boundary inputs/outputs without rewriting results")
+    parser.add_argument("--recovery", choices=["none", "full_restart", "always_verify", "selective"], help="Recovery strategy")
+    parser.add_argument("--detect-after", type=int, help="Batches to wait after the first faulted batch before triggering recovery")
     args = parser.parse_args()
     logging.basicConfig(format="%(message)s")
     logging.getLogger("multi_agent_research").setLevel(logging.INFO)
@@ -33,11 +30,10 @@ def main():
         config = RunConfig.load(args.config) if args.config else RunConfig()
         if args.output_dir:
             config.output_dir = args.output_dir
-        if args.full_restart or args.always_verify:
-            config = RunConfig.model_validate({
-                **config.model_dump(),
-                "full_restart": args.full_restart, "always_verify": args.always_verify,
-            })
+        if args.recovery:
+            config.recovery = args.recovery
+        if args.detect_after is not None:
+            config.detect_after = args.detect_after
         result = asyncio.run(run_frames(
             config, OpenAIChatCompletionsAdapter(), corpus_dir=args.corpus_dir,
             size=args.sample_size, seed=args.seed, question_ids=args.question_ids,

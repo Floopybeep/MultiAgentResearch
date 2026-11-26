@@ -3,14 +3,16 @@
 `upstream/manifest.json` pins Anthropic Cookbook reference snapshots and hashes.
 `upstream/LICENSE` contains their license.
 
-The active prompts are `lead.md`, `worker.md` and `judge.md`. Each run records their
-hashes through `prompts.hashes()`.
+The active prompts are `lead.md`, `worker.md`, `judge.md` and, with
+`recovery: always_verify`, `verifier.md` (ported unchanged from upstream). Each run
+records their hashes through `prompts.hashes()`.
 
 | Prompt | Input | Tools / output |
 | --- | --- | --- |
 | Lead | Question, document catalog and returned Worker findings | `memory_write`, `memory_read`, parallel `run_blocking_subagent`, then `submit_answer` with `\boxed{answer}` |
 | Worker | Self-contained assignment and document catalog | Paged `read_document`, then `complete_task` with findings, read document IDs and uncertainties |
 | Judge | Question, reference answer and candidate response | JSON with boolean `correct` and string `reason` |
+| Verifier | Boundary name, the agent's latest model input and its plan or delivered result | JSON with boolean `verified` and string `diagnostic` |
 
 Each `run_blocking_subagent` call specifies one `document_id` from the question's
 catalog. The active Lead and Worker prompts follow this single-article boundary:

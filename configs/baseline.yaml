@@ -23,7 +23,6 @@ judge:
   options:
     temperature: 0
     seed: 42
-always_verify: false
 verifier:
   model: api-glm-5.3-flash
   input_cost_per_million: 0.15
@@ -33,49 +32,6 @@ verifier:
 # Chat Completions generation options (e.g. reasoning_effort) go under `options`.
 lead_prompt: src/multi_agent_research/prompts/lead.md
 worker_prompt: src/multi_agent_research/prompts/worker.md
-# Inject into at most num_docs successful read_document calls per question run.
-document_injection:
-  enabled: false
-  num_docs: 1
-  prompt: ""
-# Drop Lead-to-Worker assignments in one delegation batch; num_delivered reach Workers.
-connection_drop:
-  enabled: false
-  batch: 1
-  num_delivered: 1
-  select: last
-  seed: 0
-  persistent: false
-# Withhold Worker-to-Lead results in one batch; num_delivered results arrive.
-result_timeout:
-  enabled: false
-  batch: 1
-  num_delivered: 1
-  timeout_seconds: 180  # Deadline from dispatch; same as worker_timeout_seconds.
-  select: last
-  seed: 0
-  persistent: false
-# Online recovery at the Lead-Worker boundary (off by default): resend assignments lost
-# before a Worker starts; recover failed deliveries from the Worker's completed result.
-delegation_recovery:
-  enabled: false
-  max_retries: 1
-# Worker budget faults. probability: how often each selected worker is affected.
-# max_output_tokens / max_tool_calls: how severe. target_workers: batchN-workerM; [] means all.
-worker_budget_faults:
-  generation_budget:
-    enabled: false
-    probability: 1.0
-    max_output_tokens: 128  # per_call: each request; per_worker: total for the assignment.
-    budget_scope: per_call
-    target_workers: []
-    seed: 42
-  tool_call_budget:
-    enabled: false
-    probability: 1.0
-    max_tool_calls: 1  # Reads, failed calls and complete_task all count.
-    target_workers: []
-    seed: 42
 max_lead_turns: 10
 max_worker_turns: 5
 # Per worker: search + fetch + failed calls + completion; also rendered in the worker prompt.
